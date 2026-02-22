@@ -1,0 +1,1458 @@
+{
+  "@context": {
+    "cascade": "https://ns.cascadeprotocol.org/core/v1#",
+    "clinical": "https://ns.cascadeprotocol.org/clinical/v1#",
+    "health": "https://ns.cascadeprotocol.org/health/v1#",
+    "checkup": "https://ns.cascadeprotocol.org/checkup/v1#",
+    "pots": "https://ns.cascadeprotocol.org/pots/v1#",
+    "coverage": "https://ns.cascadeprotocol.org/coverage/v1#",
+    "fhir": "http://hl7.org/fhir/",
+    "sct": "http://snomed.info/sct/",
+    "loinc": "http://loinc.org/rdf#",
+    "rxnorm": "http://www.nlm.nih.gov/research/umls/rxnorm/",
+    "icd10": "http://hl7.org/fhir/sid/icd-10-cm/",
+    "ucum": "http://unitsofmeasure.org/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dc": "http://purl.org/dc/terms/",
+    "schema": "https://schema.org/",
+    "ldp": "http://www.w3.org/ns/ldp#",
+    "solid": "http://www.w3.org/ns/solid/terms#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "acl": "http://www.w3.org/ns/auth/acl#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+
+    "__comment_core": "=== Core Vocabulary (cascade:) ===",
+
+    "DataProvenance": "cascade:DataProvenance",
+    "ConsumerGenerated": "cascade:ConsumerGenerated",
+    "ClinicalGenerated": "cascade:ClinicalGenerated",
+    "DeviceGenerated": "cascade:DeviceGenerated",
+    "SelfReported": "cascade:SelfReported",
+    "ConsumerWellness": "cascade:ConsumerWellness",
+    "EHRVerified": "cascade:EHRVerified",
+    "ScannedDocument": "cascade:ScannedDocument",
+    "AIExtracted": "cascade:AIExtracted",
+    "DataSource": "cascade:DataSource",
+    "PatientProfile": "cascade:PatientProfile",
+    "Address": "cascade:Address",
+    "PharmacyInfo": "cascade:PharmacyInfo",
+    "AdvanceDirectives": "cascade:AdvanceDirectives",
+    "EmergencyContact": "cascade:EmergencyContact",
+
+    "schemaVersion": "cascade:schemaVersion",
+    "dataProvenance": {
+      "@id": "cascade:dataProvenance",
+      "@type": "@id"
+    },
+    "creatorWebID": {
+      "@id": "cascade:creatorWebID",
+      "@type": "@id"
+    },
+    "sourceName": "cascade:sourceName",
+    "sourceBundleId": "cascade:sourceBundleId",
+    "sourceReliabilityTier": "cascade:sourceReliabilityTier",
+    "sourceMetricCoverage": {
+      "@id": "cascade:sourceMetricCoverage",
+      "@type": "@id"
+    },
+    "subConcern": "cascade:subConcern",
+    "addedInSchemaVersion": "cascade:addedInSchemaVersion",
+    "cascadeUri": {
+      "@id": "cascade:cascadeUri",
+      "@type": "xsd:anyURI"
+    },
+    "notificationsEnabled": {
+      "@id": "cascade:notificationsEnabled",
+      "@type": "xsd:boolean"
+    },
+    "preferredUnits": "cascade:preferredUnits",
+    "dateOfBirth": {
+      "@id": "cascade:dateOfBirth",
+      "@type": "xsd:date"
+    },
+    "genderIdentity": "cascade:genderIdentity",
+    "biologicalSex": "cascade:biologicalSex",
+    "ageGroup": "cascade:ageGroup",
+    "emergencyContactName": "cascade:emergencyContactName",
+    "emergencyContactRelationship": "cascade:emergencyContactRelationship",
+    "emergencyContactPhone": "cascade:emergencyContactPhone",
+    "hasAddress": {
+      "@id": "cascade:hasAddress",
+      "@type": "@id"
+    },
+    "maritalStatus": "cascade:maritalStatus",
+    "raceEthnicity": "cascade:raceEthnicity",
+    "hasPreferredPharmacy": {
+      "@id": "cascade:hasPreferredPharmacy",
+      "@type": "@id"
+    },
+    "hasAdvanceDirectives": {
+      "@id": "cascade:hasAdvanceDirectives",
+      "@type": "@id"
+    },
+    "computedAge": {
+      "@id": "cascade:computedAge",
+      "@type": "xsd:integer"
+    },
+    "profileId": "cascade:profileId",
+    "pharmacyAddress": "cascade:pharmacyAddress",
+    "contactName": "cascade:contactName",
+    "contactRelationship": "cascade:contactRelationship",
+    "contactPhone": "cascade:contactPhone",
+    "emergencyContact": {
+      "@id": "cascade:emergencyContact",
+      "@type": "@id"
+    },
+    "advanceDirectives": {
+      "@id": "cascade:advanceDirectives",
+      "@type": "@id"
+    },
+    "preferredPharmacy": {
+      "@id": "cascade:preferredPharmacy",
+      "@type": "@id"
+    },
+    "address": {
+      "@id": "cascade:address",
+      "@type": "@id"
+    },
+    "preferredLanguage": "cascade:preferredLanguage",
+    "streetAddress": "cascade:streetAddress",
+    "city": "cascade:city",
+    "state": "cascade:state",
+    "postalCode": "cascade:postalCode",
+    "country": "cascade:country",
+    "addressUse": "cascade:addressUse",
+    "addressType": "cascade:addressType",
+    "addressText": "cascade:addressText",
+    "addressLine": "cascade:addressLine",
+    "addressCity": "cascade:addressCity",
+    "addressDistrict": "cascade:addressDistrict",
+    "addressState": "cascade:addressState",
+    "addressPostalCode": "cascade:addressPostalCode",
+    "addressCountry": "cascade:addressCountry",
+    "pharmacyName": "cascade:pharmacyName",
+    "pharmacyPhone": "cascade:pharmacyPhone",
+    "hasLivingWill": {
+      "@id": "cascade:hasLivingWill",
+      "@type": "xsd:boolean"
+    },
+    "hasPowerOfAttorney": {
+      "@id": "cascade:hasPowerOfAttorney",
+      "@type": "xsd:boolean"
+    },
+    "hasDNR": {
+      "@id": "cascade:hasDNR",
+      "@type": "xsd:boolean"
+    },
+    "advanceDirectiveNotes": "cascade:advanceDirectiveNotes",
+
+    "__comment_clinical": "=== Clinical Vocabulary (clinical:) ===",
+
+    "ClinicalDocument": "clinical:ClinicalDocument",
+    "ClinicalSection": "clinical:ClinicalSection",
+    "ClinicalNarrative": "clinical:ClinicalNarrative",
+    "ProgressNote": "clinical:ProgressNote",
+    "DischargeSummary": "clinical:DischargeSummary",
+    "ConsultationNote": "clinical:ConsultationNote",
+    "LaboratoryReport": "clinical:LaboratoryReport",
+    "ImagingReport": "clinical:ImagingReport",
+    "VisitSummary": "clinical:VisitSummary",
+    "Medication": "clinical:Medication",
+    "Allergy": "clinical:Allergy",
+    "LabResult": "clinical:LabResult",
+    "Condition": "clinical:Condition",
+    "Immunization": "clinical:Immunization",
+    "Procedure": "clinical:Procedure",
+    "VitalSign": "clinical:VitalSign",
+    "MedicationUseEpisode": "clinical:MedicationUseEpisode",
+    "Supplement": "clinical:Supplement",
+    "LabTestSeries": "clinical:LabTestSeries",
+    "CoverageRecord": "clinical:CoverageRecord",
+
+    "importedAt": {
+      "@id": "clinical:importedAt",
+      "@type": "xsd:dateTime"
+    },
+    "sourceEHR": "clinical:sourceEHR",
+    "clinicalSourceBundleId": "clinical:sourceBundleId",
+    "fhirResourceId": "clinical:fhirResourceId",
+    "fhirResourceType": "clinical:fhirResourceType",
+    "documentDate": {
+      "@id": "clinical:documentDate",
+      "@type": "xsd:dateTime"
+    },
+    "encounterDate": {
+      "@id": "clinical:encounterDate",
+      "@type": "xsd:dateTime"
+    },
+    "displayName": "clinical:displayName",
+    "narrativeText": "clinical:narrativeText",
+    "narrativeXHTML": "clinical:narrativeXHTML",
+    "rawFHIRData": "clinical:rawFHIRData",
+    "hasSection": {
+      "@id": "clinical:hasSection",
+      "@type": "@id"
+    },
+    "sectionCode": "clinical:sectionCode",
+    "sectionTitle": "clinical:sectionTitle",
+    "sectionContent": "clinical:sectionContent",
+    "sectionOrder": {
+      "@id": "clinical:sectionOrder",
+      "@type": "xsd:integer"
+    },
+    "recordDate": {
+      "@id": "clinical:recordDate",
+      "@type": "xsd:dateTime"
+    },
+    "status": "clinical:status",
+    "loincCode": "clinical:loincCode",
+    "snomedCode": "clinical:snomedCode",
+    "drugName": "clinical:drugName",
+    "dosage": "clinical:dosage",
+    "route": "clinical:route",
+    "frequency": "clinical:frequency",
+    "rxNormCode": "clinical:rxNormCode",
+    "ndcCode": "clinical:ndcCode",
+    "prescriber": "clinical:prescriber",
+    "indication": "clinical:indication",
+    "courseOfTherapyType": "clinical:courseOfTherapyType",
+    "asNeeded": {
+      "@id": "clinical:asNeeded",
+      "@type": "xsd:boolean"
+    },
+    "medicationForm": "clinical:medicationForm",
+    "activeIngredient": "clinical:activeIngredient",
+    "ingredientStrength": "clinical:ingredientStrength",
+    "provenanceClass": "clinical:provenanceClass",
+    "sourceFhirResourceType": "clinical:sourceFhirResourceType",
+    "clinicalIntent": "clinical:clinicalIntent",
+    "refillsAllowed": {
+      "@id": "clinical:refillsAllowed",
+      "@type": "xsd:integer"
+    },
+    "supplyDurationDays": {
+      "@id": "clinical:supplyDurationDays",
+      "@type": "xsd:integer"
+    },
+    "dispensedQuantity": "clinical:dispensedQuantity",
+    "prescriptionCategory": "clinical:prescriptionCategory",
+    "administrationRoute": "clinical:administrationRoute",
+    "allergen": "clinical:allergen",
+    "reaction": "clinical:reaction",
+    "severity": "clinical:severity",
+    "allergyCategory": "clinical:allergyCategory",
+    "criticality": "clinical:criticality",
+    "testName": "clinical:testName",
+    "value": "clinical:value",
+    "unit": "clinical:unit",
+    "referenceRange": "clinical:referenceRange",
+    "interpretation": "clinical:interpretation",
+    "specimenType": "clinical:specimenType",
+    "conditionName": "clinical:conditionName",
+    "onsetDate": {
+      "@id": "clinical:onsetDate",
+      "@type": "xsd:dateTime"
+    },
+    "abatementDate": {
+      "@id": "clinical:abatementDate",
+      "@type": "xsd:dateTime"
+    },
+    "clinicalStatus": "clinical:clinicalStatus",
+    "verificationStatus": "clinical:verificationStatus",
+    "icd10Code": "clinical:icd10Code",
+    "vaccineName": "clinical:vaccineName",
+    "vaccineCode": "clinical:vaccineCode",
+    "lotNumber": "clinical:lotNumber",
+    "site": "clinical:site",
+    "doseNumber": "clinical:doseNumber",
+    "manufacturer": "clinical:manufacturer",
+    "expirationDate": {
+      "@id": "clinical:expirationDate",
+      "@type": "xsd:date"
+    },
+    "procedureName": "clinical:procedureName",
+    "procedureDate": {
+      "@id": "clinical:procedureDate",
+      "@type": "xsd:dateTime"
+    },
+    "bodySite": "clinical:bodySite",
+    "performer": "clinical:performer",
+    "cptCode": "clinical:cptCode",
+    "outcome": "clinical:outcome",
+    "procedureStatus": "clinical:procedureStatus",
+    "procedureCategory": "clinical:procedureCategory",
+    "procedureSnomedCode": "clinical:procedureSnomedCode",
+    "vitalType": "clinical:vitalType",
+    "systolicValue": {
+      "@id": "clinical:systolicValue",
+      "@type": "xsd:decimal"
+    },
+    "diastolicValue": {
+      "@id": "clinical:diastolicValue",
+      "@type": "xsd:decimal"
+    },
+    "deviceName": "clinical:deviceName",
+    "measurementMethod": "clinical:measurementMethod",
+    "valueString": "clinical:valueString",
+    "effectiveDate": {
+      "@id": "clinical:effectiveDate",
+      "@type": "xsd:dateTime"
+    },
+    "instructions": "clinical:instructions",
+    "startDate": {
+      "@id": "clinical:startDate",
+      "@type": "xsd:dateTime"
+    },
+    "endDate": {
+      "@id": "clinical:endDate",
+      "@type": "xsd:dateTime"
+    },
+    "allergyType": "clinical:allergyType",
+    "orderingProvider": "clinical:orderingProvider",
+    "performingLab": "clinical:performingLab",
+    "observationStatus": "clinical:observationStatus",
+    "sourceRecordId": "clinical:sourceRecordId",
+    "panelMembership": {
+      "@id": "clinical:panelMembership",
+      "@type": "@id"
+    },
+    "referenceRangeLow": {
+      "@id": "clinical:referenceRangeLow",
+      "@type": "xsd:decimal"
+    },
+    "referenceRangeHigh": {
+      "@id": "clinical:referenceRangeHigh",
+      "@type": "xsd:decimal"
+    },
+    "referenceRangeText": "clinical:referenceRangeText",
+    "issuedDate": {
+      "@id": "clinical:issuedDate",
+      "@type": "xsd:dateTime"
+    },
+    "category": "clinical:category",
+    "notes": "clinical:notes",
+    "occurrenceDate": {
+      "@id": "clinical:occurrenceDate",
+      "@type": "xsd:dateTime"
+    },
+    "doseQuantity": "clinical:doseQuantity",
+    "cvxCode": "clinical:cvxCode",
+    "performedDate": {
+      "@id": "clinical:performedDate",
+      "@type": "xsd:dateTime"
+    },
+    "performedEndDate": {
+      "@id": "clinical:performedEndDate",
+      "@type": "xsd:dateTime"
+    },
+    "location": "clinical:location",
+    "component1Name": "clinical:component1Name",
+    "component1Value": {
+      "@id": "clinical:component1Value",
+      "@type": "xsd:decimal"
+    },
+    "component1Unit": "clinical:component1Unit",
+    "component1LoincCode": "clinical:component1LoincCode",
+    "component2Name": "clinical:component2Name",
+    "component2Value": {
+      "@id": "clinical:component2Value",
+      "@type": "xsd:decimal"
+    },
+    "component2Unit": "clinical:component2Unit",
+    "component2LoincCode": "clinical:component2LoincCode",
+    "canonicalName": "clinical:canonicalName",
+    "episodeFirstSeenDate": {
+      "@id": "clinical:episodeFirstSeenDate",
+      "@type": "xsd:dateTime"
+    },
+    "episodeLastSeenDate": {
+      "@id": "clinical:episodeLastSeenDate",
+      "@type": "xsd:dateTime"
+    },
+    "currentDose": "clinical:currentDose",
+    "currentFrequency": "clinical:currentFrequency",
+    "currentRoute": "clinical:currentRoute",
+    "inferredStatus": "clinical:inferredStatus",
+    "statusConfidence": "clinical:statusConfidence",
+    "statusReason": "clinical:statusReason",
+    "usePattern": "clinical:usePattern",
+    "therapeuticClass": "clinical:therapeuticClass",
+    "conceptUri": {
+      "@id": "clinical:conceptUri",
+      "@type": "@id"
+    },
+    "drugCode": {
+      "@id": "clinical:drugCode",
+      "@type": "@id"
+    },
+    "derivedFromRecord": {
+      "@id": "clinical:derivedFromRecord",
+      "@type": "@id"
+    },
+    "sourceExternalId": "clinical:sourceExternalId",
+    "hasUnresolvedConflicts": {
+      "@id": "clinical:hasUnresolvedConflicts",
+      "@type": "xsd:boolean"
+    },
+    "durationDays": {
+      "@id": "clinical:durationDays",
+      "@type": "xsd:integer"
+    },
+    "clinicalSupplementName": "clinical:supplementName",
+    "regulatoryStatus": "clinical:regulatoryStatus",
+    "evidenceStrength": "clinical:evidenceStrength",
+    "brand": "clinical:brand",
+    "form": "clinical:form",
+    "dsldId": "clinical:dsldId",
+    "upc": "clinical:upc",
+    "reasonForUse": "clinical:reasonForUse",
+    "clinicalCascadeUri": {
+      "@id": "clinical:cascadeUri",
+      "@type": "@id"
+    },
+    "dose": "clinical:dose",
+    "isActive": {
+      "@id": "clinical:isActive",
+      "@type": "xsd:boolean"
+    },
+    "canonicalTestName": "clinical:canonicalTestName",
+    "testLoincCode": "clinical:testLoincCode",
+    "testConceptUri": {
+      "@id": "clinical:testConceptUri",
+      "@type": "@id"
+    },
+    "seriesCategory": "clinical:seriesCategory",
+    "firstResultDate": {
+      "@id": "clinical:firstResultDate",
+      "@type": "xsd:dateTime"
+    },
+    "lastResultDate": {
+      "@id": "clinical:lastResultDate",
+      "@type": "xsd:dateTime"
+    },
+    "resultCount": {
+      "@id": "clinical:resultCount",
+      "@type": "xsd:integer"
+    },
+    "latestValue": "clinical:latestValue",
+    "latestUnit": "clinical:latestUnit",
+    "latestInterpretation": "clinical:latestInterpretation",
+    "trendDirection": "clinical:trendDirection",
+    "trendConfidence": "clinical:trendConfidence",
+    "trendReason": "clinical:trendReason",
+    "hasAbnormalHistory": {
+      "@id": "clinical:hasAbnormalHistory",
+      "@type": "xsd:boolean"
+    },
+    "currentReferenceRange": "clinical:currentReferenceRange",
+    "currentReferenceRangeLow": {
+      "@id": "clinical:currentReferenceRangeLow",
+      "@type": "xsd:decimal"
+    },
+    "currentReferenceRangeHigh": {
+      "@id": "clinical:currentReferenceRangeHigh",
+      "@type": "xsd:decimal"
+    },
+    "seriesPanelMembership": {
+      "@id": "clinical:seriesPanelMembership",
+      "@type": "@id"
+    },
+    "clinicalProviderName": "clinical:providerName",
+    "clinicalMemberId": "clinical:memberId",
+    "clinicalGroupNumber": "clinical:groupNumber",
+    "clinicalPlanName": "clinical:planName",
+    "clinicalPlanType": "clinical:planType",
+    "clinicalCoverageType": "clinical:coverageType",
+    "relationship": "clinical:relationship",
+    "effectivePeriodStart": {
+      "@id": "clinical:effectivePeriodStart",
+      "@type": "xsd:date"
+    },
+    "effectivePeriodEnd": {
+      "@id": "clinical:effectivePeriodEnd",
+      "@type": "xsd:date"
+    },
+    "payorName": "clinical:payorName",
+    "clinicalSubscriberId": "clinical:subscriberId",
+
+    "__comment_health": "=== Health Vocabulary (health:) ===",
+
+    "ActivitySnapshot": "health:ActivitySnapshot",
+    "SleepSnapshot": "health:SleepSnapshot",
+    "VO2MaxStatistics": "health:VO2MaxStatistics",
+    "HRVStatistics": "health:HRVStatistics",
+    "BPStatistics": "health:BPStatistics",
+    "HealthProfile": "health:HealthProfile",
+    "DailyVitalReading": "health:DailyVitalReading",
+    "HRVReading": "health:HRVReading",
+    "BloodPressureReading": "health:BloodPressureReading",
+    "VitalSignReading": "health:VitalSignReading",
+    "DailyActivitySnapshot": "health:DailyActivitySnapshot",
+    "DailySleepSnapshot": "health:DailySleepSnapshot",
+    "MetricTrend": "health:MetricTrend",
+    "SelfReport": "health:SelfReport",
+
+    "restingHeartRate": {
+      "@id": "health:restingHeartRate",
+      "@type": "xsd:double"
+    },
+    "walkingHeartRate": {
+      "@id": "health:walkingHeartRate",
+      "@type": "xsd:double"
+    },
+    "heartRateVariability": {
+      "@id": "health:heartRateVariability",
+      "@type": "xsd:double"
+    },
+    "bloodPressure": {
+      "@id": "health:bloodPressure",
+      "@type": "@id"
+    },
+    "systolicBP": {
+      "@id": "health:systolicBP",
+      "@type": "xsd:double"
+    },
+    "diastolicBP": {
+      "@id": "health:diastolicBP",
+      "@type": "xsd:double"
+    },
+    "respiratoryRate": {
+      "@id": "health:respiratoryRate",
+      "@type": "xsd:double"
+    },
+    "vo2Max": {
+      "@id": "health:vo2Max",
+      "@type": "xsd:double"
+    },
+    "walkingSteadiness": "health:walkingSteadiness",
+    "bodyMass": {
+      "@id": "health:bodyMass",
+      "@type": "xsd:double"
+    },
+    "bodyHeight": {
+      "@id": "health:bodyHeight",
+      "@type": "xsd:double"
+    },
+    "bodyMassIndex": {
+      "@id": "health:bodyMassIndex",
+      "@type": "xsd:double"
+    },
+    "bodyTemperature": {
+      "@id": "health:bodyTemperature",
+      "@type": "xsd:double"
+    },
+    "oxygenSaturation": {
+      "@id": "health:oxygenSaturation",
+      "@type": "xsd:double"
+    },
+    "bloodGlucose": {
+      "@id": "health:bloodGlucose",
+      "@type": "xsd:double"
+    },
+    "bloodType": "health:bloodType",
+    "averageDailySteps": {
+      "@id": "health:averageDailySteps",
+      "@type": "xsd:integer"
+    },
+    "activeEnergyBurnedKcal": {
+      "@id": "health:activeEnergyBurnedKcal",
+      "@type": "xsd:decimal"
+    },
+    "exerciseMinutesWeekly": {
+      "@id": "health:exerciseMinutesWeekly",
+      "@type": "xsd:integer"
+    },
+    "standHoursDaily": {
+      "@id": "health:standHoursDaily",
+      "@type": "xsd:integer"
+    },
+    "averageDurationHours": {
+      "@id": "health:averageDurationHours",
+      "@type": "xsd:decimal"
+    },
+    "sleepQuality": "health:sleepQuality",
+    "restingHeartRateHistory": {
+      "@id": "health:restingHeartRateHistory",
+      "@type": "@id"
+    },
+    "walkingHeartRateHistory": {
+      "@id": "health:walkingHeartRateHistory",
+      "@type": "@id"
+    },
+    "hrvHistory": {
+      "@id": "health:hrvHistory",
+      "@type": "@id"
+    },
+    "bloodPressureHistory": {
+      "@id": "health:bloodPressureHistory",
+      "@type": "@id"
+    },
+    "vo2MaxHistory": {
+      "@id": "health:vo2MaxHistory",
+      "@type": "@id"
+    },
+    "bodyMassHistory": {
+      "@id": "health:bodyMassHistory",
+      "@type": "@id"
+    },
+    "dailyActivityHistory": {
+      "@id": "health:dailyActivityHistory",
+      "@type": "@id"
+    },
+    "dailySleepHistory": {
+      "@id": "health:dailySleepHistory",
+      "@type": "@id"
+    },
+    "reportDate": {
+      "@id": "health:reportDate",
+      "@type": "xsd:dateTime"
+    },
+    "reportType": "health:reportType",
+    "completionStatus": "health:completionStatus",
+    "reportContext": "health:reportContext",
+    "reportNotes": "health:reportNotes",
+    "vo2Mean": {
+      "@id": "health:vo2Mean",
+      "@type": "xsd:double"
+    },
+    "vo2Min": {
+      "@id": "health:vo2Min",
+      "@type": "xsd:double"
+    },
+    "vo2MaxValue": {
+      "@id": "health:vo2MaxValue",
+      "@type": "xsd:double"
+    },
+    "vo2SampleCount": {
+      "@id": "health:vo2SampleCount",
+      "@type": "xsd:integer"
+    },
+    "vo2DaysCovered": {
+      "@id": "health:vo2DaysCovered",
+      "@type": "xsd:integer"
+    },
+    "vo2TrendDirection": "health:vo2TrendDirection",
+    "vo2PercentageChange": {
+      "@id": "health:vo2PercentageChange",
+      "@type": "xsd:double"
+    },
+    "fitnessClassification": "health:fitnessClassification",
+    "isSparseData": {
+      "@id": "health:isSparseData",
+      "@type": "xsd:boolean"
+    },
+    "periodStart": {
+      "@id": "health:periodStart",
+      "@type": "xsd:dateTime"
+    },
+    "periodEnd": {
+      "@id": "health:periodEnd",
+      "@type": "xsd:dateTime"
+    },
+    "hrvSampleCount": {
+      "@id": "health:hrvSampleCount",
+      "@type": "xsd:integer"
+    },
+    "hrvDaysCovered": {
+      "@id": "health:hrvDaysCovered",
+      "@type": "xsd:integer"
+    },
+    "hrvMean": {
+      "@id": "health:hrvMean",
+      "@type": "xsd:double"
+    },
+    "hrvMedian": {
+      "@id": "health:hrvMedian",
+      "@type": "xsd:double"
+    },
+    "hrvStdDev": {
+      "@id": "health:hrvStdDev",
+      "@type": "xsd:double"
+    },
+    "hrvMin": {
+      "@id": "health:hrvMin",
+      "@type": "xsd:double"
+    },
+    "hrvMax": {
+      "@id": "health:hrvMax",
+      "@type": "xsd:double"
+    },
+    "hrvPercentile25": {
+      "@id": "health:hrvPercentile25",
+      "@type": "xsd:double"
+    },
+    "hrvPercentile75": {
+      "@id": "health:hrvPercentile75",
+      "@type": "xsd:double"
+    },
+    "hrvTrendDirection": "health:hrvTrendDirection",
+    "bpSampleCount": {
+      "@id": "health:bpSampleCount",
+      "@type": "xsd:integer"
+    },
+    "bpMeanSystolic": {
+      "@id": "health:bpMeanSystolic",
+      "@type": "xsd:double"
+    },
+    "bpMeanDiastolic": {
+      "@id": "health:bpMeanDiastolic",
+      "@type": "xsd:double"
+    },
+    "bpMinSystolic": {
+      "@id": "health:bpMinSystolic",
+      "@type": "xsd:double"
+    },
+    "bpMaxSystolic": {
+      "@id": "health:bpMaxSystolic",
+      "@type": "xsd:double"
+    },
+    "bpMinDiastolic": {
+      "@id": "health:bpMinDiastolic",
+      "@type": "xsd:double"
+    },
+    "bpMaxDiastolic": {
+      "@id": "health:bpMaxDiastolic",
+      "@type": "xsd:double"
+    },
+    "bpCategory": "health:bpCategory",
+    "trendMetric": {
+      "@id": "health:trendMetric",
+      "@type": "@id"
+    },
+    "healthTrendDirection": "health:trendDirection",
+    "trendMagnitude": {
+      "@id": "health:trendMagnitude",
+      "@type": "xsd:decimal"
+    },
+    "trendPeriodStart": {
+      "@id": "health:trendPeriodStart",
+      "@type": "xsd:dateTime"
+    },
+    "trendPeriodEnd": {
+      "@id": "health:trendPeriodEnd",
+      "@type": "xsd:dateTime"
+    },
+    "trendBaselineValue": {
+      "@id": "health:trendBaselineValue",
+      "@type": "xsd:decimal"
+    },
+    "trendCurrentValue": {
+      "@id": "health:trendCurrentValue",
+      "@type": "xsd:decimal"
+    },
+    "healthTrendConfidence": "health:trendConfidence",
+    "trendSource": {
+      "@id": "health:trendSource",
+      "@type": "@id"
+    },
+    "hasHRVStatistics": {
+      "@id": "health:hasHRVStatistics",
+      "@type": "@id"
+    },
+    "hasBPStatistics": {
+      "@id": "health:hasBPStatistics",
+      "@type": "@id"
+    },
+    "healthSnomedCode": "health:snomedCode",
+    "healthLoincCode": "health:loincCode",
+    "healthUnit": "health:unit",
+    "healthUcumCode": "health:ucumCode",
+    "trendPolarity": "health:trendPolarity",
+
+    "__comment_checkup": "=== Checkup Vocabulary (checkup:) ===",
+
+    "IntakeFormData": "checkup:IntakeFormData",
+    "InsuranceInfo": "checkup:InsuranceInfo",
+    "MedicationSummary": "checkup:MedicationSummary",
+    "AllergySummary": "checkup:AllergySummary",
+    "ConditionSummary": "checkup:ConditionSummary",
+    "FamilyHistoryEntry": "checkup:FamilyHistoryEntry",
+    "ScreeningStatus": "checkup:ScreeningStatus",
+    "VisitIssue": "checkup:VisitIssue",
+    "SuggestedQuestion": "checkup:SuggestedQuestion",
+    "DiagnosticTestResult": "checkup:DiagnosticTestResult",
+    "SupplementSummary": "checkup:SupplementSummary",
+    "ImmunizationSummary": "checkup:ImmunizationSummary",
+    "LabResultSummary": "checkup:LabResultSummary",
+    "ProcedureSummary": "checkup:ProcedureSummary",
+    "WellnessProfileReference": "checkup:WellnessProfileReference",
+    "WellnessSummary": "checkup:WellnessSummary",
+    "TrendInsight": "checkup:TrendInsight",
+    "CorrelationInsight": "checkup:CorrelationInsight",
+    "KeyIndicator": "checkup:KeyIndicator",
+    "AttentionItem": "checkup:AttentionItem",
+    "VisitPrepSummary": "checkup:VisitPrepSummary",
+    "DailyCheckIn": "checkup:DailyCheckIn",
+    "DiscussionTopic": "checkup:DiscussionTopic",
+    "CheckInSettings": "checkup:CheckInSettings",
+    "IntakeQuestionnaireResponse": "checkup:IntakeQuestionnaireResponse",
+    "ResponseItem": "checkup:ResponseItem",
+    "MedicationChangeRecord": "checkup:MedicationChangeRecord",
+
+    "insuranceProvider": "checkup:insuranceProvider",
+    "checkupMemberId": "checkup:memberId",
+    "checkupGroupNumber": "checkup:groupNumber",
+    "checkupCoverageType": "checkup:coverageType",
+    "primaryCareProvider": "checkup:primaryCareProvider",
+    "pcpPhone": "checkup:pcpPhone",
+    "medicationName": "checkup:medicationName",
+    "checkupDose": "checkup:dose",
+    "checkupFrequency": "checkup:frequency",
+    "adherenceStatus": "checkup:adherenceStatus",
+    "adherenceBarrier": "checkup:adherenceBarrier",
+    "sideEffects": "checkup:sideEffects",
+    "perceivedEffectiveness": "checkup:perceivedEffectiveness",
+    "lastRefillDate": {
+      "@id": "checkup:lastRefillDate",
+      "@type": "xsd:date"
+    },
+    "checkupPrescriber": "checkup:prescriber",
+    "sourceRecord": {
+      "@id": "checkup:sourceRecord",
+      "@type": "xsd:anyURI"
+    },
+    "episodeId": "checkup:episodeId",
+    "checkupStartDate": {
+      "@id": "checkup:startDate",
+      "@type": "xsd:date"
+    },
+    "checkupIndication": "checkup:indication",
+    "patientCost": {
+      "@id": "checkup:patientCost",
+      "@type": "xsd:decimal"
+    },
+    "costFrequency": "checkup:costFrequency",
+    "functionalImpact": "checkup:functionalImpact",
+    "concernsForDoctor": "checkup:concernsForDoctor",
+    "needsVerification": {
+      "@id": "checkup:needsVerification",
+      "@type": "xsd:boolean"
+    },
+    "verificationReason": "checkup:verificationReason",
+    "lastVerifiedDate": {
+      "@id": "checkup:lastVerifiedDate",
+      "@type": "xsd:dateTime"
+    },
+    "importSessionId": {
+      "@id": "checkup:importSessionId",
+      "@type": "@id"
+    },
+    "checkupSupplementName": "checkup:supplementName",
+    "supplementDose": "checkup:supplementDose",
+    "supplementFrequency": "checkup:supplementFrequency",
+    "supplementBrand": "checkup:supplementBrand",
+    "supplementForm": "checkup:supplementForm",
+    "checkupRegulatoryStatus": "checkup:regulatoryStatus",
+    "checkupEvidenceStrength": "checkup:evidenceStrength",
+    "checkupReasonForUse": "checkup:reasonForUse",
+    "supplementStartDate": {
+      "@id": "checkup:supplementStartDate",
+      "@type": "xsd:date"
+    },
+    "supplementIsActive": {
+      "@id": "checkup:supplementIsActive",
+      "@type": "xsd:boolean"
+    },
+    "checkupDsldId": "checkup:dsldId",
+    "supplementSourceRecord": {
+      "@id": "checkup:supplementSourceRecord",
+      "@type": "xsd:anyURI"
+    },
+    "doctorAware": {
+      "@id": "checkup:doctorAware",
+      "@type": "xsd:boolean"
+    },
+    "checkupVaccineName": "checkup:vaccineName",
+    "administrationDate": {
+      "@id": "checkup:administrationDate",
+      "@type": "xsd:dateTime"
+    },
+    "immunizationStatus": "checkup:immunizationStatus",
+    "checkupVaccineCode": "checkup:vaccineCode",
+    "vaccineCategory": "checkup:vaccineCategory",
+    "checkupManufacturer": "checkup:manufacturer",
+    "checkupLotNumber": "checkup:lotNumber",
+    "checkupExpirationDate": {
+      "@id": "checkup:expirationDate",
+      "@type": "xsd:date"
+    },
+    "checkupDoseNumber": {
+      "@id": "checkup:doseNumber",
+      "@type": "xsd:integer"
+    },
+    "checkupDoseQuantity": "checkup:doseQuantity",
+    "checkupAdministrationRoute": "checkup:administrationRoute",
+    "administrationSite": "checkup:administrationSite",
+    "administeringProvider": "checkup:administeringProvider",
+    "administeringLocation": "checkup:administeringLocation",
+    "immunizationNotes": "checkup:immunizationNotes",
+    "immunizationSourceRecord": {
+      "@id": "checkup:immunizationSourceRecord",
+      "@type": "@id"
+    },
+    "labCategory": "checkup:labCategory",
+    "checkupProcedureName": "checkup:procedureName",
+    "checkupProcedureCategory": "checkup:procedureCategory",
+    "procedureLocation": "checkup:procedureLocation",
+    "procedureSourceRecord": {
+      "@id": "checkup:procedureSourceRecord",
+      "@type": "@id"
+    },
+    "checkupAllergen": "checkup:allergen",
+    "checkupReaction": "checkup:reaction",
+    "allergySeverity": "checkup:allergySeverity",
+    "checkupAllergyCategory": "checkup:allergyCategory",
+    "checkupConditionName": "checkup:conditionName",
+    "checkupIcd10Code": "checkup:icd10Code",
+    "checkupSnomedCode": "checkup:snomedCode",
+    "checkupOnsetDate": {
+      "@id": "checkup:onsetDate",
+      "@type": "xsd:date"
+    },
+    "onsetYear": {
+      "@id": "checkup:onsetYear",
+      "@type": "xsd:gYear"
+    },
+    "conditionStatus": "checkup:conditionStatus",
+    "relativeType": "checkup:relativeType",
+    "relativeSex": "checkup:relativeSex",
+    "familyCondition": "checkup:familyCondition",
+    "familyConditionCode": "checkup:familyConditionCode",
+    "ageAtDiagnosis": {
+      "@id": "checkup:ageAtDiagnosis",
+      "@type": "xsd:integer"
+    },
+    "ageAtDeath": {
+      "@id": "checkup:ageAtDeath",
+      "@type": "xsd:integer"
+    },
+    "isDeceased": {
+      "@id": "checkup:isDeceased",
+      "@type": "xsd:boolean"
+    },
+    "screeningType": "checkup:screeningType",
+    "screeningStatus": "checkup:screeningStatus",
+    "lastCompletedDate": {
+      "@id": "checkup:lastCompletedDate",
+      "@type": "xsd:date"
+    },
+    "nextDueDate": {
+      "@id": "checkup:nextDueDate",
+      "@type": "xsd:date"
+    },
+    "guidelineSource": "checkup:guidelineSource",
+    "gradeLevel": "checkup:gradeLevel",
+    "applicableAgeMin": {
+      "@id": "checkup:applicableAgeMin",
+      "@type": "xsd:integer"
+    },
+    "applicableAgeMax": {
+      "@id": "checkup:applicableAgeMax",
+      "@type": "xsd:integer"
+    },
+    "applicableSex": "checkup:applicableSex",
+    "frequencyMonths": {
+      "@id": "checkup:frequencyMonths",
+      "@type": "xsd:integer"
+    },
+    "issueCategory": "checkup:issueCategory",
+    "issueDescription": "checkup:issueDescription",
+    "issueDuration": "checkup:issueDuration",
+    "issueSeverity": "checkup:issueSeverity",
+    "issueFrequency": "checkup:issueFrequency",
+    "affectsDaily": {
+      "@id": "checkup:affectsDaily",
+      "@type": "xsd:boolean"
+    },
+    "relatedConditions": {
+      "@id": "checkup:relatedConditions",
+      "@type": "@id"
+    },
+    "issuePriority": {
+      "@id": "checkup:issuePriority",
+      "@type": "xsd:integer"
+    },
+    "questionText": "checkup:questionText",
+    "questionCategory": "checkup:questionCategory",
+    "basedOnCondition": {
+      "@id": "checkup:basedOnCondition",
+      "@type": "@id"
+    },
+    "basedOnMedication": {
+      "@id": "checkup:basedOnMedication",
+      "@type": "@id"
+    },
+    "basedOnIssue": {
+      "@id": "checkup:basedOnIssue",
+      "@type": "@id"
+    },
+    "basedOnTrend": {
+      "@id": "checkup:basedOnTrend",
+      "@type": "@id"
+    },
+    "basedOnTemplate": "checkup:basedOnTemplate",
+    "basedOnScreening": {
+      "@id": "checkup:basedOnScreening",
+      "@type": "@id"
+    },
+    "testType": "checkup:testType",
+    "testDate": {
+      "@id": "checkup:testDate",
+      "@type": "xsd:dateTime"
+    },
+    "sourceApp": "checkup:sourceApp",
+    "sourceAppVersion": "checkup:sourceAppVersion",
+    "resultSummary": "checkup:resultSummary",
+    "resultDetails": {
+      "@id": "checkup:resultDetails",
+      "@type": "xsd:anyURI"
+    },
+    "flaggedForDiscussion": {
+      "@id": "checkup:flaggedForDiscussion",
+      "@type": "xsd:boolean"
+    },
+    "checkupPotsThresholdMet": {
+      "@id": "checkup:potsThresholdMet",
+      "@type": "xsd:boolean"
+    },
+    "checkupMaxHeartRateDelta": {
+      "@id": "checkup:maxHeartRateDelta",
+      "@type": "xsd:double"
+    },
+    "orthostaticFlags": "checkup:orthostaticFlags",
+    "generatedAt": {
+      "@id": "checkup:generatedAt",
+      "@type": "xsd:dateTime"
+    },
+    "checkupSchemaVersion": "checkup:schemaVersion",
+    "hasPatientProfile": {
+      "@id": "checkup:hasPatientProfile",
+      "@type": "@id"
+    },
+    "hasInsurance": {
+      "@id": "checkup:hasInsurance",
+      "@type": "@id"
+    },
+    "hasMedication": {
+      "@id": "checkup:hasMedication",
+      "@type": "@id"
+    },
+    "hasSupplement": {
+      "@id": "checkup:hasSupplement",
+      "@type": "@id"
+    },
+    "hasAllergy": {
+      "@id": "checkup:hasAllergy",
+      "@type": "@id"
+    },
+    "hasCondition": {
+      "@id": "checkup:hasCondition",
+      "@type": "@id"
+    },
+    "hasFamilyHistory": {
+      "@id": "checkup:hasFamilyHistory",
+      "@type": "@id"
+    },
+    "hasScreening": {
+      "@id": "checkup:hasScreening",
+      "@type": "@id"
+    },
+    "hasVisitIssue": {
+      "@id": "checkup:hasVisitIssue",
+      "@type": "@id"
+    },
+    "hasSuggestedQuestion": {
+      "@id": "checkup:hasSuggestedQuestion",
+      "@type": "@id"
+    },
+    "hasDiagnosticResult": {
+      "@id": "checkup:hasDiagnosticResult",
+      "@type": "@id"
+    },
+    "hasWellnessSummary": {
+      "@id": "checkup:hasWellnessSummary",
+      "@type": "@id"
+    },
+    "hasTrendInsight": {
+      "@id": "checkup:hasTrendInsight",
+      "@type": "@id"
+    },
+    "hasCorrelationInsight": {
+      "@id": "checkup:hasCorrelationInsight",
+      "@type": "@id"
+    },
+    "hasKeyIndicator": {
+      "@id": "checkup:hasKeyIndicator",
+      "@type": "@id"
+    },
+    "hasAttentionItem": {
+      "@id": "checkup:hasAttentionItem",
+      "@type": "@id"
+    },
+    "hasVisitPrepSummary": {
+      "@id": "checkup:hasVisitPrepSummary",
+      "@type": "@id"
+    },
+    "hasProvenance": {
+      "@id": "checkup:hasProvenance",
+      "@type": "@id"
+    },
+    "provenanceType": "checkup:provenanceType",
+    "provenanceSource": "checkup:provenanceSource",
+    "provenanceDate": {
+      "@id": "checkup:provenanceDate",
+      "@type": "xsd:dateTime"
+    },
+    "ehrSystemName": "checkup:ehrSystemName",
+    "ehrOrganization": "checkup:ehrOrganization",
+    "checkupFhirResourceType": "checkup:fhirResourceType",
+    "lastSyncedFromSource": {
+      "@id": "checkup:lastSyncedFromSource",
+      "@type": "xsd:dateTime"
+    },
+    "relevanceTier": "checkup:relevanceTier",
+    "brandName": "checkup:brandName",
+    "commonBrandNames": "checkup:commonBrandNames",
+    "checkupTherapeuticClass": "checkup:therapeuticClass",
+    "tierClassificationReason": "checkup:tierClassificationReason",
+    "wellnessTrend": {
+      "@id": "checkup:wellnessTrend",
+      "@type": "@id"
+    },
+    "wellnessBaselineDate": {
+      "@id": "checkup:wellnessBaselineDate",
+      "@type": "xsd:dateTime"
+    },
+    "insightText": "checkup:insightText",
+    "insightSourceTrend": {
+      "@id": "checkup:insightSourceTrend",
+      "@type": "@id"
+    },
+    "insightGeneratedBy": {
+      "@id": "checkup:insightGeneratedBy",
+      "@type": "@id"
+    },
+    "correlationMetric": {
+      "@id": "checkup:correlationMetric",
+      "@type": "@id"
+    },
+    "correlationEvent": {
+      "@id": "checkup:correlationEvent",
+      "@type": "@id"
+    },
+    "correlationText": "checkup:correlationText",
+    "correlationTimeLag": {
+      "@id": "checkup:correlationTimeLag",
+      "@type": "xsd:integer"
+    },
+    "indicatorMetric": "checkup:indicatorMetric",
+    "indicatorValue": {
+      "@id": "checkup:indicatorValue",
+      "@type": "xsd:decimal"
+    },
+    "indicatorUnit": "checkup:indicatorUnit",
+    "indicatorLabel": "checkup:indicatorLabel",
+    "indicatorStatus": "checkup:indicatorStatus",
+    "attentionReason": "checkup:attentionReason",
+    "attentionMetric": "checkup:attentionMetric",
+    "attentionText": "checkup:attentionText",
+    "attentionSeverity": "checkup:attentionSeverity",
+    "visitPrepDate": {
+      "@id": "checkup:visitPrepDate",
+      "@type": "xsd:dateTime"
+    },
+    "visitPrepComparisonDate": {
+      "@id": "checkup:visitPrepComparisonDate",
+      "@type": "xsd:dateTime"
+    },
+    "visitPrepChange": {
+      "@id": "checkup:visitPrepChange",
+      "@type": "@id"
+    },
+    "visitPrepCorrelation": {
+      "@id": "checkup:visitPrepCorrelation",
+      "@type": "@id"
+    },
+    "visitPrepAttention": {
+      "@id": "checkup:visitPrepAttention",
+      "@type": "@id"
+    },
+    "visitPrepUserNotes": "checkup:visitPrepUserNotes",
+    "noteContent": "checkup:noteContent",
+    "checkInDate": {
+      "@id": "checkup:checkInDate",
+      "@type": "xsd:dateTime"
+    },
+    "checkInResponse": "checkup:checkInResponse",
+    "missedMedicationIds": "checkup:missedMedicationIds",
+    "checkInNotes": "checkup:checkInNotes",
+    "submittedAt": {
+      "@id": "checkup:submittedAt",
+      "@type": "xsd:dateTime"
+    },
+    "topicText": "checkup:topicText",
+    "topicCategory": "checkup:topicCategory",
+    "topicSource": "checkup:topicSource",
+    "relevanceScore": {
+      "@id": "checkup:relevanceScore",
+      "@type": "xsd:double"
+    },
+    "isSelected": {
+      "@id": "checkup:isSelected",
+      "@type": "xsd:boolean"
+    },
+    "relatedMedicationName": "checkup:relatedMedicationName",
+    "detailText": "checkup:detailText",
+    "checkInEnabled": {
+      "@id": "checkup:checkInEnabled",
+      "@type": "xsd:boolean"
+    },
+    "notificationHour": {
+      "@id": "checkup:notificationHour",
+      "@type": "xsd:integer"
+    },
+    "notificationMinute": {
+      "@id": "checkup:notificationMinute",
+      "@type": "xsd:integer"
+    },
+    "enabledDays": "checkup:enabledDays",
+    "hasDailyCheckIn": {
+      "@id": "checkup:hasDailyCheckIn",
+      "@type": "@id"
+    },
+    "hasDiscussionTopic": {
+      "@id": "checkup:hasDiscussionTopic",
+      "@type": "@id"
+    },
+    "hasCheckInSettings": {
+      "@id": "checkup:hasCheckInSettings",
+      "@type": "@id"
+    },
+    "questionnaireId": "checkup:questionnaireId",
+    "questionnaireTitle": "checkup:questionnaireTitle",
+    "responseItem": {
+      "@id": "checkup:responseItem",
+      "@type": "@id"
+    },
+    "completedAt": {
+      "@id": "checkup:completedAt",
+      "@type": "xsd:dateTime"
+    },
+    "itemLinkId": "checkup:itemLinkId",
+    "itemText": "checkup:itemText",
+    "itemAnswer": "checkup:itemAnswer",
+    "itemAnswerCode": "checkup:itemAnswerCode",
+    "itemAnswerCodeSystem": {
+      "@id": "checkup:itemAnswerCodeSystem",
+      "@type": "xsd:anyURI"
+    },
+    "childItem": {
+      "@id": "checkup:childItem",
+      "@type": "@id"
+    },
+    "hasQuestionnaireResponse": {
+      "@id": "checkup:hasQuestionnaireResponse",
+      "@type": "@id"
+    },
+    "hasImmunization": {
+      "@id": "checkup:hasImmunization",
+      "@type": "@id"
+    },
+    "hasLabResult": {
+      "@id": "checkup:hasLabResult",
+      "@type": "@id"
+    },
+    "hasProcedure": {
+      "@id": "checkup:hasProcedure",
+      "@type": "@id"
+    },
+    "changeType": "checkup:changeType",
+    "changedField": "checkup:changedField",
+    "changeRecordPreviousValue": "checkup:changeRecordPreviousValue",
+    "changeRecordNewValue": "checkup:changeRecordNewValue",
+    "changeDate": {
+      "@id": "checkup:changeDate",
+      "@type": "xsd:dateTime"
+    },
+    "hasChange": {
+      "@id": "checkup:hasChange",
+      "@type": "@id"
+    },
+    "hasLabResults": {
+      "@id": "checkup:hasLabResults",
+      "@type": "@id"
+    },
+    "wellnessProfileRef": {
+      "@id": "checkup:wellnessProfileRef",
+      "@type": "@id"
+    },
+    "lastSnapshotDate": {
+      "@id": "checkup:lastSnapshotDate",
+      "@type": "xsd:dateTime"
+    },
+    "medicationEndDate": {
+      "@id": "checkup:medicationEndDate",
+      "@type": "xsd:date"
+    },
+    "supplementUPC": "checkup:supplementUPC",
+    "hasVitalsTrend": {
+      "@id": "checkup:hasVitalsTrend",
+      "@type": "@id"
+    },
+    "hasWellnessBaseline": {
+      "@id": "checkup:hasWellnessBaseline",
+      "@type": "@id"
+    },
+    "hasActivitySummary": {
+      "@id": "checkup:hasActivitySummary",
+      "@type": "@id"
+    },
+
+    "__comment_pots": "=== POTS Vocabulary (pots:) ===",
+
+    "POTSCheckResult": "pots:POTSCheckResult",
+    "HeartRateMeasurement": "pots:HeartRateMeasurement",
+    "BloodPressureMeasurement": "pots:BloodPressureMeasurement",
+    "SymptomEvent": "pots:SymptomEvent",
+    "PostureStability": "pots:PostureStability",
+    "TestProtocol": "pots:TestProtocol",
+    "NASALean": "pots:NASALean",
+
+    "potsDate": {
+      "@id": "pots:date",
+      "@type": "xsd:dateTime"
+    },
+    "protocol": "pots:protocol",
+    "baselineDurationSeconds": {
+      "@id": "pots:baselineDurationSeconds",
+      "@type": "xsd:integer"
+    },
+    "uprightDurationSeconds": {
+      "@id": "pots:uprightDurationSeconds",
+      "@type": "xsd:integer"
+    },
+    "supineHeartRate": {
+      "@id": "pots:supineHeartRate",
+      "@type": "@id"
+    },
+    "standingHeartRates": {
+      "@id": "pots:standingHeartRates",
+      "@type": "@id"
+    },
+    "recoveryHeartRate": {
+      "@id": "pots:recoveryHeartRate",
+      "@type": "xsd:double"
+    },
+    "potsMaxHeartRateDelta": {
+      "@id": "pots:maxHeartRateDelta",
+      "@type": "xsd:double"
+    },
+    "supineBloodPressure": {
+      "@id": "pots:supineBloodPressure",
+      "@type": "@id"
+    },
+    "standingBloodPressures": {
+      "@id": "pots:standingBloodPressures",
+      "@type": "@id"
+    },
+    "symptomEvents": {
+      "@id": "pots:symptomEvents",
+      "@type": "@id"
+    },
+    "symptom": "pots:symptom",
+    "potsNotes": "pots:notes",
+    "potsPotsThresholdMet": {
+      "@id": "pots:potsThresholdMet",
+      "@type": "xsd:boolean"
+    },
+    "orthostaticHypotensionSuspected": {
+      "@id": "pots:orthostaticHypotensionSuspected",
+      "@type": "xsd:boolean"
+    },
+    "orthostaticHypertensionSuspected": {
+      "@id": "pots:orthostaticHypertensionSuspected",
+      "@type": "xsd:boolean"
+    },
+    "isIncomplete": {
+      "@id": "pots:isIncomplete",
+      "@type": "xsd:boolean"
+    },
+    "earlyTerminationReason": "pots:earlyTerminationReason",
+    "postureQualityScore": "pots:postureQualityScore",
+    "movementArtifactPercentage": {
+      "@id": "pots:movementArtifactPercentage",
+      "@type": "xsd:double"
+    },
+    "postureStability": {
+      "@id": "pots:postureStability",
+      "@type": "@id"
+    },
+    "isStable": {
+      "@id": "pots:isStable",
+      "@type": "xsd:boolean"
+    },
+    "stabilityScore": {
+      "@id": "pots:stabilityScore",
+      "@type": "xsd:double"
+    },
+    "userAgeAtTest": {
+      "@id": "pots:userAgeAtTest",
+      "@type": "xsd:integer"
+    },
+    "atSeconds": {
+      "@id": "pots:atSeconds",
+      "@type": "xsd:integer"
+    },
+    "secondsSinceStand": {
+      "@id": "pots:secondsSinceStand",
+      "@type": "xsd:double"
+    },
+    "timestampSeconds": {
+      "@id": "pots:timestampSeconds",
+      "@type": "xsd:double"
+    },
+    "importedBloodPressureHistory": {
+      "@id": "pots:importedBloodPressureHistory",
+      "@type": "@id"
+    },
+    "importedHRVHistory": {
+      "@id": "pots:importedHRVHistory",
+      "@type": "@id"
+    },
+    "averageImportedBloodPressure": "pots:averageImportedBloodPressure",
+    "averageImportedHRV": {
+      "@id": "pots:averageImportedHRV",
+      "@type": "xsd:double"
+    },
+
+    "__comment_coverage": "=== Coverage Vocabulary (coverage:) ===",
+
+    "InsurancePlan": "coverage:InsurancePlan",
+    "Deductible": "coverage:Deductible",
+    "CopaySchedule": "coverage:CopaySchedule",
+
+    "coverageProviderName": "coverage:providerName",
+    "coverageMemberId": "coverage:memberId",
+    "coverageGroupNumber": "coverage:groupNumber",
+    "coveragePlanName": "coverage:planName",
+    "coveragePlanType": "coverage:planType",
+    "coverageCoverageType": "coverage:coverageType",
+    "effectiveStart": {
+      "@id": "coverage:effectiveStart",
+      "@type": "xsd:date"
+    },
+    "effectiveEnd": {
+      "@id": "coverage:effectiveEnd",
+      "@type": "xsd:date"
+    },
+    "coverageSubscriberId": "coverage:subscriberId",
+    "subscriberName": "coverage:subscriberName",
+    "subscriberRelationship": "coverage:subscriberRelationship",
+    "rxBin": "coverage:rxBin",
+    "rxPcn": "coverage:rxPcn",
+    "rxGroup": "coverage:rxGroup"
+  }
+}

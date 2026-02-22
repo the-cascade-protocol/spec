@@ -1,0 +1,296 @@
+{
+  "@context": {
+    "health": "https://ns.cascadeprotocol.org/health/v1#",
+    "cascade": "https://ns.cascadeprotocol.org/core/v1#",
+    "fhir": "http://hl7.org/fhir/",
+    "sct": "http://snomed.info/sct/",
+    "loinc": "http://loinc.org/rdf#",
+    "ucum": "http://unitsofmeasure.org/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+
+    "ActivitySnapshot": "health:ActivitySnapshot",
+    "SleepSnapshot": "health:SleepSnapshot",
+    "VO2MaxStatistics": "health:VO2MaxStatistics",
+    "HRVStatistics": "health:HRVStatistics",
+    "BPStatistics": "health:BPStatistics",
+    "HealthProfile": "health:HealthProfile",
+    "DailyVitalReading": "health:DailyVitalReading",
+    "HRVReading": "health:HRVReading",
+    "BloodPressureReading": "health:BloodPressureReading",
+    "VitalSignReading": "health:VitalSignReading",
+    "DailyActivitySnapshot": "health:DailyActivitySnapshot",
+    "DailySleepSnapshot": "health:DailySleepSnapshot",
+    "MetricTrend": "health:MetricTrend",
+    "SelfReport": "health:SelfReport",
+
+    "restingHeartRate": {
+      "@id": "health:restingHeartRate",
+      "@type": "xsd:double"
+    },
+    "walkingHeartRate": {
+      "@id": "health:walkingHeartRate",
+      "@type": "xsd:double"
+    },
+    "heartRateVariability": {
+      "@id": "health:heartRateVariability",
+      "@type": "xsd:double"
+    },
+    "bloodPressure": {
+      "@id": "health:bloodPressure",
+      "@type": "@id"
+    },
+    "systolicBP": {
+      "@id": "health:systolicBP",
+      "@type": "xsd:double"
+    },
+    "diastolicBP": {
+      "@id": "health:diastolicBP",
+      "@type": "xsd:double"
+    },
+    "respiratoryRate": {
+      "@id": "health:respiratoryRate",
+      "@type": "xsd:double"
+    },
+    "vo2Max": {
+      "@id": "health:vo2Max",
+      "@type": "xsd:double"
+    },
+    "walkingSteadiness": "health:walkingSteadiness",
+    "bodyMass": {
+      "@id": "health:bodyMass",
+      "@type": "xsd:double"
+    },
+    "bodyHeight": {
+      "@id": "health:bodyHeight",
+      "@type": "xsd:double"
+    },
+    "bodyMassIndex": {
+      "@id": "health:bodyMassIndex",
+      "@type": "xsd:double"
+    },
+    "bodyTemperature": {
+      "@id": "health:bodyTemperature",
+      "@type": "xsd:double"
+    },
+    "oxygenSaturation": {
+      "@id": "health:oxygenSaturation",
+      "@type": "xsd:double"
+    },
+    "bloodGlucose": {
+      "@id": "health:bloodGlucose",
+      "@type": "xsd:double"
+    },
+    "bloodType": "health:bloodType",
+    "averageDailySteps": {
+      "@id": "health:averageDailySteps",
+      "@type": "xsd:integer"
+    },
+    "activeEnergyBurnedKcal": {
+      "@id": "health:activeEnergyBurnedKcal",
+      "@type": "xsd:decimal"
+    },
+    "exerciseMinutesWeekly": {
+      "@id": "health:exerciseMinutesWeekly",
+      "@type": "xsd:integer"
+    },
+    "standHoursDaily": {
+      "@id": "health:standHoursDaily",
+      "@type": "xsd:integer"
+    },
+    "averageDurationHours": {
+      "@id": "health:averageDurationHours",
+      "@type": "xsd:decimal"
+    },
+    "sleepQuality": "health:sleepQuality",
+    "restingHeartRateHistory": {
+      "@id": "health:restingHeartRateHistory",
+      "@type": "@id"
+    },
+    "walkingHeartRateHistory": {
+      "@id": "health:walkingHeartRateHistory",
+      "@type": "@id"
+    },
+    "hrvHistory": {
+      "@id": "health:hrvHistory",
+      "@type": "@id"
+    },
+    "bloodPressureHistory": {
+      "@id": "health:bloodPressureHistory",
+      "@type": "@id"
+    },
+    "vo2MaxHistory": {
+      "@id": "health:vo2MaxHistory",
+      "@type": "@id"
+    },
+    "bodyMassHistory": {
+      "@id": "health:bodyMassHistory",
+      "@type": "@id"
+    },
+    "dailyActivityHistory": {
+      "@id": "health:dailyActivityHistory",
+      "@type": "@id"
+    },
+    "dailySleepHistory": {
+      "@id": "health:dailySleepHistory",
+      "@type": "@id"
+    },
+    "reportDate": {
+      "@id": "health:reportDate",
+      "@type": "xsd:dateTime"
+    },
+    "reportType": "health:reportType",
+    "completionStatus": "health:completionStatus",
+    "reportContext": "health:reportContext",
+    "reportNotes": "health:reportNotes",
+    "vo2Mean": {
+      "@id": "health:vo2Mean",
+      "@type": "xsd:double"
+    },
+    "vo2Min": {
+      "@id": "health:vo2Min",
+      "@type": "xsd:double"
+    },
+    "vo2MaxValue": {
+      "@id": "health:vo2MaxValue",
+      "@type": "xsd:double"
+    },
+    "vo2SampleCount": {
+      "@id": "health:vo2SampleCount",
+      "@type": "xsd:integer"
+    },
+    "vo2DaysCovered": {
+      "@id": "health:vo2DaysCovered",
+      "@type": "xsd:integer"
+    },
+    "vo2TrendDirection": "health:vo2TrendDirection",
+    "vo2PercentageChange": {
+      "@id": "health:vo2PercentageChange",
+      "@type": "xsd:double"
+    },
+    "fitnessClassification": "health:fitnessClassification",
+    "isSparseData": {
+      "@id": "health:isSparseData",
+      "@type": "xsd:boolean"
+    },
+    "periodStart": {
+      "@id": "health:periodStart",
+      "@type": "xsd:dateTime"
+    },
+    "periodEnd": {
+      "@id": "health:periodEnd",
+      "@type": "xsd:dateTime"
+    },
+    "hrvSampleCount": {
+      "@id": "health:hrvSampleCount",
+      "@type": "xsd:integer"
+    },
+    "hrvDaysCovered": {
+      "@id": "health:hrvDaysCovered",
+      "@type": "xsd:integer"
+    },
+    "hrvMean": {
+      "@id": "health:hrvMean",
+      "@type": "xsd:double"
+    },
+    "hrvMedian": {
+      "@id": "health:hrvMedian",
+      "@type": "xsd:double"
+    },
+    "hrvStdDev": {
+      "@id": "health:hrvStdDev",
+      "@type": "xsd:double"
+    },
+    "hrvMin": {
+      "@id": "health:hrvMin",
+      "@type": "xsd:double"
+    },
+    "hrvMax": {
+      "@id": "health:hrvMax",
+      "@type": "xsd:double"
+    },
+    "hrvPercentile25": {
+      "@id": "health:hrvPercentile25",
+      "@type": "xsd:double"
+    },
+    "hrvPercentile75": {
+      "@id": "health:hrvPercentile75",
+      "@type": "xsd:double"
+    },
+    "hrvTrendDirection": "health:hrvTrendDirection",
+    "bpSampleCount": {
+      "@id": "health:bpSampleCount",
+      "@type": "xsd:integer"
+    },
+    "bpMeanSystolic": {
+      "@id": "health:bpMeanSystolic",
+      "@type": "xsd:double"
+    },
+    "bpMeanDiastolic": {
+      "@id": "health:bpMeanDiastolic",
+      "@type": "xsd:double"
+    },
+    "bpMinSystolic": {
+      "@id": "health:bpMinSystolic",
+      "@type": "xsd:double"
+    },
+    "bpMaxSystolic": {
+      "@id": "health:bpMaxSystolic",
+      "@type": "xsd:double"
+    },
+    "bpMinDiastolic": {
+      "@id": "health:bpMinDiastolic",
+      "@type": "xsd:double"
+    },
+    "bpMaxDiastolic": {
+      "@id": "health:bpMaxDiastolic",
+      "@type": "xsd:double"
+    },
+    "bpCategory": "health:bpCategory",
+    "trendMetric": {
+      "@id": "health:trendMetric",
+      "@type": "@id"
+    },
+    "healthTrendDirection": "health:trendDirection",
+    "trendMagnitude": {
+      "@id": "health:trendMagnitude",
+      "@type": "xsd:decimal"
+    },
+    "trendPeriodStart": {
+      "@id": "health:trendPeriodStart",
+      "@type": "xsd:dateTime"
+    },
+    "trendPeriodEnd": {
+      "@id": "health:trendPeriodEnd",
+      "@type": "xsd:dateTime"
+    },
+    "trendBaselineValue": {
+      "@id": "health:trendBaselineValue",
+      "@type": "xsd:decimal"
+    },
+    "trendCurrentValue": {
+      "@id": "health:trendCurrentValue",
+      "@type": "xsd:decimal"
+    },
+    "trendConfidence": "health:trendConfidence",
+    "trendSource": {
+      "@id": "health:trendSource",
+      "@type": "@id"
+    },
+    "hasHRVStatistics": {
+      "@id": "health:hasHRVStatistics",
+      "@type": "@id"
+    },
+    "hasBPStatistics": {
+      "@id": "health:hasBPStatistics",
+      "@type": "@id"
+    },
+    "healthSnomedCode": "health:snomedCode",
+    "healthLoincCode": "health:loincCode",
+    "healthUnit": "health:unit",
+    "healthUcumCode": "health:ucumCode",
+    "trendPolarity": "health:trendPolarity"
+  }
+}

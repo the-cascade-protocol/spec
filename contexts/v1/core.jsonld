@@ -1,0 +1,139 @@
+{
+  "@context": {
+    "cascade": "https://ns.cascadeprotocol.org/core/v1#",
+    "fhir": "http://hl7.org/fhir/",
+    "sct": "http://snomed.info/sct/",
+    "loinc": "http://loinc.org/rdf#",
+    "ucum": "http://unitsofmeasure.org/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dc": "http://purl.org/dc/terms/",
+    "schema": "https://schema.org/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+
+    "DataProvenance": "cascade:DataProvenance",
+    "ConsumerGenerated": "cascade:ConsumerGenerated",
+    "ClinicalGenerated": "cascade:ClinicalGenerated",
+    "DeviceGenerated": "cascade:DeviceGenerated",
+    "SelfReported": "cascade:SelfReported",
+    "ConsumerWellness": "cascade:ConsumerWellness",
+    "EHRVerified": "cascade:EHRVerified",
+    "ScannedDocument": "cascade:ScannedDocument",
+    "AIExtracted": "cascade:AIExtracted",
+    "DataSource": "cascade:DataSource",
+    "PatientProfile": "cascade:PatientProfile",
+    "Address": "cascade:Address",
+    "PharmacyInfo": "cascade:PharmacyInfo",
+    "AdvanceDirectives": "cascade:AdvanceDirectives",
+    "EmergencyContact": "cascade:EmergencyContact",
+
+    "schemaVersion": "cascade:schemaVersion",
+    "dataProvenance": {
+      "@id": "cascade:dataProvenance",
+      "@type": "@id"
+    },
+    "creatorWebID": {
+      "@id": "cascade:creatorWebID",
+      "@type": "@id"
+    },
+    "sourceName": "cascade:sourceName",
+    "sourceBundleId": "cascade:sourceBundleId",
+    "sourceReliabilityTier": "cascade:sourceReliabilityTier",
+    "sourceMetricCoverage": {
+      "@id": "cascade:sourceMetricCoverage",
+      "@type": "@id"
+    },
+    "subConcern": "cascade:subConcern",
+    "addedInSchemaVersion": "cascade:addedInSchemaVersion",
+    "cascadeUri": {
+      "@id": "cascade:cascadeUri",
+      "@type": "xsd:anyURI"
+    },
+    "notificationsEnabled": {
+      "@id": "cascade:notificationsEnabled",
+      "@type": "xsd:boolean"
+    },
+    "preferredUnits": "cascade:preferredUnits",
+    "dateOfBirth": {
+      "@id": "cascade:dateOfBirth",
+      "@type": "xsd:date"
+    },
+    "genderIdentity": "cascade:genderIdentity",
+    "biologicalSex": "cascade:biologicalSex",
+    "ageGroup": "cascade:ageGroup",
+    "emergencyContactName": "cascade:emergencyContactName",
+    "emergencyContactRelationship": "cascade:emergencyContactRelationship",
+    "emergencyContactPhone": "cascade:emergencyContactPhone",
+    "hasAddress": {
+      "@id": "cascade:hasAddress",
+      "@type": "@id"
+    },
+    "maritalStatus": "cascade:maritalStatus",
+    "raceEthnicity": "cascade:raceEthnicity",
+    "hasPreferredPharmacy": {
+      "@id": "cascade:hasPreferredPharmacy",
+      "@type": "@id"
+    },
+    "hasAdvanceDirectives": {
+      "@id": "cascade:hasAdvanceDirectives",
+      "@type": "@id"
+    },
+    "computedAge": {
+      "@id": "cascade:computedAge",
+      "@type": "xsd:integer"
+    },
+    "profileId": "cascade:profileId",
+    "pharmacyAddress": "cascade:pharmacyAddress",
+    "contactName": "cascade:contactName",
+    "contactRelationship": "cascade:contactRelationship",
+    "contactPhone": "cascade:contactPhone",
+    "emergencyContact": {
+      "@id": "cascade:emergencyContact",
+      "@type": "@id"
+    },
+    "advanceDirectives": {
+      "@id": "cascade:advanceDirectives",
+      "@type": "@id"
+    },
+    "preferredPharmacy": {
+      "@id": "cascade:preferredPharmacy",
+      "@type": "@id"
+    },
+    "address": {
+      "@id": "cascade:address",
+      "@type": "@id"
+    },
+    "preferredLanguage": "cascade:preferredLanguage",
+    "streetAddress": "cascade:streetAddress",
+    "city": "cascade:city",
+    "state": "cascade:state",
+    "postalCode": "cascade:postalCode",
+    "country": "cascade:country",
+    "addressUse": "cascade:addressUse",
+    "addressType": "cascade:addressType",
+    "addressText": "cascade:addressText",
+    "addressLine": "cascade:addressLine",
+    "addressCity": "cascade:addressCity",
+    "addressDistrict": "cascade:addressDistrict",
+    "addressState": "cascade:addressState",
+    "addressPostalCode": "cascade:addressPostalCode",
+    "addressCountry": "cascade:addressCountry",
+    "pharmacyName": "cascade:pharmacyName",
+    "pharmacyPhone": "cascade:pharmacyPhone",
+    "hasLivingWill": {
+      "@id": "cascade:hasLivingWill",
+      "@type": "xsd:boolean"
+    },
+    "hasPowerOfAttorney": {
+      "@id": "cascade:hasPowerOfAttorney",
+      "@type": "xsd:boolean"
+    },
+    "hasDNR": {
+      "@id": "cascade:hasDNR",
+      "@type": "xsd:boolean"
+    },
+    "advanceDirectiveNotes": "cascade:advanceDirectiveNotes"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "@context": {
+    "coverage": "https://ns.cascadeprotocol.org/coverage/v1#",
+    "cascade": "https://ns.cascadeprotocol.org/core/v1#",
+    "fhir": "http://hl7.org/fhir/",
+    "sct": "http://snomed.info/sct/",
+    "loinc": "http://loinc.org/rdf#",
+    "ucum": "http://unitsofmeasure.org/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+
+    "InsurancePlan": "coverage:InsurancePlan",
+    "Deductible": "coverage:Deductible",
+    "CopaySchedule": "coverage:CopaySchedule",
+
+    "coverageProviderName": "coverage:providerName",
+    "coverageMemberId": "coverage:memberId",
+    "coverageGroupNumber": "coverage:groupNumber",
+    "coveragePlanName": "coverage:planName",
+    "coveragePlanType": "coverage:planType",
+    "coverageCoverageType": "coverage:coverageType",
+    "effectiveStart": {
+      "@id": "coverage:effectiveStart",
+      "@type": "xsd:date"
+    },
+    "effectiveEnd": {
+      "@id": "coverage:effectiveEnd",
+      "@type": "xsd:date"
+    },
+    "coverageSubscriberId": "coverage:subscriberId",
+    "subscriberName": "coverage:subscriberName",
+    "subscriberRelationship": "coverage:subscriberRelationship",
+    "rxBin": "coverage:rxBin",
+    "rxPcn": "coverage:rxPcn",
+    "rxGroup": "coverage:rxGroup"
+  }
+}

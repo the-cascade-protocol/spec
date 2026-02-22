@@ -1,0 +1,130 @@
+{
+  "@context": {
+    "pots": "https://ns.cascadeprotocol.org/pots/v1#",
+    "cascade": "https://ns.cascadeprotocol.org/core/v1#",
+    "fhir": "http://hl7.org/fhir/",
+    "sct": "http://snomed.info/sct/",
+    "loinc": "http://loinc.org/rdf#",
+    "ucum": "http://unitsofmeasure.org/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+
+    "POTSCheckResult": "pots:POTSCheckResult",
+    "HeartRateMeasurement": "pots:HeartRateMeasurement",
+    "BloodPressureMeasurement": "pots:BloodPressureMeasurement",
+    "SymptomEvent": "pots:SymptomEvent",
+    "PostureStability": "pots:PostureStability",
+    "TestProtocol": "pots:TestProtocol",
+    "NASALean": "pots:NASALean",
+
+    "potsDate": {
+      "@id": "pots:date",
+      "@type": "xsd:dateTime"
+    },
+    "protocol": "pots:protocol",
+    "baselineDurationSeconds": {
+      "@id": "pots:baselineDurationSeconds",
+      "@type": "xsd:integer"
+    },
+    "uprightDurationSeconds": {
+      "@id": "pots:uprightDurationSeconds",
+      "@type": "xsd:integer"
+    },
+    "supineHeartRate": {
+      "@id": "pots:supineHeartRate",
+      "@type": "@id"
+    },
+    "standingHeartRates": {
+      "@id": "pots:standingHeartRates",
+      "@type": "@id"
+    },
+    "recoveryHeartRate": {
+      "@id": "pots:recoveryHeartRate",
+      "@type": "xsd:double"
+    },
+    "potsMaxHeartRateDelta": {
+      "@id": "pots:maxHeartRateDelta",
+      "@type": "xsd:double"
+    },
+    "supineBloodPressure": {
+      "@id": "pots:supineBloodPressure",
+      "@type": "@id"
+    },
+    "standingBloodPressures": {
+      "@id": "pots:standingBloodPressures",
+      "@type": "@id"
+    },
+    "symptomEvents": {
+      "@id": "pots:symptomEvents",
+      "@type": "@id"
+    },
+    "symptom": "pots:symptom",
+    "potsNotes": "pots:notes",
+    "potsPotsThresholdMet": {
+      "@id": "pots:potsThresholdMet",
+      "@type": "xsd:boolean"
+    },
+    "orthostaticHypotensionSuspected": {
+      "@id": "pots:orthostaticHypotensionSuspected",
+      "@type": "xsd:boolean"
+    },
+    "orthostaticHypertensionSuspected": {
+      "@id": "pots:orthostaticHypertensionSuspected",
+      "@type": "xsd:boolean"
+    },
+    "isIncomplete": {
+      "@id": "pots:isIncomplete",
+      "@type": "xsd:boolean"
+    },
+    "earlyTerminationReason": "pots:earlyTerminationReason",
+    "postureQualityScore": "pots:postureQualityScore",
+    "movementArtifactPercentage": {
+      "@id": "pots:movementArtifactPercentage",
+      "@type": "xsd:double"
+    },
+    "postureStability": {
+      "@id": "pots:postureStability",
+      "@type": "@id"
+    },
+    "isStable": {
+      "@id": "pots:isStable",
+      "@type": "xsd:boolean"
+    },
+    "stabilityScore": {
+      "@id": "pots:stabilityScore",
+      "@type": "xsd:double"
+    },
+    "userAgeAtTest": {
+      "@id": "pots:userAgeAtTest",
+      "@type": "xsd:integer"
+    },
+    "atSeconds": {
+      "@id": "pots:atSeconds",
+      "@type": "xsd:integer"
+    },
+    "secondsSinceStand": {
+      "@id": "pots:secondsSinceStand",
+      "@type": "xsd:double"
+    },
+    "timestampSeconds": {
+      "@id": "pots:timestampSeconds",
+      "@type": "xsd:double"
+    },
+    "importedBloodPressureHistory": {
+      "@id": "pots:importedBloodPressureHistory",
+      "@type": "@id"
+    },
+    "importedHRVHistory": {
+      "@id": "pots:importedHRVHistory",
+      "@type": "@id"
+    },
+    "averageImportedBloodPressure": "pots:averageImportedBloodPressure",
+    "averageImportedHRV": {
+      "@id": "pots:averageImportedHRV",
+      "@type": "xsd:double"
+    }
+  }
+}
