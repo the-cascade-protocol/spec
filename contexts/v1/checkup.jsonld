@@ -559,6 +559,10 @@
       "@id": "checkup:medicationEndDate",
       "@type": "xsd:date"
     },
+    "supplyEndDate": {
+      "@id": "checkup:supplyEndDate",
+      "@type": "xsd:date"
+    },
     "supplementUPC": "checkup:supplementUPC"
   }
 }
