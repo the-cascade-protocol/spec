@@ -21,8 +21,8 @@
     dct:description "Structured health data for patient intake forms and pre-visit preparation. Enables aggregation of EHR, HealthKit, and manually entered health data."@en ;
     dct:creator "Cascade Agentic Labs" ;
     dct:created "2026-01-03"^^xsd:date ;
-    dct:modified "2026-02-18"^^xsd:date ;
-    owl:versionInfo "3.0" ;
+    dct:modified "2026-02-26"^^xsd:date ;
+    owl:versionInfo "3.2" ;
     rdfs:seeAlso <https://cascadeprotocol.org/docs/checkup/v1/> .
 
 # ============================================================================
@@ -1608,6 +1608,111 @@ checkup:hasChange a owl:ObjectProperty ;
 # (hasChange is defined on MedicationSummary/SupplementSummary, not IntakeFormData)
 
 # ============================================================================
+# VISIT PREP TRAY (v3.1 — Task A7)
+# ============================================================================
+
+checkup:VisitPrepTray a owl:Class ;
+    rdfs:label "Visit Prep Tray" ;
+    rdfs:comment "Per-appointment visit preparation container grouping issues, discussion topics, questions, and notes. Uses a typed payload wrapper (VisitItemPayload) to preserve existing type richness from VisitIssue, DiscussionTopic, and SuggestedQuestion." ;
+    cascade:subConcern "intake" ;
+    rdfs:subClassOf prov:Entity .
+
+checkup:VisitTrayItem a owl:Class ;
+    rdfs:label "Visit Tray Item" ;
+    rdfs:comment "A typed item within a VisitPrepTray. Wraps VisitIssue, DiscussionTopic, SuggestedQuestion, note, or custom content with intent category and resolution tracking." ;
+    rdfs:subClassOf prov:Entity .
+
+# --- VisitPrepTray Properties ---
+
+checkup:prepTitle a owl:DatatypeProperty ;
+    rdfs:label "Prep Title" ;
+    rdfs:comment "Display title for the visit prep (e.g., 'Rheumatologist - Feb 28')." ;
+    rdfs:domain checkup:VisitPrepTray ;
+    rdfs:range xsd:string .
+
+checkup:appointmentDate a owl:DatatypeProperty ;
+    rdfs:label "Appointment Date" ;
+    rdfs:comment "Scheduled appointment date and time." ;
+    rdfs:domain checkup:VisitPrepTray ;
+    rdfs:range xsd:dateTime .
+
+checkup:prepProviderName a owl:DatatypeProperty ;
+    rdfs:label "Prep Provider Name" ;
+    rdfs:comment "Name of the healthcare provider for this appointment." ;
+    rdfs:domain checkup:VisitPrepTray ;
+    rdfs:range xsd:string .
+
+checkup:specialty a owl:DatatypeProperty ;
+    rdfs:label "Specialty" ;
+    rdfs:comment "Provider specialty (e.g., 'Rheumatology', 'Cardiology')." ;
+    rdfs:domain checkup:VisitPrepTray ;
+    rdfs:range xsd:string .
+
+checkup:visitPrepStatus a owl:DatatypeProperty ;
+    rdfs:label "Visit Prep Status" ;
+    rdfs:comment "Tray status: preparing, ready, completed." ;
+    rdfs:domain checkup:VisitPrepTray ;
+    rdfs:range xsd:string .
+
+checkup:prepCompletedDate a owl:DatatypeProperty ;
+    rdfs:label "Prep Completed Date" ;
+    rdfs:comment "When the visit was marked completed." ;
+    rdfs:domain checkup:VisitPrepTray ;
+    rdfs:range xsd:dateTime .
+
+checkup:hasTrayItem a owl:ObjectProperty ;
+    rdfs:label "Has Tray Item" ;
+    rdfs:comment "Link from a VisitPrepTray to a VisitTrayItem." ;
+    rdfs:domain checkup:VisitPrepTray ;
+    rdfs:range checkup:VisitTrayItem .
+
+# --- VisitTrayItem Properties ---
+
+checkup:payloadType a owl:DatatypeProperty ;
+    rdfs:label "Payload Type" ;
+    rdfs:comment "Payload discriminator: issue, topic, question, note, custom." ;
+    rdfs:domain checkup:VisitTrayItem ;
+    rdfs:range xsd:string .
+
+checkup:intentCategory a owl:DatatypeProperty ;
+    rdfs:label "Intent Category" ;
+    rdfs:comment "Intent of the tray item: discuss, schedule, inform, ask." ;
+    rdfs:domain checkup:VisitTrayItem ;
+    rdfs:range xsd:string .
+
+checkup:isResolved a owl:DatatypeProperty ;
+    rdfs:label "Is Resolved" ;
+    rdfs:comment "Whether the tray item has been addressed or resolved." ;
+    rdfs:domain checkup:VisitTrayItem ;
+    rdfs:range xsd:boolean .
+
+checkup:sourceSection a owl:DatatypeProperty ;
+    rdfs:label "Source Section" ;
+    rdfs:comment "Health Map section this item originated from (e.g., 'medications', 'conditions')." ;
+    rdfs:domain checkup:VisitTrayItem ;
+    rdfs:range xsd:string .
+
+checkup:sourceRecordId a owl:DatatypeProperty ;
+    rdfs:label "Source Record ID" ;
+    rdfs:comment "UUID linking to the source record that prompted this tray item." ;
+    rdfs:domain checkup:VisitTrayItem ;
+    rdfs:range xsd:anyURI .
+
+# --- IntakeFormData aggregate links (v3.1) ---
+
+checkup:hasVisitPrep a owl:ObjectProperty ;
+    rdfs:label "Has Visit Prep" ;
+    rdfs:comment "Link from IntakeFormData to a VisitPrepTray." ;
+    rdfs:domain checkup:IntakeFormData ;
+    rdfs:range checkup:VisitPrepTray .
+
+checkup:activeVisitPrepId a owl:DatatypeProperty ;
+    rdfs:label "Active Visit Prep ID" ;
+    rdfs:comment "UUID of the currently active visit prep tray on IntakeFormData." ;
+    rdfs:domain checkup:IntakeFormData ;
+    rdfs:range xsd:string .
+
+# ============================================================================
 # DARK VOCABULARY REMEDIATION (v2.2 — PF1-R)
 # ============================================================================
 # Properties previously emitted by CheckupSerializer but not formally defined.
@@ -1638,7 +1743,13 @@ checkup:lastSnapshotDate a owl:DatatypeProperty ;
 
 checkup:medicationEndDate a owl:DatatypeProperty ;
     rdfs:label "Medication End Date" ;
-    rdfs:comment "End date for a medication prescription. Replaces dark vocabulary checkup:endDate (disambiguated from other end-date uses)." ;
+    rdfs:comment "End date for a medication prescription. Replaces dark vocabulary checkup:endDate (disambiguated from other end-date uses). NOTE: This reflects the administrative EHR order expiry date, which may not match the actual supply exhaustion date. Use checkup:supplyEndDate for the computed supply end date." ;
+    rdfs:domain checkup:MedicationSummary ;
+    rdfs:range xsd:date .
+
+checkup:supplyEndDate a owl:DatatypeProperty ;
+    rdfs:label "Supply End Date" ;
+    rdfs:comment "Computed date when the dispensed medication supply is expected to be exhausted, calculated as startDate + supplyDurationDays. Distinguishes clinical supply exhaustion from administrative EHR order expiry (checkup:medicationEndDate). Consumers should use this property — rather than medicationEndDate — to determine whether a medication is likely still active when adherenceStatus is absent." ;
     rdfs:domain checkup:MedicationSummary ;
     rdfs:range xsd:date .
 
@@ -1680,6 +1791,21 @@ checkup:supplementUPC a owl:DatatypeProperty ;
 # ============================================================================
 # CHANGELOG
 # ============================================================================
+#
+# v3.2 (2026-02-26, BUG-002): Added checkup:supplyEndDate DatatypeProperty on
+# MedicationSummary. Computed as startDate + supplyDurationDays, this field
+# allows consumers to distinguish administrative EHR order expiry
+# (checkup:medicationEndDate) from actual supply exhaustion. Updated
+# checkup:medicationEndDate rdfs:comment to clarify the distinction.
+# Active classes: 28. Properties added: 1.
+#
+# v3.1 (2026-02-22, Task A7): Added VisitPrepTray class (8 properties) and
+# VisitTrayItem class (5 properties) for per-appointment visit preparation
+# containers. VisitPrepTray groups VisitIssue, DiscussionTopic,
+# SuggestedQuestion, and note items with typed payload wrappers and intent
+# categories. Added hasTrayItem ObjectProperty linking tray to items. Added
+# hasVisitPrep and activeVisitPrepId aggregate links on IntakeFormData.
+# Active classes: 28. Part of Health Map v3 Pre-Phase Track A.
 #
 # v3.0 (2026-02-18, Phase 4 CLN1): Removed 8 deprecated classes (PatientProfile,
 # VitalSignsTrend, WellnessBaseline, ActivitySummary, ClinicalSummary, HealthRecord,
@@ -1854,4 +1980,4 @@ checkup:supplementUPC a owl:DatatypeProperty ;
 # - Data provenance properties for source tracking
 #
 
-# End of Cascade Checkup Vocabulary v3.0
+# End of Cascade Checkup Vocabulary v3.1

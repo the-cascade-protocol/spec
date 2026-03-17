@@ -21,10 +21,10 @@
     dct:description "Vocabulary for POTS (Postural Orthostatic Tachycardia Syndrome) home screening checks using the NASA Lean Test protocol"@en ;
     dct:creator "Cascade Agentic Labs" ;
     dct:created "2025-10-31"^^xsd:date ;
-    dct:modified "2026-02-10"^^xsd:date ;
-    owl:versionInfo "1.3" ;
+    dct:modified "2026-02-26"^^xsd:date ;
+    owl:versionInfo "1.4" ;
     rdfs:comment "Layer 2 domain-specific vocabulary for POTS Check app. Defines the POTS screening test protocol, raw measurement classes, and computed results. Describes consumer-generated wellness data from guided orthostatic screening checks performed with Apple Watch and iPhone."@en ;
-    rdfs:seeAlso <https://cascadeprotocol.org/docs/pots/v1.3/> .
+    rdfs:seeAlso <https://cascadeprotocol.org/docs/pots/v1.4/> .
 
 # ============================================================================
 # Core Classes
@@ -297,6 +297,67 @@ pots:averageImportedHRV a owl:DatatypeProperty ;
     rdfs:range xsd:double .
 
 # ============================================================================
+# V2 Test Configuration & Patient Context (v1.4+)
+# ============================================================================
+
+pots:baselineDurationMinutes a owl:DatatypeProperty ;
+    rdfs:label "Baseline Duration (minutes)"@en ;
+    rdfs:comment "User-selected supine baseline duration in whole minutes. One of: 5, 10, or 15. Captures the deliberate configuration choice (distinct from pots:baselineDurationSeconds which records actual elapsed time). Values below 10 minutes carry a clinical advisory per Bateman Horne Center guidance. (v1.4+)"@en ;
+    rdfs:domain pots:POTSCheckResult ;
+    rdfs:range xsd:integer .
+
+pots:testNotes a owl:DatatypeProperty ;
+    rdfs:label "Test Notes"@en ;
+    rdfs:comment "Optional free-text notes entered by the patient about this check session (e.g., current symptoms, recent activity, medication timing). Maximum 500 characters. Distinct from pots:notes which is scoped to individual pots:SymptomEvent items. (v1.4+)"@en ;
+    rdfs:domain pots:POTSCheckResult ;
+    rdfs:range xsd:string .
+
+pots:bpProvided a owl:DatatypeProperty ;
+    rdfs:label "Blood Pressure Provided"@en ;
+    rdfs:comment "True if blood pressure cuff data was entered during this check session. False if the user proceeded without a blood pressure cuff. Used by result views and PDF generator to gate BP-dependent sections and display appropriate limitation warnings. (v1.4+)"@en ;
+    rdfs:domain pots:POTSCheckResult ;
+    rdfs:range xsd:boolean .
+
+# ============================================================================
+# Proportional Pulse Pressure — Per-Minute Values (v1.4+)
+# ============================================================================
+# PPP = (SBP - DBP) / SBP. Values stored as ratios (0.0 to 1.0).
+# Clinical reference: PPP < 0.25 (25%) may indicate failure to constrict
+# on standing (Bateman Horne Center clinical guidance).
+# Predicates are absent when no BP reading exists at that timepoint.
+# Timepoints mirror the standing BP collection schedule: 1, 3, 5, 7, 10 minutes.
+
+pots:pppMinute1 a owl:DatatypeProperty ;
+    rdfs:label "Proportional Pulse Pressure at 1 Minute"@en ;
+    rdfs:comment "Proportional Pulse Pressure ratio (SBP-DBP)/SBP at 1 minute of standing. Stored as a decimal ratio 0.0-1.0. Absent if no blood pressure reading was taken at this timepoint. Reference: values >= 0.25 (25%) are considered normal per Bateman Horne Center clinical guidance. (v1.4+)"@en ;
+    rdfs:domain pots:POTSCheckResult ;
+    rdfs:range xsd:decimal .
+
+pots:pppMinute3 a owl:DatatypeProperty ;
+    rdfs:label "Proportional Pulse Pressure at 3 Minutes"@en ;
+    rdfs:comment "Proportional Pulse Pressure ratio (SBP-DBP)/SBP at 3 minutes of standing. Stored as a decimal ratio 0.0-1.0. Absent if no blood pressure reading was taken at this timepoint. (v1.4+)"@en ;
+    rdfs:domain pots:POTSCheckResult ;
+    rdfs:range xsd:decimal .
+
+pots:pppMinute5 a owl:DatatypeProperty ;
+    rdfs:label "Proportional Pulse Pressure at 5 Minutes"@en ;
+    rdfs:comment "Proportional Pulse Pressure ratio (SBP-DBP)/SBP at 5 minutes of standing. Stored as a decimal ratio 0.0-1.0. Absent if no blood pressure reading was taken at this timepoint. (v1.4+)"@en ;
+    rdfs:domain pots:POTSCheckResult ;
+    rdfs:range xsd:decimal .
+
+pots:pppMinute7 a owl:DatatypeProperty ;
+    rdfs:label "Proportional Pulse Pressure at 7 Minutes"@en ;
+    rdfs:comment "Proportional Pulse Pressure ratio (SBP-DBP)/SBP at 7 minutes of standing. Stored as a decimal ratio 0.0-1.0. Absent if no blood pressure reading was taken at this timepoint. (v1.4+)"@en ;
+    rdfs:domain pots:POTSCheckResult ;
+    rdfs:range xsd:decimal .
+
+pots:pppMinute10 a owl:DatatypeProperty ;
+    rdfs:label "Proportional Pulse Pressure at 10 Minutes"@en ;
+    rdfs:comment "Proportional Pulse Pressure ratio (SBP-DBP)/SBP at 10 minutes of standing. Stored as a decimal ratio 0.0-1.0. Absent if no blood pressure reading was taken at this timepoint. (v1.4+)"@en ;
+    rdfs:domain pots:POTSCheckResult ;
+    rdfs:range xsd:decimal .
+
+# ============================================================================
 # Alignment with Healthcare Standards
 # ============================================================================
 
@@ -330,6 +391,13 @@ pots:averageImportedHRV a owl:DatatypeProperty ;
 # ============================================================================
 # Changelog
 # ============================================================================
+# v1.4 (2026-02-26): Added pots:baselineDurationMinutes (user-selected baseline
+#     duration in whole minutes, distinct from pots:baselineDurationSeconds).
+#     Added pots:testNotes (free-text patient notes on the result, distinct from
+#     per-symptom pots:notes). Added pots:bpProvided (boolean flag for BP cuff
+#     presence). Added per-minute PPP predicates pots:pppMinute1, pots:pppMinute3,
+#     pots:pppMinute5, pots:pppMinute7, pots:pppMinute10 for Proportional Pulse
+#     Pressure values (ratio 0.0-1.0) at each standard BP timepoint.
 # v1.3 (2026-02-10): Added timing properties (secondsSinceStand, timestampSeconds)
 #     for fine-grained temporal resolution in measurement lists. Added Apple Health
 #     import properties (importedBloodPressureHistory, importedHRVHistory,
