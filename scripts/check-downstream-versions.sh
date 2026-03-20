@@ -23,7 +23,7 @@ grep -v '^#' "$SPEC_VERSIONS" | grep -v '^$' | while IFS='=' read -r key val; do
 done
 echo ""
 
-DOWNSTREAM_REPOS="cascade-cli sdk-typescript sdk-python cascade-agent conformance cascadeprotocol.org"
+DOWNSTREAM_REPOS="cascade-cli sdk-typescript sdk-python cascade-agent conformance cascadeprotocol.org cascade-sdk-swift"
 any_drift=0
 
 for repo in $DOWNSTREAM_REPOS; do
