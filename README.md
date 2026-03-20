@@ -55,12 +55,12 @@ spec/
 
 | Vocabulary | Current Version | Classes | Properties |
 |---|---|---|---|
-| Core | 1.3 | PatientProfile, Address, EmergencyContact, PharmacyInfo, Pod, Container | ~25 |
-| Health | 1.3 | HealthProfile, WellnessStatistic | ~15 |
-| Clinical | 1.3 | MedicationRecord, ConditionRecord, AllergyRecord, LabResult, VitalSign, ImmunizationRecord | ~40 |
-| Coverage | 1.0 | InsurancePlan | ~12 |
-| Checkup | 1.0 | CheckupSummary | ~10 |
-| POTS | 1.0 | POTSTest, HeartRateMeasurement | ~8 |
+| Core | 2.8 | PatientProfile, Address, EmergencyContact, PharmacyInfo, Pod, Container | ~25 |
+| Health | 2.3 | HealthProfile, WellnessStatistic | ~15 |
+| Clinical | 1.7 | ClinicalDocument, ClinicalSection, ClinicalNarrative, ProgressNote, DischargeSummary, ConsultationNote, LaboratoryReport, ImagingReport, VisitSummary, Medication, Allergy, LabResult, Condition, Immunization, Procedure, VitalSign, MedicationUseEpisode, Supplement, LabTestSeries, CoverageRecord (deprecated), Encounter, MedicationAdministration, ImplantedDevice, ImagingStudy | ~40 |
+| Coverage | 1.3 | InsurancePlan, Deductible, CopaySchedule, ClaimRecord, BenefitStatement, DenialNotice, AppealRecord, DenialReasonCode | ~12 |
+| Checkup | 3.2 | CheckupSummary | ~10 |
+| POTS | 1.4 | POTSTest, HeartRateMeasurement | ~8 |
 
 ## SHACL Shapes
 
