@@ -56,14 +56,52 @@ When modifying an ontology:
 3. Add a changelog comment at the top of the file
 4. Update the corresponding shapes file if new properties are added
 
+## MANDATORY: Pre-Commit Checklist for Vocabulary Changes
+
+**This repo is the gate. Incomplete commits cause downstream drift.**
+
+Before committing any change to an ontology (`.ttl`) file, you MUST:
+
+- [ ] Bump `owl:versionInfo` — the pre-commit hook will block the commit if you don't
+- [ ] Update `dct:modified` to today's date
+- [ ] Add a changelog comment block at the top of the TTL file
+- [ ] Update the corresponding `.shapes.ttl` if new classes/properties were added
+- [ ] Update JSON-LD context (`contexts/v1/{name}.jsonld`) if new terms need `@type` / `@id` mappings
+- [ ] Update `VOCAB_VERSIONS` file for this vocabulary — stage it with `git add VOCAB_VERSIONS`
+- [ ] Tag the commit: `git tag vocab/{name}-v{X.Y}` after committing
+
+After committing, complete the downstream update sequence (in order):
+
+1. **cascadeprotocol.org** — run `scripts/sync-from-spec.sh`, then update HTML docs + schemas.md
+2. **conformance** — add fixtures for new classes/properties; tag the release
+3. **cascade-cli** — run `scripts/sync-shapes-from-spec.sh`, update `VOCAB_VERSIONS`
+4. **sdk-typescript** — add model files, update predicates + context, update `VOCAB_VERSIONS`
+5. **sdk-python** — add model files, update namespaces + predicates, update `VOCAB_VERSIONS`
+6. **cascade-agent** — update system prompt query patterns, update `VOCAB_VERSIONS`
+
+Run `scripts/check-downstream-versions.sh` at any time to see which repos are behind.
+
 ## Commit Conventions
 
 ```
 docs(schema): <vocab>: <description>
 ```
 
+Tag format: `vocab/{name}-v{X.Y}` (e.g., `vocab/clinical-v1.8`)
+
+## Hook Setup
+
+After cloning, install the pre-commit hook:
+```sh
+sh scripts/install-hooks.sh
+```
+
+The hook will block commits that modify TTL files without bumping `owl:versionInfo`.
+
 ## Related Repositories
 
 - [conformance](https://github.com/the-cascade-protocol/conformance) -- Test fixtures derived from these shapes
-- [cli](https://github.com/the-cascade-protocol/cli) -- CLI bundles copies of shapes files for validation
-- [sdk-typescript](https://github.com/the-cascade-protocol/sdk-typescript) -- SDK implements serialization per these ontologies
+- [cascade-cli](https://github.com/the-cascade-protocol/cli) -- CLI bundles copies of shapes files; run `sync-shapes-from-spec.sh` after updates
+- [sdk-typescript](https://github.com/the-cascade-protocol/sdk-typescript) -- Implements serialization per these ontologies
+- [sdk-python](https://github.com/the-cascade-protocol/sdk-python) -- Python implementation
+- [cascade-agent](https://github.com/the-cascade-protocol/cascade-agent) -- System prompt must reflect current vocabulary

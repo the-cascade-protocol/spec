@@ -1,0 +1,10 @@
+# Canonical vocabulary versions — authoritative source of truth
+# Maintained in spec/. Downstream repos copy this file and update it
+# as they implement support for each vocabulary version.
+# Format: {vocab}={major}.{minor}
+core=2.8
+health=2.3
+clinical=1.7
+coverage=1.3
+checkup=3.2
+pots=1.4

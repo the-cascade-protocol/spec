@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# spec pre-commit hook
+# Enforces vocabulary versioning discipline when ontology files are modified.
+# Install with: scripts/install-hooks.sh
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Find all staged ontology TTL files (not shapes)
+STAGED_TTLS=$(git diff --cached --name-only | grep -E '^ontologies/.+/v[0-9]+/[^.]+\.ttl$' | grep -v '\.shapes\.ttl$' || true)
+
+if [[ -z "$STAGED_TTLS" ]]; then
+  exit 0  # No ontology files changed, nothing to check
+fi
+
+echo ""
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║        Cascade Protocol — Vocabulary Change Detected         ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo ""
+
+ERRORS=()
+
+for ttl_file in $STAGED_TTLS; do
+  vocab=$(echo "$ttl_file" | sed -E 's|ontologies/([^/]+)/.*|\1|')
+
+  # Check owl:versionInfo was updated
+  # Compare staged version vs HEAD version
+  staged_version=$(git show :"$ttl_file" 2>/dev/null | grep 'owl:versionInfo' | grep -oE '"[0-9]+\.[0-9.]+"' | tr -d '"' | head -1 || true)
+  head_version=$(git show HEAD:"$ttl_file" 2>/dev/null | grep 'owl:versionInfo' | grep -oE '"[0-9]+\.[0-9.]+"' | tr -d '"' | head -1 || echo "NEW_FILE")
+
+  if [[ -z "$staged_version" ]]; then
+    ERRORS+=("$ttl_file: owl:versionInfo not found. Add it before committing.")
+    continue
+  fi
+
+  if [[ "$staged_version" == "$head_version" ]] && [[ "$head_version" != "NEW_FILE" ]]; then
+    ERRORS+=("$ttl_file: owl:versionInfo unchanged ($staged_version). Bump it for any modification.")
+    continue
+  fi
+
+  echo "  ✅ $vocab: $head_version → $staged_version"
+
+  # Check dct:modified was updated
+  staged_modified=$(git show :"$ttl_file" 2>/dev/null | grep 'dct:modified' | head -1 || true)
+  head_modified=$(git show HEAD:"$ttl_file" 2>/dev/null | grep 'dct:modified' | head -1 || true)
+  if [[ "$staged_modified" == "$head_modified" ]] && [[ "$head_version" != "NEW_FILE" ]]; then
+    ERRORS+=("$ttl_file: dct:modified not updated. Set it to today's date.")
+  fi
+
+  # Check SHACL shapes file is also staged
+  shapes_file="${ttl_file%.ttl}.shapes.ttl"
+  if [[ -f "$REPO_ROOT/$shapes_file" ]]; then
+    if ! git diff --cached --name-only | grep -q "$shapes_file"; then
+      echo "  ⚠️  $vocab: shapes file not staged — if you added/changed properties, update $shapes_file"
+    fi
+  fi
+
+  # Check VOCAB_VERSIONS was updated
+  if ! git diff --cached --name-only | grep -q "VOCAB_VERSIONS"; then
+    ERRORS+=("VOCAB_VERSIONS not staged. Update $vocab=$staged_version in VOCAB_VERSIONS.")
+  fi
+done
+
+echo ""
+
+if [[ ${#ERRORS[@]} -gt 0 ]]; then
+  echo "╔══════════════════════════════════════════════════════════════╗"
+  echo "║                    ❌  COMMIT BLOCKED                        ║"
+  echo "╚══════════════════════════════════════════════════════════════╝"
+  echo ""
+  for err in "${ERRORS[@]}"; do
+    echo "  ERROR: $err"
+  done
+  echo ""
+  echo "To bypass (only for non-vocabulary housekeeping commits):"
+  echo "  SKIP_VERSION_CHECK=1 git commit ..."
+  echo ""
+  exit 1
+fi
+
+echo "Downstream update checklist (complete AFTER this commit):"
+echo ""
+echo "  [ ] cascadeprotocol.org: run scripts/sync-from-spec.sh, update HTML docs"
+echo "  [ ] conformance: add fixtures for new classes/properties, tag release"
+echo "  [ ] cascade-cli: run scripts/sync-shapes-from-spec.sh, update VOCAB_VERSIONS"
+echo "  [ ] sdk-typescript: add model files, update predicates, update VOCAB_VERSIONS"
+echo "  [ ] sdk-python: add model files, update predicates, update VOCAB_VERSIONS"
+echo "  [ ] cascade-agent: update system prompt query patterns, update VOCAB_VERSIONS"
+echo ""
+echo "  Commit tag: vocab/{name}-v{X.Y}   (e.g., git tag vocab/clinical-v1.8)"
+echo ""
