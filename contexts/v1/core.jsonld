@@ -134,6 +134,35 @@
       "@id": "cascade:hasDNR",
       "@type": "xsd:boolean"
     },
-    "advanceDirectiveNotes": "cascade:advanceDirectiveNotes"
+    "advanceDirectiveNotes": "cascade:advanceDirectiveNotes",
+
+    "HealthRecord": "cascade:HealthRecord",
+    "AIExtractionActivity": "cascade:AIExtractionActivity",
+    "AIDiscardedExtraction": "cascade:AIDiscardedExtraction",
+    "SocialHistoryConsent": "cascade:SocialHistoryConsent",
+    "extractionConfidence": {
+      "@id": "cascade:extractionConfidence",
+      "@type": "xsd:decimal"
+    },
+    "extractionModel": "cascade:extractionModel",
+    "sourceNarrativeSection": "cascade:sourceNarrativeSection",
+    "requiresUserReview": {
+      "@id": "cascade:requiresUserReview",
+      "@type": "xsd:boolean"
+    },
+    "requiresLLMExtraction": {
+      "@id": "cascade:requiresLLMExtraction",
+      "@type": "xsd:boolean"
+    },
+    "discardedEntityType": "cascade:discardedEntityType",
+    "discardedFrom": "cascade:discardedFrom",
+    "discardedAt": {
+      "@id": "cascade:discardedAt",
+      "@type": "xsd:dateTime"
+    },
+    "discardConfidence": {
+      "@id": "cascade:discardConfidence",
+      "@type": "xsd:decimal"
+    }
   }
 }

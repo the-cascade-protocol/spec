@@ -338,6 +338,18 @@
       "@type": "xsd:date"
     },
     "payorName": "clinical:payorName",
-    "subscriberId": "clinical:subscriberId"
+    "subscriberId": "clinical:subscriberId",
+
+    "SocialHistoryRecord": "clinical:SocialHistoryRecord",
+    "socialHistoryCategory": "clinical:socialHistoryCategory",
+    "packsPerYear": {
+      "@id": "clinical:packsPerYear",
+      "@type": "xsd:decimal"
+    },
+    "alcoholDrinksPerWeek": {
+      "@id": "clinical:alcoholDrinksPerWeek",
+      "@type": "xsd:decimal"
+    },
+    "occupationTitle": "clinical:occupationTitle"
   }
 }
