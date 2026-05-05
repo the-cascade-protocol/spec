@@ -86,15 +86,9 @@ advisory:supersedes a owl:ObjectProperty ;
     rdfs:domain advisory:CascadeAdvisoryPatch ;
     rdfs:range advisory:CascadeAdvisoryPatch .
 
-advisory:expiresAt a owl:DatatypeProperty ;
-    rdfs:label "Expires At"@en ;
-    rdfs:comment "ISO 8601 dateTime after which this advisory should no longer be applied to new matches. The pod SHOULD still honour applications that occurred before this time. Synonymous with advisory:applicableUntil; advisory:applicableUntil is the form used in the published worked examples and is preferred for new advisories."@en ;
-    rdfs:domain advisory:CascadeAdvisoryPatch ;
-    rdfs:range xsd:dateTime .
-
 advisory:applicableUntil a owl:DatatypeProperty ;
     rdfs:label "Applicable Until"@en ;
-    rdfs:comment "ISO 8601 dateTime after which this advisory should no longer be applied to new matches. The form used in the worked CAP examples; equivalent in meaning to advisory:expiresAt."@en ;
+    rdfs:comment "ISO 8601 dateTime after which this advisory should no longer be applied to new matches. The pod SHOULD still honour applications that occurred before this time. Used by both worked examples (BRCA2 reclassification, CPIC CYP2C19/warfarin) — the canonical name."@en ;
     rdfs:domain advisory:CascadeAdvisoryPatch ;
     rdfs:range xsd:dateTime .
 

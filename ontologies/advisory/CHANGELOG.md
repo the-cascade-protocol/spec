@@ -47,7 +47,7 @@ Required: `advisory:humanSummary`, `advisory:advisoryClass`,
 `advisory:issuer`, `advisory:issuedAt`.
 
 Optional: `advisory:advisoryId`, `advisory:supersedes`,
-`advisory:expiresAt`, `advisory:applicableUntil`, `advisory:profileVersion`,
+`advisory:applicableUntil`, `advisory:profileVersion`,
 `advisory:issuerName`, `advisory:evidenceUrl`,
 `advisory:appliesToActiveOnly`, `advisory:cadence`.
 
@@ -83,8 +83,8 @@ fixed to `application/x-cascade-advisory-patch`).
   wrapping is deferred to a later profile version.
 - `cascade:AdvisoryApplicationActivity` is declared in core v3.1 and is
   REFERENCED here, not redeclared.
-- Both `advisory:expiresAt` and `advisory:applicableUntil` are declared.
-  The published worked CAP examples use `applicableUntil`; `expiresAt` is
-  the form named in the implementation plan. They are equivalent in
-  meaning and both are honoured by the applier; future profile versions
-  may consolidate.
+- `advisory:applicableUntil` is the canonical name for the
+  clinical-applicability cutoff; both worked CAP examples (BRCA2
+  reclassification, CPIC CYP2C19/warfarin) use it. The implementation plan
+  draft mentioned `expiresAt`; consolidated to `applicableUntil` here
+  before merge.
