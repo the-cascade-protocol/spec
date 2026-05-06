@@ -5,6 +5,61 @@ namespace is `https://ns.cascadeprotocol.org/genomics/v1#`. Pre-stable drafts
 (`v1-draft`) are not registered in `spec/VOCAB_VERSIONS` per D-PATH; they land
 there at v1.0 graduation.
 
+## v1-draft.0.3 — 2026-05-06
+
+Two SHACL shape relaxations surfaced by the Phase 2/3 test-fixture review.
+No vocabulary additions — shapes only. All importers continue to validate;
+fixtures that were previously SHACL-violating for the relaxed reasons now
+validate cleanly.
+
+### Shape relaxation — `genomics:geneSymbol` on `VariantShape`
+
+Downgraded from `sh:Violation` to `sh:Warning`. `sh:minCount 1` removed;
+`sh:maxCount 1` retained.
+
+Reason: multiple v0.1 import paths legitimately produce Variants without a
+gene symbol — the VRS preserve-only importer (D-Q6 forbids seqrepo lookups
+that would map coordinates back to gene boundaries), VCF records lacking
+`INFO.GENEINFO`, and FHIR Genomics IG variants of the `complexVariant-nonHGVS`
+shape. A Variant remains identifiable via stable identifiers (CAid / VRS /
+ClinVar VCV / dbSNP rs) or VCF coordinates (`refAllele` + `altAllele` +
+`genomicStartEnd`). Source: `cascade-coordination/tie-breaks/2026-05-06-vrs-geneSymbol-shape.md`.
+
+### Shape widening — `genomics:variantInterpreted` range
+
+Range expanded from `genomics:Variant` alone to `{Variant, CopyNumberVariant,
+Haplotype}` via `sh:or`. Cardinality (1..1) and severity (Violation) unchanged.
+
+Reason: clinical interpretations attach to all three molecular-record types,
+not just point Variants. The retinoblastoma phenopacket interprets a chr13
+CNV (currently flagged by SHACL as a class violation); HLA bundles
+interpret Haplotypes. The narrower v0.2 shape was an over-fit to the most
+common case. D-Q5 (multi-condition cardinality) is unaffected — each
+Interpretation still has exactly one molecular record of any of the three
+admissible classes.
+
+### Affected fixtures (now SHACL-clean post-relaxation)
+
+- `conformance/fixtures/genomics/vrs/example-allele-BRCA2-deletion.expected.ttl` (geneSymbol)
+- `conformance/fixtures/genomics/fhir-genomics-ig/Bundle-bundle-complexVariant-nonHGVS.expected.ttl` (geneSymbol on both Variants)
+- `conformance/fixtures/genomics/fhir-genomics-ig/Bundle-bundle-compound-heterozygote.expected.ttl` (geneSymbol on both Variants)
+- `conformance/fixtures/genomics/phenopackets/retinoblastoma.expected.ttl` (variantInterpreted CNV class violation)
+
+No fixture refresh required — byte-equal Turtle output is unchanged; only
+SHACL severity for the validations changed.
+
+### Deferred (still queued for later draft revisions)
+
+- `genomics:CompositeVariant` — only one Phase 1 corpus example (the `hasMember`
+  aggregate-variant pattern); want more samples first.
+- LOINC 48013-7 (Genomic ref-seq), 48019-4 (DNA change type), 48001-2
+  (cytogenetic location) — lower frequency, multiple modeling options.
+- Multi-gene Diplotype — architectural change.
+- SNOMED reaction-coding system in condition mappings — needs a wider scope of
+  upstream-data review.
+- Phenopacket negation (`negatedHpoTerm`), per-feature severity / modifiers /
+  evidence / onset class, treatment dosing structure, Layer-2 Specimen wrapper.
+
 ## v1-draft.0.2 — 2026-05-05
 
 Phase 1 evolution candidates landed after the FHIR Genomics IG importer
