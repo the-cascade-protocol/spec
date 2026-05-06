@@ -1,5 +1,20 @@
 # Core Vocabulary Changelog
 
+## v3.2 — 2026-05-06
+
+Forward-reference closure for the Phase 4 advisory applier.
+
+- Added `cascade:appliedTriplesCount` (`owl:DatatypeProperty`, range
+  `xsd:nonNegativeInteger`, domain `cascade:AdvisoryApplicationActivity`).
+  Records the number of triples a single advisory application inserted into
+  the pod, enabling post-hoc auditable verification of CAP profile constraint
+  C5 (≤ 64 inserted triples per match).
+- The Phase 4 applier (cascade-cli `src/lib/advisory/applier.ts`) was already
+  emitting this property as a documented forward reference; v3.2 retroactively
+  declares it. No applier code change is needed; existing emitted records
+  become SHACL-clean (Info-severity property shape encourages but does not
+  require the stamp).
+
 ## v3.1 — 2026-05-05
 
 Genomics & Advisory provenance (TASK-0.0). Two new `prov:Activity` subclasses
