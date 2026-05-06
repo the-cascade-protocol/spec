@@ -47,6 +47,25 @@
     rdfs:seeAlso <https://cascadeprotocol.org/docs/genomics/v1/> .
 
 # Changelog:
+# v1.0-draft.0.2 (2026-05-05): Phase 1 evolution candidates landed after the FHIR
+#     Genomics IG importer session surfaced gaps. All four are additive (no breaking
+#     changes):
+#       - genomics:reportedRecord — generic GeneticTest → record predicate (no
+#         rdfs:range, deliberately broad). Resolves the HLA tie-break (TASK-1.9):
+#         existing genomics:variantsObserved has rdfs:range genomics:Variant and
+#         cannot represent non-Variant report links (Diplotypes, Haplotypes, PGx
+#         implications).
+#       - genomics:refAllele, genomics:altAllele, genomics:genomicStartEnd —
+#         VCF-style coordinate properties for FHIR Genomics IG variants that lack
+#         HGVS but carry LOINC 69547-8 / 69551-0 / 81254-5 directly. Required for
+#         the Phase 3 VCF importer.
+#       - genomics:somaticStatus ObjectProperty + genomics:SomaticStatus enum
+#         (Germline / Somatic / UnknownSomaticStatus). Maps LOINC 48002-0.
+#       - genomics:variantAlleleFrequency (xsd:decimal, SHACL-bounded 0.0–1.0).
+#         Distinct from genomics:mosaicismFraction: VAF is a sequencing-evidence
+#         fraction; mosaicism is the clinical conclusion that the variant is
+#         present in only a subset of cells. Phase 1 importer was shoehorning
+#         VAF into mosaicismFraction; importers should now emit VAF here.
 # v1.0-draft (2026-05-05): Initial production version of genomics/v1-draft authored
 #     in spec/ from the v0.1 sketch (cascadeprotocol.org/drafts/genomics-v1/genomics.ttl).
 #     Folds in 9 gaps from GAP-ANALYSIS.md (Haplotype, Diplotype, CopyNumberVariant,
@@ -165,6 +184,30 @@ genomics:hgvsGDot a owl:DatatypeProperty ;
     rdfs:range xsd:string ;
     genomics:loincCode loinc:81290-9 .  # Genomic ref allele
 
+# Added in v1-draft.0.2: VCF-style coordinate properties. FHIR Genomics IG
+# variants frequently carry the LOINC 69547-8 / 69551-0 / 81254-5 components
+# without HGVS strings; the Phase 3 VCF importer relies on these directly.
+genomics:refAllele a owl:DatatypeProperty ;
+    rdfs:label "Reference Allele"@en ;
+    rdfs:comment "The reference base sequence at the variant position, as defined by the reference genome assembly. ATCG[N], typically 1–N bases. Per VCF REF / FHIR Genomics IG LOINC 69547-8."@en ;
+    rdfs:domain genomics:Variant ;
+    rdfs:range xsd:string ;
+    genomics:loincCode loinc:69547-8 .  # Genomic ref allele [ID]
+
+genomics:altAllele a owl:DatatypeProperty ;
+    rdfs:label "Alternate Allele"@en ;
+    rdfs:comment "The variant allele sequence at the variant position. ATCG[N] for substitutions/insertions; '-' or empty for deletions; structured forms like '<DEL>'/'<DUP>' for symbolic alleles. Per VCF ALT / FHIR Genomics IG LOINC 69551-0."@en ;
+    rdfs:domain genomics:Variant ;
+    rdfs:range xsd:string ;
+    genomics:loincCode loinc:69551-0 .  # Genomic alt allele [ID]
+
+genomics:genomicStartEnd a owl:DatatypeProperty ;
+    rdfs:label "Genomic Start-End Coordinates"@en ;
+    rdfs:comment "The 1-based inclusive start-end coordinates of the variant on the reference assembly, formatted as 'chrN:start-end' (e.g., 'chr17:43124027-43124028'). Pair with genomics:referenceGenome for full anchoring. Per FHIR Genomics IG LOINC 81254-5."@en ;
+    rdfs:domain genomics:Variant ;
+    rdfs:range xsd:string ;
+    genomics:loincCode loinc:81254-5 .  # Genomic allele start-end
+
 genomics:hgvsProteinObserved a owl:DatatypeProperty ;
     rdfs:label "Protein Consequence Directly Observed"@en ;
     rdfs:comment "True when the p.HGVS description was directly observed at the protein level (e.g. mass spec, functional assay). False or absent means the protein consequence was predicted from the DNA change. Conventionally encoded in HGVS by parentheses around the p. description."@en ;
@@ -264,9 +307,31 @@ genomics:zygosity a owl:ObjectProperty ;
 
 genomics:mosaicismFraction a owl:DatatypeProperty ;
     rdfs:label "Mosaicism Fraction (VAF)"@en ;
-    rdfs:comment "Variant allele fraction (0.0–1.0) for mosaic variants. Distinct from zygosity, which is categorical. The continuous VAF is the load-bearing number for clinical decisions in somatic mosaicism scenarios."@en ;
+    rdfs:comment "Variant allele fraction (0.0–1.0) for mosaic variants. Distinct from zygosity, which is categorical. The continuous VAF is the load-bearing number for clinical decisions in somatic mosaicism scenarios. NOTE (v1-draft.0.2): for the broader 'fraction of reads supporting alt allele' use genomics:variantAlleleFrequency; mosaicismFraction is reserved for the clinical conclusion that the variant is present in only a subset of cells."@en ;
     rdfs:domain genomics:Variant ;
     rdfs:range xsd:decimal .
+
+# Added in v1-draft.0.2: VAF as a distinct property from mosaicismFraction.
+# VAF is the broader concept (any sequencing read fraction supporting the alt
+# allele); mosaicism is the specific clinical interpretation. Phase 1 importer
+# was shoehorning LOINC 81258-6 into mosaicismFraction; the correct fix is
+# authoring VAF as its own property.
+genomics:variantAlleleFrequency a owl:DatatypeProperty ;
+    rdfs:label "Variant Allele Frequency"@en ;
+    rdfs:comment "Fraction of sequencing reads at the variant position that support the alternate allele. Range 0.0–1.0. Per FHIR Genomics IG LOINC 81258-6. Distinct from genomics:mosaicismFraction — VAF is a sequencing-evidence fraction; mosaicism is the clinical conclusion that the variant is present in only a subset of cells (which often, but not always, manifests as low VAF)."@en ;
+    rdfs:domain genomics:Variant ;
+    rdfs:range xsd:decimal ;
+    genomics:loincCode loinc:81258-6 .  # Sample variant allelic frequency [NFr]
+
+# Added in v1-draft.0.2: variant origin (germline vs. somatic). LOINC 48002-0
+# is one of the most clinically important variant attributes. Critical for
+# cancer interpretation and inheritance reasoning.
+genomics:somaticStatus a owl:ObjectProperty ;
+    rdfs:label "Somatic Status"@en ;
+    rdfs:comment "Whether the variant is germline (inherited / present in all cells) or somatic (acquired / tissue-specific). Critical for cancer interpretation and inheritance reasoning. Per FHIR Genomics IG LOINC 48002-0."@en ;
+    rdfs:domain genomics:Variant ;
+    rdfs:range genomics:SomaticStatus ;
+    genomics:loincCode loinc:48002-0 .  # Genomic source class
 
 genomics:phase a owl:ObjectProperty ;
     rdfs:label "Allelic Phase"@en ;
@@ -526,6 +591,19 @@ genomics:variantsObserved a owl:ObjectProperty ;
     rdfs:comment "Variants reported by this test. Empty list with non-empty genePanel = clinically meaningful negative result."@en ;
     rdfs:domain genomics:GeneticTest ;
     rdfs:range genomics:Variant .
+
+# Added in v1-draft.0.2: generic GeneticTest → record predicate. Resolves the
+# HLA tie-break (cascade-coordination/tie-breaks/2026-05-05-task-1.9-hla-variantsObserved.md):
+# genomics:variantsObserved has rdfs:range genomics:Variant and cannot
+# represent non-Variant report links (Diplotypes, Haplotypes, PGx
+# implications). Importers should still emit the most specific predicate
+# available (variantsObserved for Variants).
+genomics:reportedRecord a owl:ObjectProperty ;
+    rdfs:label "Reported Record"@en ;
+    rdfs:comment "A genomics record (Variant, Haplotype, Diplotype, VariantInterpretation, or other genomics:* class) referenced by this GeneticTest. Use this predicate when the test result is a Diplotype, Haplotype, or PGx implication that has no Variant-typed range. For point-Variant references, prefer the type-specific genomics:variantsObserved (rdfs:range genomics:Variant)."@en ;
+    rdfs:domain genomics:GeneticTest .
+    # No rdfs:range — deliberately broad. SHACL won't constrain the object class
+    # so any genomics: record can be referenced.
 
 genomics:orderingProvider a owl:DatatypeProperty ;
     rdfs:label "Ordering Provider"@en ;
@@ -924,6 +1002,23 @@ genomics:Rejected    a genomics:CausalityStatus ; rdfs:label "Rejected"@en ;
     rdfs:comment "This variant has been ruled out as the cause."@en .
 
 # ============================================================================
+# Named Individuals — Somatic Status (germline vs. somatic origin)
+# ============================================================================
+# Added in v1-draft.0.2. Maps LOINC 48002-0 (Genomic source class).
+
+genomics:Germline a owl:NamedIndividual, genomics:SomaticStatus ;
+    rdfs:label "Germline"@en ;
+    rdfs:comment "Variant present in the germline; inherited or de novo at conception; present in all cells of the individual."@en .
+
+genomics:Somatic a owl:NamedIndividual, genomics:SomaticStatus ;
+    rdfs:label "Somatic"@en ;
+    rdfs:comment "Variant acquired post-conception in a specific tissue / cell lineage; not heritable. Common in tumor samples."@en .
+
+genomics:UnknownSomaticStatus a owl:NamedIndividual, genomics:SomaticStatus ;
+    rdfs:label "Unknown Somatic Status"@en ;
+    rdfs:comment "Origin not determined by the reporting workflow. Use when the source data is silent on germline-vs-somatic classification rather than guessing."@en .
+
+# ============================================================================
 # Named Individuals — Sequencing Technology
 # ============================================================================
 
@@ -1075,6 +1170,9 @@ genomics:OrderStatus           a owl:Class ; rdfs:label "Order Status"@en .
 genomics:SubmitterCategory     a owl:Class ; rdfs:label "Submitter Category"@en .
 genomics:ReviewStatus          a owl:Class ; rdfs:label "Review Status"@en .
 genomics:CausalityStatus       a owl:Class ; rdfs:label "Causality Status"@en .
+genomics:SomaticStatus         a owl:Class ;
+    rdfs:label "Somatic Status"@en ;
+    rdfs:comment "Closed enumeration of variant origin classifications (germline / somatic / unknown). Added in v1-draft.0.2."@en .
 genomics:SequencingTechnology  a owl:Class ; rdfs:label "Sequencing Technology"@en .
 genomics:LaboratoryCertification a owl:Class ; rdfs:label "Laboratory Certification"@en .
 genomics:FileFormat            a owl:Class ; rdfs:label "File Format"@en .
