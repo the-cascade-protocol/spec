@@ -6,6 +6,18 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-05-06 — core/v1 3.1 → 3.2 (forward-reference closure)
+
+Small additive bump on `core/v1` to retroactively declare `cascade:appliedTriplesCount`. The Phase 4 advisory applier (cascade-cli TASK-4.5) was already emitting this property on every `cascade:AdvisoryApplicationActivity` record as a documented forward reference; this milestone closes the loop.
+
+- `cascade:appliedTriplesCount` (DatatypeProperty, `xsd:nonNegativeInteger`, domain `cascade:AdvisoryApplicationActivity`). Records the number of triples a single advisory application inserted into the pod — auditable post-hoc verification of CAP profile constraint C5 (≤ 64 inserted triples per match).
+- SHACL: Info-severity property shape on `AdvisoryApplicationActivityShape` (recommended, not required — existing activity records without the stamp remain SHACL-clean).
+- VOCAB_VERSIONS: `core=3.2`. See `ontologies/core/CHANGELOG.md` for the full per-vocab entry.
+
+Tag: `vocab/core-v3.2` (orchestrator-applied after merge).
+
+---
+
 ## 2026-05-05 — Genomics v1-draft.0.2 evolution
 
 Small, additive evolution pass on `genomics/v1-draft` driven by gaps surfaced in the Phase 1 FHIR Genomics IG importer (cascade-cli) and the TASK-1.9 HLA tie-break. Four high-confidence additions; nothing removed or renamed.
