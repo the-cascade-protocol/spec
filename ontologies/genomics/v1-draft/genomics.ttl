@@ -29,7 +29,7 @@
     dct:description "Layer 2 vocabulary for sequence variants, variant interpretations, haplotypes/diplotypes, copy number variants, sequencing-run metadata, raw-file pointers, pedigrees, and genetic test reports/orders. Bridges Layer 1 standards (HGVS, ClinVar, VRS, HGNC, Sequence Ontology, HPO, MONDO/OMIM/ORDO, ACMG/AMP via LOINC answer codes, ClinGen review-status taxonomy) to Layer 3 patient-facing genetic counseling summaries in checkup:."@en ;
     dct:creator "Cascade Agentic Labs" ;
     dct:created "2026-05-05"^^xsd:date ;
-    dct:modified "2026-05-05"^^xsd:date ;
+    dct:modified "2026-05-06"^^xsd:date ;
     owl:versionInfo "1.0-draft" ;
     rdfs:comment """DRAFT — pre-stable v1 ontology. Property names, ranges, and structure may change before v1.0 stable release.
         Three-layer ontology for genomics:

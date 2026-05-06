@@ -6,6 +6,19 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-05-06 — genomics v1-draft.0.3 (shape relaxations from test-fixture review)
+
+Two SHACL shape relaxations on `genomics/v1-draft`. No vocabulary additions; shapes only.
+
+- `genomics:geneSymbol` on `VariantShape`: Violation → Warning. The required-cardinality `sh:minCount 1` is removed; `sh:maxCount 1` stays. VRS preserve-only imports (D-Q6) and gene-less VCF records legitimately lack gene context.
+- `genomics:variantInterpreted` range widened from `genomics:Variant` alone to `{Variant, CopyNumberVariant, Haplotype}` via `sh:or`. Clinical interpretations attach to all three molecular-record types (e.g., the retinoblastoma phenopacket interprets a chr13 CNV).
+
+Tag: `vocab/genomics-v1-draft.0.3` (orchestrator-applied after merge). See `ontologies/genomics/CHANGELOG.md` for the full per-vocab entry, including the list of fixtures that become SHACL-clean post-relaxation and the deferred-to-later candidates.
+
+Source: `cascade-coordination/tie-breaks/2026-05-06-vrs-geneSymbol-shape.md` and the Phenopacket test-fixture agent's report (variantInterpreted CNV violation).
+
+---
+
 ## 2026-05-06 — core/v1 3.1 → 3.2 (forward-reference closure)
 
 Small additive bump on `core/v1` to retroactively declare `cascade:appliedTriplesCount`. The Phase 4 advisory applier (cascade-cli TASK-4.5) was already emitting this property on every `cascade:AdvisoryApplicationActivity` record as a documented forward reference; this milestone closes the loop.
