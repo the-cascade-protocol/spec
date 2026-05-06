@@ -5,6 +5,52 @@ namespace is `https://ns.cascadeprotocol.org/genomics/v1#`. Pre-stable drafts
 (`v1-draft`) are not registered in `spec/VOCAB_VERSIONS` per D-PATH; they land
 there at v1.0 graduation.
 
+## v1-draft.0.2 — 2026-05-05
+
+Phase 1 evolution candidates landed after the FHIR Genomics IG importer
+session surfaced gaps. All four are additive (no breaking changes):
+
+### Added — generic GeneticTest linkage
+
+- `genomics:reportedRecord` (ObjectProperty, no rdfs:range — deliberately
+  broad). Generic predicate for GeneticTest → Diplotype / Haplotype / PGx
+  implication / future genomics record links. Resolves the HLA tie-break
+  raised in TASK-1.9 (cascade-coordination/tie-breaks/2026-05-05-task-1.9-hla-variantsObserved.md):
+  the existing genomics:variantsObserved has rdfs:range genomics:Variant
+  and cannot represent non-Variant report links.
+
+### Added — VCF-style coordinate properties
+
+- `genomics:refAllele`, `genomics:altAllele`, `genomics:genomicStartEnd` —
+  required for VCF importer (Phase 3) and for FHIR Genomics IG variants
+  that lack HGVS but carry the LOINC 69547-8/69551-0/81254-5 components
+  directly. These were emitted as gap-warnings throughout Phase 1.
+
+### Added — variant origin
+
+- `genomics:somaticStatus` ObjectProperty + `SomaticStatus` enum with
+  three named individuals: `Germline`, `Somatic`, `UnknownSomaticStatus`.
+  Maps LOINC 48002-0. Critical for cancer + inheritance reasoning.
+
+### Added — variant allele frequency
+
+- `genomics:variantAlleleFrequency` (DatatypeProperty, xsd:decimal,
+  SHACL-bounded 0.0–1.0). Distinct from existing `mosaicismFraction`:
+  VAF is a sequencing-evidence fraction; mosaicism is the clinical
+  conclusion that the variant is present in only a subset of cells. The
+  Phase 1 importer was shoehorning VAF into mosaicismFraction; importers
+  should now emit VAF on this property.
+
+### Deferred to later draft revisions
+
+These Phase 1 candidates are NOT included in v0.2; they need Ellen
+review or more diverse importer experience first:
+- `genomics:CompositeVariant` (only one Phase 1 example)
+- LOINC 48013-7 Genomic ref-seq, 48019-4 DNA change type, 48001-2
+  cytogenetic location (lower frequency, multiple modeling options)
+- Multi-gene Diplotype (architectural change)
+- SNOMED reaction-coding system in condition mappings (out-of-band)
+
 ## v1.0-draft.0.1 — 2026-05-05
 
 Initial production version of `genomics/v1-draft`, authored in `spec/` from

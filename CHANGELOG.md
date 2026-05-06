@@ -6,6 +6,21 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-05-05 — Genomics v1-draft.0.2 evolution
+
+Small, additive evolution pass on `genomics/v1-draft` driven by gaps surfaced in the Phase 1 FHIR Genomics IG importer (cascade-cli) and the TASK-1.9 HLA tie-break. Four high-confidence additions; nothing removed or renamed.
+
+- **`genomics:reportedRecord`** (ObjectProperty, no `rdfs:range` — deliberately broad). Generic GeneticTest → record predicate for non-Variant report links (Diplotype, Haplotype, PGx implication, future genomics record types). Resolves the HLA tie-break: `genomics:variantsObserved` has `rdfs:range genomics:Variant` and cannot represent these without a range violation. Importers should still emit the more specific `variantsObserved` for true Variant references.
+- **`genomics:refAllele`, `genomics:altAllele`, `genomics:genomicStartEnd`** (DatatypeProperty, `xsd:string`). VCF-style coordinate properties mapping LOINC 69547-8 / 69551-0 / 81254-5. Required for the Phase 3 VCF importer and for FHIR Genomics IG variants that lack HGVS but carry the LOINC components directly.
+- **`genomics:somaticStatus`** ObjectProperty + **`genomics:SomaticStatus`** class with three named individuals (`Germline`, `Somatic`, `UnknownSomaticStatus`). Maps LOINC 48002-0 (Genomic source class). Critical for cancer interpretation and inheritance reasoning.
+- **`genomics:variantAlleleFrequency`** (DatatypeProperty, `xsd:decimal`, SHACL-bounded 0.0–1.0). Maps LOINC 81258-6. Distinct from the existing `genomics:mosaicismFraction` — VAF is a sequencing-evidence fraction; mosaicism is the clinical conclusion that the variant is present in only a subset of cells. Phase 1 importer was shoehorning VAF into mosaicismFraction; this is the proper home.
+
+SHACL: VariantShape gains optional property shapes for all five new Variant-domain properties (Info severity for the three string coordinates; Violation severity for the closed-enumeration `somaticStatus` and the 0.0–1.0 range on `variantAlleleFrequency`). No NodeShape added for `reportedRecord` — its domain breadth is intentional. All existing fixtures continue to pass.
+
+Per D-PATH this is still a draft; no `VOCAB_VERSIONS` change. Tag: `vocab/genomics-v1-draft.0.2` (orchestrator-applied after merge). See `ontologies/genomics/CHANGELOG.md` for the full per-vocab entry, including the deferred-to-later candidates (CompositeVariant, multi-gene Diplotype, cytogenetic location, SNOMED reaction coding).
+
+---
+
 ## 2026-05-05 — Genomics & Advisory v1-draft.0.1 milestone (TASK-0.5)
 
 First draft of the Genomics & Advisory v0.1 implementation workstream lands in `spec/`:
