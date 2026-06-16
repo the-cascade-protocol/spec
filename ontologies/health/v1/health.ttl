@@ -21,8 +21,8 @@
     dct:description "Vocabulary for consumer-generated wellness observations from wearable devices and HealthKit. Maps Cascade wellness properties to established SNOMED CT and LOINC codes following the three-layer ontology architecture."@en ;
     dct:creator "Cascade Agentic Labs" ;
     dct:created "2026-01-29"^^xsd:date ;
-    dct:modified "2026-02-28"^^xsd:date ;
-    owl:versionInfo "2.3" ;
+    dct:modified "2026-03-27"^^xsd:date ;
+    owl:versionInfo "2.4" ;
     rdfs:comment """Three-layer ontology for wellness data:
         Layer 1 (Established standards): SNOMED CT concept IDs + LOINC observation codes
         Layer 2 (Cascade health vocabulary): health: namespace properties linking to Layer 1
@@ -30,6 +30,11 @@
     rdfs:seeAlso <https://cascadeprotocol.org/docs/health/v1/> .
 
 # Changelog:
+# v2.4 (2026-03-27): EHR Import Reconciliation (P1-C) — Added health:SocialHistoryRecord
+#     class for social history observations (smoking, alcohol, exercise, occupation).
+#     Added 4 properties: health:smokingStatus, health:alcoholUse,
+#     health:exerciseFrequency, health:occupationalExposure.
+#
 # v2.3 (2026-02-28): BUG-006 — Added 6 Pattern A flat-property vocabulary terms
 #     for VitalSignReading blank nodes: health:value (generic numeric value),
 #     health:date (observation timestamp), health:sdnn (HRV SDNN measurement),
@@ -926,3 +931,37 @@ health:Unknown a health:WalkingSteadinessLevel ;
 # | Exercise Minutes      | health:exerciseMinutesWeekly | 68130003    | 73985-4  |
 # | Stand Hours           | health:standHoursDaily       | ---         | ---      |
 # | Sleep Duration        | health:averageDurationHours  | 248263006   | 93832-4  |
+
+# ============================================================================
+# Social History (v2.4)
+# ============================================================================
+
+###  Social History Record
+health:SocialHistoryRecord a owl:Class ;
+    rdfs:label "Social History Record"@en ;
+    rdfs:comment "A social history observation about a patient, including smoking status, alcohol use, exercise, occupation, and other lifestyle factors."@en ;
+    owl:versionInfo "Added in health v2.4" .
+
+health:smokingStatus a owl:DatatypeProperty ;
+    rdfs:label "Smoking Status"@en ;
+    rdfs:comment "Patient's smoking status (e.g., current-smoker, former-smoker, never-smoker)."@en ;
+    rdfs:domain health:SocialHistoryRecord ;
+    rdfs:range xsd:string .
+
+health:alcoholUse a owl:DatatypeProperty ;
+    rdfs:label "Alcohol Use"@en ;
+    rdfs:comment "Patient's alcohol consumption description."@en ;
+    rdfs:domain health:SocialHistoryRecord ;
+    rdfs:range xsd:string .
+
+health:exerciseFrequency a owl:DatatypeProperty ;
+    rdfs:label "Exercise Frequency"@en ;
+    rdfs:comment "Patient's reported exercise frequency."@en ;
+    rdfs:domain health:SocialHistoryRecord ;
+    rdfs:range xsd:string .
+
+health:occupationalExposure a owl:DatatypeProperty ;
+    rdfs:label "Occupational Exposure"@en ;
+    rdfs:comment "Occupational exposures relevant to patient health."@en ;
+    rdfs:domain health:SocialHistoryRecord ;
+    rdfs:range xsd:string .
