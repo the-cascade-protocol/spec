@@ -22,6 +22,7 @@
     "EHRVerified": "cascade:EHRVerified",
     "ScannedDocument": "cascade:ScannedDocument",
     "AIExtracted": "cascade:AIExtracted",
+    "AIAsserted": "cascade:AIAsserted",
     "DataSource": "cascade:DataSource",
     "PatientProfile": "cascade:PatientProfile",
     "Address": "cascade:Address",
@@ -163,6 +164,26 @@
     "discardConfidence": {
       "@id": "cascade:discardConfidence",
       "@type": "xsd:decimal"
+    },
+
+    "ProxyAgent": "cascade:ProxyAgent",
+    "actsForPatient": {
+      "@id": "cascade:actsForPatient",
+      "@type": "@id"
+    },
+    "proxyWebID": {
+      "@id": "cascade:proxyWebID",
+      "@type": "@id"
+    },
+    "proxyRelationship": "cascade:proxyRelationship",
+    "proxyScope": "cascade:proxyScope",
+    "proxyGrantedAt": {
+      "@id": "cascade:proxyGrantedAt",
+      "@type": "xsd:dateTime"
+    },
+    "proxyRevokedAt": {
+      "@id": "cascade:proxyRevokedAt",
+      "@type": "xsd:dateTime"
     }
   }
 }

@@ -29,7 +29,7 @@
     dct:description "Layer 2 vocabulary for sequence variants, variant interpretations, haplotypes/diplotypes, copy number variants, sequencing-run metadata, raw-file pointers, pedigrees, and genetic test reports/orders. Bridges Layer 1 standards (HGVS, ClinVar, VRS, HGNC, Sequence Ontology, HPO, MONDO/OMIM/ORDO, ACMG/AMP via LOINC answer codes, ClinGen review-status taxonomy) to Layer 3 patient-facing genetic counseling summaries in checkup:."@en ;
     dct:creator "Cascade Agentic Labs" ;
     dct:created "2026-05-05"^^xsd:date ;
-    dct:modified "2026-05-06"^^xsd:date ;
+    dct:modified "2026-06-16"^^xsd:date ;
     owl:versionInfo "1.0-draft" ;
     rdfs:comment """DRAFT — pre-stable v1 ontology. Property names, ranges, and structure may change before v1.0 stable release.
         Three-layer ontology for genomics:
@@ -1177,3 +1177,48 @@ genomics:SequencingTechnology  a owl:Class ; rdfs:label "Sequencing Technology"@
 genomics:LaboratoryCertification a owl:Class ; rdfs:label "Laboratory Certification"@en .
 genomics:FileFormat            a owl:Class ; rdfs:label "File Format"@en .
 genomics:DataProvenance        a owl:Class ; rdfs:label "Genomic Data Provenance"@en .
+
+# ============================================================================
+# Phenotypic Observation (v1-draft.0.4) — index-patient HPO profile
+# ============================================================================
+
+genomics:PhenotypicObservation a owl:Class ;
+    rdfs:label "Phenotypic Observation"@en ;
+    rdfs:comment "A single HPO-coded phenotypic feature observed in the index patient, captured outside the pedigree/variant context (e.g. during conversational phenotype intake). Supports negated findings (phenotype explicitly absent), essential for narrowing a differential. Provenance is typically cascade:SelfReported. Reuses genomics:hpoTerm for the HPO linkage."@en ;
+    owl:versionInfo "Added in genomics v1-draft.0.4" .
+
+genomics:PhenotypePresenceValue a owl:Class ;
+    rdfs:label "Phenotype Presence Value"@en ;
+    rdfs:comment "Closed enumeration: whether the phenotype is present, absent, or resolved."@en ;
+    owl:versionInfo "Added in genomics v1-draft.0.4" .
+
+genomics:Present  a owl:NamedIndividual, genomics:PhenotypePresenceValue ; rdfs:label "Present"@en .
+genomics:Absent   a owl:NamedIndividual, genomics:PhenotypePresenceValue ; rdfs:label "Absent"@en ;
+    rdfs:comment "Phenotype explicitly assessed and NOT present (negated finding)."@en .
+genomics:Resolved a owl:NamedIndividual, genomics:PhenotypePresenceValue ; rdfs:label "Resolved"@en .
+
+genomics:phenotypePresence a owl:ObjectProperty ;
+    rdfs:label "Phenotype Presence"@en ;
+    rdfs:domain genomics:PhenotypicObservation ;
+    rdfs:range genomics:PhenotypePresenceValue ;
+    owl:versionInfo "Added in genomics v1-draft.0.4" .
+
+genomics:phenotypeOnsetDate a owl:DatatypeProperty ;
+    rdfs:label "Phenotype Onset Date"@en ;
+    rdfs:comment "Calendar date the phenotype was first observed. Use genomics:phenotypeOnsetAge for age-based onset."@en ;
+    rdfs:domain genomics:PhenotypicObservation ;
+    rdfs:range xsd:date ;
+    owl:versionInfo "Added in genomics v1-draft.0.4" .
+
+genomics:phenotypeSeverity a owl:DatatypeProperty ;
+    rdfs:label "Phenotype Severity"@en ;
+    rdfs:comment "Optional HPO severity modifier: mild, moderate, severe, profound (HP:0012823 modifier space)."@en ;
+    rdfs:domain genomics:PhenotypicObservation ;
+    rdfs:range xsd:string ;
+    owl:versionInfo "Added in genomics v1-draft.0.4" .
+
+genomics:phenotypeNote a owl:DatatypeProperty ;
+    rdfs:label "Phenotype Note"@en ;
+    rdfs:domain genomics:PhenotypicObservation ;
+    rdfs:range xsd:string ;
+    owl:versionInfo "Added in genomics v1-draft.0.4" .

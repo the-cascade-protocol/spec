@@ -1,0 +1,173 @@
+# Cascade Evidence Vocabulary (Layer 2, cross-cutting) — v1-draft
+# Authored in spec/. Per draft policy (cf. genomics:, advisory:), NOT registered
+# in spec/VOCAB_VERSIONS until v1.0 graduation.
+
+@prefix evidence: <https://ns.cascadeprotocol.org/evidence/v1#> .
+@prefix cascade:  <https://ns.cascadeprotocol.org/core/v1#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+# ============================================================================
+# Ontology Metadata
+# ============================================================================
+
+<https://ns.cascadeprotocol.org/evidence/v1#> a owl:Ontology ;
+    dct:title "Cascade Protocol Evidence Vocabulary"@en ;
+    dct:description "Layer 2 cross-cutting vocabulary for grounding assertions in cited evidence with explicit verdicts."@en ;
+    dct:creator "Cascade Agentic Labs" ;
+    dct:created "2026-06-16"^^xsd:date ;
+    dct:modified "2026-06-16"^^xsd:date ;
+    owl:versionInfo "1.0-draft" ;
+    rdfs:comment "Generalizes the assertion -> evidence -> verdict pattern needed by Cascade Workbench (checking claims pulled from AI conversations against a patient's records and literature), the Cascade Appeal system (citing clinical evidence against policy criteria, cf. coverage:deniedClinicalContext), and PGx/genomics decision support. Reuses core provenance primitives (cascade:extractionModel, cascade:extractionConfidence, cascade:requiresUserReview, prov:wasDerivedFrom) rather than redefining them. Uses 'Assertion' (not 'Claim') to avoid collision with coverage:ClaimRecord. Draft: not in VOCAB_VERSIONS until v1.0 graduation."@en ;
+    rdfs:seeAlso <https://cascadeprotocol.org/docs/evidence/v1-draft/> .
+
+# ============================================================================
+# Classes
+# ============================================================================
+
+evidence:Assertion a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Assertion"@en ;
+    rdfs:comment "A discrete, checkable statement extracted from a source (e.g. an AI conversation) or entered by the user, evaluated against evidence in the Pod and/or literature. Carries exactly one verdict and zero-or-more evidence links. The extraction of an Assertion from its source SHOULD be recorded with a cascade:AIExtractionActivity; an assertion surfaced by a general-purpose AI assistant SHOULD carry cascade:dataProvenance cascade:AIAsserted."@en ;
+    owl:versionInfo "Added in evidence v1-draft.0.1" .
+
+evidence:EvidenceLink a owl:Class ;
+    rdfs:label "Evidence Link"@en ;
+    rdfs:comment "A reified link from an Assertion to one piece of evidence (a Pod record or an external Citation), carrying a stance (supports / contradicts / contextual). Modeled as a node so a single Assertion can carry multiple, differently-directed pieces of evidence. Pattern mirrors cascade:ConflictDetail."@en ;
+    owl:versionInfo "Added in evidence v1-draft.0.1" .
+
+evidence:Citation a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Citation"@en ;
+    rdfs:comment "An external bibliographic source (e.g. a research paper) used as evidence, identified by DOI and/or PMID. When retrieved into the Pod it is a first-class resource (recommended path literature/) so an evidence chip can resolve to it exactly as it resolves to a clinical record."@en ;
+    owl:versionInfo "Added in evidence v1-draft.0.1" .
+
+evidence:GroundingActivity a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Grounding Activity"@en ;
+    rdfs:comment "A PROV-O Activity representing the model pass that graded an Assertion against evidence and produced its verdict. Distinct from cascade:AIExtractionActivity (which extracts structured records from documents); grounding grades free-text assertions. Reuses cascade:extractionModel to record the model."@en ;
+    owl:versionInfo "Added in evidence v1-draft.0.1" .
+
+evidence:VerdictValue a owl:Class ;
+    rdfs:label "Verdict Value"@en ;
+    rdfs:comment "Closed enumeration of an Assertion's grounding verdict. Instances are the named individuals below."@en ;
+    owl:versionInfo "Added in evidence v1-draft.0.1" .
+
+evidence:StanceValue a owl:Class ;
+    rdfs:label "Stance Value"@en ;
+    rdfs:comment "Closed enumeration of the direction of an EvidenceLink. Instances are the named individuals below."@en ;
+    owl:versionInfo "Added in evidence v1-draft.0.1" .
+
+# ============================================================================
+# Named Individuals (enumerations)
+# ============================================================================
+
+evidence:Supported       a owl:NamedIndividual, evidence:VerdictValue ; rdfs:label "Supported"@en ;
+    rdfs:comment "The patient's records and/or literature substantiate the assertion."@en .
+evidence:Contradicted    a owl:NamedIndividual, evidence:VerdictValue ; rdfs:label "Contradicted"@en ;
+    rdfs:comment "The patient's records and/or literature directly conflict with the assertion."@en .
+evidence:Unverifiable    a owl:NamedIndividual, evidence:VerdictValue ; rdfs:label "Unverifiable"@en ;
+    rdfs:comment "No evidence available in the current Pod to support or refute. NOT a judgment that the assertion is false."@en .
+evidence:NeedsLiterature a owl:NamedIndividual, evidence:VerdictValue ; rdfs:label "Needs Literature"@en ;
+    rdfs:comment "Cannot be settled from the patient's records alone; requires external literature retrieval to grade."@en .
+
+evidence:Supports    a owl:NamedIndividual, evidence:StanceValue ; rdfs:label "Supports"@en .
+evidence:Contradicts a owl:NamedIndividual, evidence:StanceValue ; rdfs:label "Contradicts"@en .
+evidence:Contextual  a owl:NamedIndividual, evidence:StanceValue ; rdfs:label "Contextual"@en ;
+    rdfs:comment "Relevant background that neither supports nor refutes."@en .
+
+# ============================================================================
+# Properties — Assertion
+# ============================================================================
+
+evidence:assertionText a owl:DatatypeProperty ;
+    rdfs:label "assertion text"@en ;
+    rdfs:comment "The normalized, atomic statement being evaluated."@en ;
+    rdfs:domain evidence:Assertion ; rdfs:range xsd:string .
+
+evidence:verdict a owl:ObjectProperty ;
+    rdfs:label "verdict"@en ;
+    rdfs:domain evidence:Assertion ; rdfs:range evidence:VerdictValue .
+
+evidence:rationale a owl:DatatypeProperty ;
+    rdfs:label "rationale"@en ;
+    rdfs:comment "One-line plain-language explanation of the verdict."@en ;
+    rdfs:domain evidence:Assertion ; rdfs:range xsd:string .
+
+evidence:disconfirming a owl:DatatypeProperty ;
+    rdfs:label "disconfirming consideration"@en ;
+    rdfs:comment "A 'what would argue against this' consideration. Multiple permitted. Required by product design for any material assertion (anti-confirmation-bias)."@en ;
+    rdfs:domain evidence:Assertion ; rdfs:range xsd:string .
+
+evidence:hasEvidenceLink a owl:ObjectProperty ;
+    rdfs:label "has evidence link"@en ;
+    rdfs:domain evidence:Assertion ; rdfs:range evidence:EvidenceLink .
+
+evidence:groundedBy a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasGeneratedBy ;
+    rdfs:label "grounded by"@en ;
+    rdfs:comment "Links an Assertion to the GroundingActivity that produced its verdict."@en ;
+    rdfs:domain evidence:Assertion ; rdfs:range evidence:GroundingActivity .
+
+evidence:assertedAt a owl:DatatypeProperty ;
+    rdfs:label "asserted at"@en ;
+    rdfs:domain evidence:Assertion ; rdfs:range xsd:dateTime .
+
+# Reuse (NOT redefined here): cascade:extractionModel, cascade:extractionConfidence,
+# and cascade:requiresUserReview carry the extraction provenance of an Assertion.
+
+# ============================================================================
+# Properties — EvidenceLink
+# ============================================================================
+
+evidence:evidenceStance a owl:ObjectProperty ;
+    rdfs:label "evidence stance"@en ;
+    rdfs:domain evidence:EvidenceLink ; rdfs:range evidence:StanceValue .
+
+evidence:citesRecord a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:label "cites record"@en ;
+    rdfs:comment "Points to a Pod record (clinical:, health:, pots:, genomics: ...) used as evidence. Range intentionally open (rdfs:Resource) for cross-namespace linking, mirroring coverage:deniedClinicalContext."@en ;
+    rdfs:domain evidence:EvidenceLink ; rdfs:range rdfs:Resource .
+
+evidence:citesSource a owl:ObjectProperty ;
+    rdfs:label "cites source"@en ;
+    rdfs:comment "Points to an external Citation (research paper) used as evidence."@en ;
+    rdfs:domain evidence:EvidenceLink ; rdfs:range evidence:Citation .
+
+evidence:evidenceWeight a owl:DatatypeProperty ;
+    rdfs:label "evidence weight"@en ;
+    rdfs:comment "Optional 0.0-1.0 strength of this evidence link toward the verdict."@en ;
+    rdfs:domain evidence:EvidenceLink ; rdfs:range xsd:decimal .
+
+# ============================================================================
+# Properties — Citation
+# ============================================================================
+
+evidence:doi a owl:DatatypeProperty ; rdfs:label "DOI"@en ;
+    rdfs:domain evidence:Citation ; rdfs:range xsd:string .
+evidence:pmid a owl:DatatypeProperty ; rdfs:label "PMID"@en ;
+    rdfs:domain evidence:Citation ; rdfs:range xsd:string .
+evidence:citationTitle a owl:DatatypeProperty ; rdfs:label "title"@en ;
+    rdfs:domain evidence:Citation ; rdfs:range xsd:string .
+evidence:citationYear a owl:DatatypeProperty ; rdfs:label "year"@en ;
+    rdfs:domain evidence:Citation ; rdfs:range xsd:gYear .
+evidence:citationSourceName a owl:DatatypeProperty ; rdfs:label "source name"@en ;
+    rdfs:comment "Retrieval source, e.g. 'PubMed', 'Europe PMC'."@en ;
+    rdfs:domain evidence:Citation ; rdfs:range xsd:string .
+evidence:retrievedAt a owl:DatatypeProperty ; rdfs:label "retrieved at"@en ;
+    rdfs:domain evidence:Citation ; rdfs:range xsd:dateTime .
+
+# ============================================================================
+# Properties — GroundingActivity
+# ============================================================================
+
+evidence:groundingConfidence a owl:DatatypeProperty ;
+    rdfs:label "grounding confidence"@en ;
+    rdfs:comment "Model confidence in the produced verdict, [0.0, 1.0]."@en ;
+    rdfs:domain evidence:GroundingActivity ; rdfs:range xsd:decimal .
+# Reuses cascade:extractionModel to record which model performed the grounding.

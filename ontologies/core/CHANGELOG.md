@@ -1,5 +1,23 @@
 # Core Vocabulary Changelog
 
+## v3.3 - 2026-06-16
+
+Cascade Workbench support: ungrounded-AI provenance + caregiver-proxy.
+
+- Added `cascade:AIAsserted` (`owl:Class`, subClassOf `cascade:ConsumerGenerated`):
+  provenance leaf for content surfaced by a general-purpose AI assistant in a
+  patient-directed conversation. Safety primitive: marks `evidence:Assertion`
+  inputs as ungrounded-by-construction so they are never confused with
+  `cascade:AIExtracted` clinical data.
+- Added `cascade:ProxyAgent` (`owl:Class`, subClassOf `prov:Agent`) and properties
+  `actsForPatient`, `proxyWebID`, `proxyRelationship`, `proxyScope`,
+  `proxyGrantedAt`, `proxyRevokedAt`: caregiver-proxy actor (e.g. a parent
+  operating a minor child's Pod).
+- SHACL: `cascade:ProxyAgentShape` (requires actsForPatient, proxyRelationship,
+  proxyGrantedAt).
+- Downstream sync (cascade-cli, sdk-typescript, sdk-python, cascade-agent) pending
+  per the Vocabulary Change Checklist.
+
 ## v3.2 — 2026-05-06
 
 Forward-reference closure for the Phase 4 advisory applier.

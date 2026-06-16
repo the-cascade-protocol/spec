@@ -5,6 +5,21 @@ namespace is `https://ns.cascadeprotocol.org/genomics/v1#`. Pre-stable drafts
 (`v1-draft`) are not registered in `spec/VOCAB_VERSIONS` per D-PATH; they land
 there at v1.0 graduation.
 
+## v1-draft.0.4 - 2026-06-16
+
+Index-patient phenotype capture (for Cascade Workbench).
+
+- Added `genomics:PhenotypicObservation` (`owl:Class`): a single HPO-coded
+  phenotypic feature observed in the index patient, outside the
+  pedigree/variant context. Supports negated findings (phenotype explicitly
+  absent), essential for narrowing a differential.
+- Added enum `genomics:PhenotypePresenceValue` with individuals `Present`,
+  `Absent`, `Resolved`; properties `phenotypePresence`, `phenotypeOnsetDate`,
+  `phenotypeSeverity`, `phenotypeNote`.
+- Reuses existing `genomics:hpoTerm` (HPO linkage) and `cascade:dataProvenance`
+  (typically `cascade:SelfReported`). No change to existing terms.
+- SHACL: `genomics:PhenotypicObservationShape`.
+
 ## v1-draft.0.3 — 2026-05-06
 
 Two SHACL shape relaxations surfaced by the Phase 2/3 test-fixture review.
