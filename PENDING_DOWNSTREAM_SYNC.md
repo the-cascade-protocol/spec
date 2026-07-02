@@ -54,7 +54,39 @@ on the CLI shape sync; do it promptly only so `validate` documents the new term.
   - [ ] cascade-agent — query patterns
   - **Batchable:** yes (draft; open-world).
 
-### 2. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
+### 2. `evidence:` verdict taxonomy v2 facet model (draft) — authored, downstream pending
+
+- **Authored:** `spec/ontologies/evidence/v1-draft/evidence.ttl` +
+  `evidence.shapes.ttl` (`owl:versionInfo 1.0-draft.0.2`, `dct:modified
+  2026-07-01`, tag `vocab/evidence-v1-draft.0.2`). DONE.
+- **What it is:** the grounding outcome moves from the flat 4-value
+  `evidence:verdict` to orthogonal facets on the Assertion
+  (`evidence:direction` / `basis` / `strength` / `settled` / `reason` object
+  properties over closed enumerations, `evidence:confidence` xsd:decimal).
+  The facets are the canonical serialized form; the SHACL grounding invariant
+  is generalized (SHACL Core): a grounded result of EITHER basis requires
+  >= 1 evidence link, plus facet-consistency constraints. `evidence:verdict`
+  and the `VerdictValue` individuals are deprecated, kept one release.
+- **Code sync (already done in lockstep, not batched):**
+  `cascade-workbench/packages/contracts` (invariant + migration) and
+  `packages/claims` `reify()`; Workbench grounding-gate fixtures exercise the
+  new shapes against the real validator.
+- **Downstream:**
+  - [ ] cascadeprotocol.org — `sync-from-spec.sh`, HTML + `cascade-protocol-schemas.md`
+  - [ ] conformance — facet fixtures (grounded-without-link INVALID,
+        NeedsEvidence-with-grounded-direction INVALID, either-basis VALID);
+        interim copies live in `cascade-workbench/fixtures/grounding/`
+  - [ ] cascade-cli — embedded `evidence` shapes via `sync-shapes-from-spec.sh`
+        (Workbench passes its own synced copy via `--shapes` meanwhile)
+  - [ ] sdk-typescript / sdk-python — facet predicates + context
+  - [ ] cascade-agent — query patterns
+  - **Batchable:** yes (draft; open-world).
+- **At v1.0 graduation (do NOT batch-forget):** remove `evidence:verdict` +
+  the `VerdictValue` individuals and the legacy SHACL branch; make
+  `evidence:settled` `sh:minCount 1`; drop the derived legacy `Verdict` from
+  `@cascade-workbench/contracts`.
+
+### 3. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
 
 - **Status:** DEFERRED from the 2026-06-28 source-attribution work. The Apple
   Health authoritative-`sourceName` fix (importer reads `export.xml`
@@ -71,4 +103,4 @@ on the CLI shape sync; do it promptly only so `validate` documents the new term.
 
 ---
 
-_Last updated: 2026-06-28._
+_Last updated: 2026-07-01._
