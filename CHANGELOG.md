@@ -6,6 +6,14 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-07-15 — workbench v1-draft.0.5 (notes / flags / follow-ups as W3C Web Annotations)
+
+Caregiver notes, "needs research" flags, and follow-ups become ONE substrate: `oa:Annotation` over one or more graph nodes, distinguished by `oa:motivatedBy`, with required PROV-O attribution. Maximal Layer-1 reuse: span selectors from `oa:`, due date + status for follow-ups from W3C RDF Calendar (`ical:due` / `ical:status`, follow-ups dual-typed `cal:Vtodo`). Exactly one term minted: `workbench:followUp` (an `oa:Motivation`, `skos:broader oa:questioning`). `workbench:InvestigationNote` removed (draft; unshipped), superseded by the substrate. New Pod container `notes/` documented in `pod-structure.md` §5.2. SHACL Core shapes verified against `cascade validate` with positive + negative fixtures. Unblocks Workbench shell Phase 9 (notes grammar).
+
+Tag: `vocab/workbench-v1-draft.0.5` (applied after merge). See `ontologies/workbench/CHANGELOG.md`. Downstream propagation is BATCHED per `PENDING_DOWNSTREAM_SYNC.md` (row 4) together with the outstanding v1-draft rows.
+
+---
+
 ## 2026-05-06 — genomics v1-draft.0.3 (shape relaxations from test-fixture review)
 
 Two SHACL shape relaxations on `genomics/v1-draft`. No vocabulary additions; shapes only.

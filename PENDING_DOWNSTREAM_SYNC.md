@@ -86,7 +86,36 @@ on the CLI shape sync; do it promptly only so `validate` documents the new term.
   `evidence:settled` `sh:minCount 1`; drop the derived legacy `Verdict` from
   `@cascade-workbench/contracts`.
 
-### 3. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
+### 3. `workbench:` notes / flags / follow-ups as Web Annotations (draft) — authored, downstream pending
+
+- **Authored:** `spec/ontologies/workbench/v1-draft/workbench.ttl` +
+  `workbench.shapes.ttl` (`owl:versionInfo 1.0-draft.0.5`, `dct:modified
+  2026-07-15`, tag `vocab/workbench-v1-draft.0.5` after merge) +
+  `pod-structure.md` §5.2 `notes/` container. DONE.
+- **What it is:** [NOTES-ANNOTATION-VOCAB] — caregiver notes, research flags,
+  and follow-ups as ONE `oa:Annotation` substrate distinguished by
+  `oa:motivatedBy`; required PROV-O attribution; follow-ups dual-typed
+  `cal:Vtodo` with `ical:due` / `ical:status`. One minted term
+  (`workbench:followUp`). `InvestigationNote` removed (unshipped). Unblocks
+  Workbench shell Phase 9.
+- **Code sync (lockstep, not batched):** Workbench Phase 9 emits/reads these
+  under `notes/`; the contracts package drops the stale `InvestigationNote`
+  types in the same PR.
+- **Downstream:**
+  - [ ] cascadeprotocol.org — `sync-from-spec.sh`, HTML + `cascade-protocol-schemas.md`
+  - [ ] conformance — fixtures: valid commenting/questioning/followUp notes
+        (multi-target + selector-anchored + Vtodo); INVALID
+        followUp-without-status, commenting-without-body, floating annotation
+        (recreate from the shapes-verification set in the authoring PR)
+  - [ ] cascade-cli — embedded `workbench` shapes via `sync-shapes-from-spec.sh`
+        (open-world: Phase 9 can ship before this lands; sync promptly so
+        `cascade validate` enforces the note shapes by default)
+  - [ ] sdk-typescript / sdk-python — `oa:`/`ical:` predicates + namespaces
+  - [ ] cascade-agent — query patterns (`notes/` container, motivation filters)
+  - **Batchable:** yes (draft; open-world). No JSON-LD context yet (drafts get
+    contexts at v1.0 graduation, same as the other draft rows).
+
+### 4. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
 
 - **Status:** DEFERRED from the 2026-06-28 source-attribution work. The Apple
   Health authoritative-`sourceName` fix (importer reads `export.xml`
@@ -103,4 +132,4 @@ on the CLI shape sync; do it promptly only so `validate` documents the new term.
 
 ---
 
-_Last updated: 2026-07-01._
+_Last updated: 2026-07-15._

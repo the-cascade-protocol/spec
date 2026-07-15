@@ -371,6 +371,23 @@ wellness/
       test-{id}.ttl            # Individual pots:POTSTest results
 ```
 
+**Cascade Workbench** adds these directories (vocabulary: `workbench/v1-draft`):
+
+```
+notes/
+  {id}.ttl                    # oa:Annotation resources: user-authored notes,
+                              # research flags, and follow-ups over records,
+                              # claims, or investigations (workbench v1-draft.0.5;
+                              # W3C Web Annotation + PROV-O attribution; follow-ups
+                              # dual-typed cal:Vtodo with ical:due / ical:status)
+
+annotations/
+  {id}.ttl                    # workbench: append-only record-amendment overlays
+                              # (Amendment / Annotation / Retraction / Tombstone)
+                              # -- edit machinery, deliberately separate from the
+                              # user-authored content in notes/
+```
+
 **Hypothetical diabetes management app:**
 
 ```
