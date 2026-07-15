@@ -14,6 +14,22 @@ Tag: `vocab/workbench-v1-draft.0.5` (applied after merge). See `ontologies/workb
 
 ---
 
+## 2026-07-01 — evidence v1-draft.0.2 (verdict taxonomy v2: the facet model)
+
+The `evidence:` grounding outcome moves from the flat 4-value `evidence:verdict` to orthogonal **facets** on the Assertion: `evidence:direction` / `basis` / `strength` / `settled` / `reason` (object properties over new closed enumerations `DirectionValue` / `BasisValue` / `StrengthValue` / `SettledValue` / `NeedsEvidenceReasonValue`) plus `evidence:confidence` (`xsd:decimal`, [0,1]). The facets are the canonical serialized form. The generalized SHACL-Core grounding invariant: a grounded result (settled Settled, non-None direction, non-None basis) of EITHER basis requires at least one `evidence:hasEvidenceLink`, plus facet-consistency constraints (NeedsEvidence must not carry a grounded direction; a grounded direction requires a real basis). Some individuals are shared across facets (e.g. `Supports`/`Contradicts` are both `StanceValue` and `DirectionValue`; `None` is both `DirectionValue` and `BasisValue`; `NeedsLiterature` doubles as the deprecated `VerdictValue` and a `NeedsEvidenceReasonValue`). `evidence:verdict` and the `VerdictValue` individuals are **deprecated, not removed**, kept one release so draft-period data still validates; both are scheduled for removal at v1.0 graduation (see `PENDING_DOWNSTREAM_SYNC.md`).
+
+Tag: `vocab/evidence-v1-draft.0.2` (applied after merge). See `ontologies/evidence/CHANGELOG.md`. Downstream propagation is BATCHED per `PENDING_DOWNSTREAM_SYNC.md` (row 2), synced 2026-07-15 together with the outstanding v1-draft rows.
+
+---
+
+## 2026-06-28 — workbench v1-draft.0.4 (userSourceLabel filing axis)
+
+Adds the filing / organization axis to `workbench:`: `workbench:userSourceLabel` (`xsd:string`), the user-chosen label for the SOURCE a record is filed under in the Workbench "filing cabinet". It is a filing preference attributed to the user, carried on a `workbench:Annotation` overlay (`annotationProperty` = `"workbench:userSourceLabel"`, `annotationValue` = the chosen label) bearing `cascade:SelfReported` provenance. It MUST NOT overwrite the objective imported origin `clinical:sourceEHR`, which is preserved and displayed alongside; the effective grouping source prefers this label, else falls back to `clinical:sourceEHR` / the import-batch tag. Orthogonal axis with an open domain (mirroring `workbench:verificationStatus` in v1-draft.0.3), so it can file any record. No new SHACL shape: the overlay reuses the already-shaped `workbench:annotationProperty` / `workbench:annotationValue` string predicates.
+
+Tag: `vocab/workbench-v1-draft.0.4` (applied after merge). See `ontologies/workbench/CHANGELOG.md`. Downstream propagation is BATCHED per `PENDING_DOWNSTREAM_SYNC.md` (row 1), synced 2026-07-15 together with the outstanding v1-draft rows.
+
+---
+
 ## 2026-05-06 — genomics v1-draft.0.3 (shape relaxations from test-fixture review)
 
 Two SHACL shape relaxations on `genomics/v1-draft`. No vocabulary additions; shapes only.
