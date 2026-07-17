@@ -159,7 +159,9 @@ before this batch fires. Slice V1 of the graph-retrieval sequenced plan
 
 - [x] `spec/` — authored (this repo); `VOCAB_VERSIONS` `clinical=1.10`.
 - [x] `cascade-cli` — `sync-shapes-from-spec.sh` (embedded `clinical.ttl` +
-      `clinical.shapes.ttl`) + `VOCAB_VERSIONS` `clinical=1.10`. PR: `<CLI-PR>`.
+      `clinical.shapes.ttl`) + `VOCAB_VERSIONS` `clinical=1.10`. PR:
+      the-cascade-protocol/cascade-cli#21 (npm test 1034 green; fresh Synthea
+      import validates 20/20 clean against the new shapes).
 
 **Batched (do NOT execute now; run at the next batch, per CLAUDE.md checklist 2-7):**
 
