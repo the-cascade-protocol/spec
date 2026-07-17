@@ -6,6 +6,21 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-07-16: clinical v1.9 to v1.10 (graph edge vocabulary)
+
+Gives the importer traversable RDF for the relationships EHR sources carry but the pod has been flattening. Four authored changes to the released `clinical` vocabulary (slice V1 of the graph-retrieval sequenced plan; root backlog 3.12 and 3.11(d); blocks importer slice R3):
+
+- `clinical:hasEncounter` (ObjectProperty, range `clinical:Encounter`): the record-to-encounter edge for grouping clinical events by visit context. FHIR-aligned to the `.encounter` Reference(Encounter) element on Observation, MedicationRequest, Condition, Procedure, DiagnosticReport, DocumentReference. Broad domain, constrained by SHACL rather than a restrictive `rdfs:domain` union.
+- `clinical:indicationReference` (ObjectProperty, open range `rdfs:Resource`): the medication-to-condition indication edge, alongside the retained free-text `clinical:indication` / `clinical:reasonForUse` literals. FHIR-aligned to `MedicationRequest.reasonReference` (R4; `reason` CodeableReference in R5). Range left open because FHIR allows Condition or Observation.
+- `clinical:linkedCondition` (ObjectProperty, Condition to Condition) plus `owl:deprecated true` on `clinical:linkedConditionIds`. Replaces the space-separated-UUID literal wart with a real traversable edge; the old property is retained (not removed) for backward compatibility with existing Checkup data.
+- `clinical:hasLabResult` `rdfs:range` corrected from `clinical:LabResult` to `health:LabResultRecord`, matching the class both importer paths actually type panel members (root 3.11(d)). Non-breaking (no SHACL shape constrained the edge target). Surfaced a related gap: `health:LabResultRecord` is emitted by the importer but has no class definition in the health vocabulary, filed as a follow-up.
+
+Shapes: three open-world `sh:targetSubjectsOf` PropertyShapes (IRI nodeKind, class where the range is committed, `sh:Warning`, no `minCount`), so no pod current or future fails validation on account of these edges. JSON-LD context: the three ObjectProperties as `@type: @id`.
+
+Tag: `vocab/clinical-v1.10` (applied after merge). See the inline changelog in `ontologies/clinical/v1/clinical.ttl`. The `cascade-cli` shape sync ships promptly in its own PR so `cascade validate` knows the terms; the rest of the 7-repo checklist (docs site, conformance, both SDKs, agent) is BATCHED per `PENDING_DOWNSTREAM_SYNC.md` (Pending batch, clinical v1.10).
+
+---
+
 ## 2026-07-15 — workbench v1-draft.0.5 (notes / flags / follow-ups as W3C Web Annotations)
 
 Caregiver notes, "needs research" flags, and follow-ups become ONE substrate: `oa:Annotation` over one or more graph nodes, distinguished by `oa:motivatedBy`, with required PROV-O attribution. Maximal Layer-1 reuse: span selectors from `oa:`, due date + status for follow-ups from W3C RDF Calendar (`ical:due` / `ical:status`, follow-ups dual-typed `cal:Vtodo`). Exactly one term minted: `workbench:followUp` (an `oa:Motivation`, `skos:broader oa:questioning`). `workbench:InvestigationNote` removed (draft; unshipped), superseded by the substrate. New Pod container `notes/` documented in `pod-structure.md` §5.2. SHACL Core shapes verified against `cascade validate` with positive + negative fixtures. Unblocks Workbench shell Phase 9 (notes grammar).

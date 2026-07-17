@@ -2,6 +2,7 @@
   "@context": {
     "clinical": "https://ns.cascadeprotocol.org/clinical/v1#",
     "cascade": "https://ns.cascadeprotocol.org/core/v1#",
+    "health": "https://ns.cascadeprotocol.org/health/v1#",
     "fhir": "http://hl7.org/fhir/",
     "sct": "http://snomed.info/sct/",
     "loinc": "http://loinc.org/rdf#",
@@ -350,6 +351,19 @@
       "@id": "clinical:alcoholDrinksPerWeek",
       "@type": "xsd:decimal"
     },
-    "occupationTitle": "clinical:occupationTitle"
+    "occupationTitle": "clinical:occupationTitle",
+
+    "hasEncounter": {
+      "@id": "clinical:hasEncounter",
+      "@type": "@id"
+    },
+    "indicationReference": {
+      "@id": "clinical:indicationReference",
+      "@type": "@id"
+    },
+    "linkedCondition": {
+      "@id": "clinical:linkedCondition",
+      "@type": "@id"
+    }
   }
 }

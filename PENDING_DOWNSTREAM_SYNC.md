@@ -127,6 +127,62 @@ and `vocab/evidence-v1-draft.0.2` are applied on merge.
 
 ---
 
+## Pending batch — clinical v1.10 (authored 2026-07-16)
+
+Released-vocab change (`clinical` 1.9 to 1.10), tag `vocab/clinical-v1.10`. Per
+the seam table, `spec/` + the `cascade-cli` shape sync happen NOW (so `cascade
+validate` knows the terms); the rest of the 7-repo checklist BATCHES here and
+runs at the next release boundary. Open-world shapes mean the DATA can ship
+before this batch fires. Slice V1 of the graph-retrieval sequenced plan
+(root backlog 3.12 + 3.11(d)); it blocks importer slice R3.
+
+**What was authored (the four changes):**
+
+- `clinical:hasEncounter` ObjectProperty (range `clinical:Encounter`) — the
+  record-to-encounter edge. FHIR: the `.encounter` Reference(Encounter) element
+  on Observation/MedicationRequest/Condition/Procedure/DiagnosticReport/
+  DocumentReference.
+- `clinical:indicationReference` ObjectProperty (range `rdfs:Resource`, open) —
+  the medication-to-condition indication edge, alongside the retained free-text
+  `clinical:indication` / `clinical:reasonForUse`. FHIR: `MedicationRequest.reasonReference`.
+- `clinical:linkedCondition` ObjectProperty (Condition to Condition) plus
+  `owl:deprecated true` on `clinical:linkedConditionIds` (the space-separated
+  UUID literal it replaces; retained for backward compatibility).
+- `clinical:hasLabResult` `rdfs:range` corrected `clinical:LabResult` to
+  `health:LabResultRecord` (root 3.11(d)) to match what both importer paths
+  actually type.
+- Shapes: three open-world `sh:targetSubjectsOf` PropertyShapes (IRI nodeKind,
+  class where committed, `sh:Warning`, no minCount). JSON-LD context: the three
+  new ObjectProperties as `@type: @id`.
+
+**Synced NOW (not batched):**
+
+- [x] `spec/` — authored (this repo); `VOCAB_VERSIONS` `clinical=1.10`.
+- [x] `cascade-cli` — `sync-shapes-from-spec.sh` (embedded `clinical.ttl` +
+      `clinical.shapes.ttl`) + `VOCAB_VERSIONS` `clinical=1.10`. PR: `<CLI-PR>`.
+
+**Batched (do NOT execute now; run at the next batch, per CLAUDE.md checklist 2-7):**
+
+- [ ] `cascadeprotocol.org` — `sync-from-spec.sh`, HTML docs (`docs/clinical/v1/`
+      version refs, new property/shape sections, changelog entry) +
+      `cascade-protocol-schemas.md` heading/property-count/version-history +
+      `docs/index.html` clinical card badge; regenerate `llms-full.txt`.
+- [ ] `conformance` — fixtures for `hasEncounter` / `indicationReference` /
+      `linkedCondition` (VALID edge + INVALID non-IRI / wrong-class), plus a
+      `hasLabResult`→`health:LabResultRecord` range fixture; tag a release.
+- [ ] `sdk-typescript` — register the three predicates (`@type: @id`) + the
+      `health:LabResultRecord` range in the generated context; `VOCAB_VERSIONS`.
+- [ ] `sdk-python` — same predicates (snake + camel) + namespaces; `VOCAB_VERSIONS`.
+- [ ] `cascade-agent` — system-prompt query patterns for encounter-grouped
+      records, medication indications, and condition links; `VOCAB_VERSIONS`.
+
+**At the batch: `check-downstream-versions.sh` should report `clinical` drift
+(repo=1.9, spec=1.10) for cascadeprotocol.org, sdk-typescript, sdk-python,
+cascade-agent, conformance, and cascade-sdk-swift until each is brought current;
+cascade-cli reads 1.10 immediately after its shape-sync PR merges.**
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
@@ -138,12 +194,13 @@ and `vocab/evidence-v1-draft.0.2` are applied on merge.
 - **What it would be:** carry the raw source-system OID (e.g.
   `urn:oid:1.2.840.114350.1.13.296` = an Epic customer org) alongside the friendly
   `clinical:sourceEHR`, as supplementary provenance + a stable cross-export key for
-  reconciliation and the OID→org registry. `clinical:` is a RELEASED vocab (1.9),
-  so authoring it bumps `clinical` to 1.10 and triggers the CLI shape sync.
+  reconciliation and the OID→org registry. `clinical:` is a RELEASED vocab (now
+  1.10 after the edge-vocab batch above), so authoring it bumps `clinical` to
+  1.11 and triggers the CLI shape sync.
 - **Trigger to author:** a non-Apple import (raw FHIR / C-CDA with no Apple
   wrapper) needs OID-based attribution, OR the OID→org registry work begins.
 - **Downstream when authored:** full 7-repo checklist (released vocab).
 
 ---
 
-_Last updated: 2026-07-15._
+_Last updated: 2026-07-16._
