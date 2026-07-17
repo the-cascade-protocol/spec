@@ -185,6 +185,51 @@ cascade-cli reads 1.10 immediately after its shape-sync PR merges.**
 
 ---
 
+## Pending batch — clinical v1.11 (authored 2026-07-16)
+
+Released-vocab change (`clinical` 1.10 to 1.11), tag `vocab/clinical-v1.11`. A
+one-property vocabulary-correctness tweak, folded into the same v1.10 batch when
+it fires. Per the seam table, `spec/` + the `cascade-cli` shape sync happen NOW;
+the rest batches. Slice R3 of the graph-retrieval sequenced plan (root 3.11(b)).
+
+**What was authored (two changes):**
+
+- `clinical:indicationReference` — dropped the restrictive
+  `rdfs:domain clinical:Medication` in favor of the broad-domain comment + SHACL
+  pattern the other cross-class edges use. FHIR carries `reasonReference` on
+  Procedure / MedicationRequest / MedicationAdministration / Encounter, not only
+  medications; the R3 importer materializes indication edges from all three
+  wired resource types (Procedure is the common case in the Synthea specimen:
+  17 of 19). The `IndicationReferenceEdgeShape` was already domain-free.
+- Edge shapes `HasEncounterEdgeShape` + `LinkedConditionEdgeShape` — REMOVED
+  their `sh:class` constraints. Cascade stores records in per-type files and the
+  validator checks each file independently, so an edge to a sibling-file target
+  can never satisfy `sh:class`: it warned on every well-formed, fully-resolving
+  edge (all 181 hasEncounter edges of the specimen) and never caught a real
+  error. `sh:nodeKind sh:IRI` is kept; target class is enforced at import and can
+  be re-checked by a future pod-wide validator. This is what makes `cascade
+  validate` clean on a pod carrying the R3 edges.
+
+**Synced NOW (not batched):**
+
+- [x] `spec/` — authored (this repo); `VOCAB_VERSIONS` `clinical=1.11`.
+- [ ] `cascade-cli` — `sync-shapes-from-spec.sh` (embedded `clinical.ttl` +
+      `clinical.shapes.ttl`) + `VOCAB_VERSIONS` `clinical=1.11`. PR: (R3 branch).
+
+**Batched (do NOT execute now; fold into the clinical v1.10 batch above — same
+7 repos, same release boundary):**
+
+- [ ] `cascadeprotocol.org` — HTML docs + `cascade-protocol-schemas.md`: reflect
+      the widened `indicationReference` domain (broad, SHACL-constrained).
+- [ ] `conformance` — the `indicationReference` VALID fixture no longer needs a
+      `clinical:Medication` subject; add a Procedure-subject VALID edge fixture.
+- [ ] `sdk-typescript` / `sdk-python` — no predicate change (already registered
+      in the v1.10 batch); bump `VOCAB_VERSIONS` `clinical=1.11` with v1.10.
+- [ ] `cascade-agent` — indication query patterns already cover it; bump
+      `VOCAB_VERSIONS`.
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
@@ -197,8 +242,8 @@ cascade-cli reads 1.10 immediately after its shape-sync PR merges.**
   `urn:oid:1.2.840.114350.1.13.296` = an Epic customer org) alongside the friendly
   `clinical:sourceEHR`, as supplementary provenance + a stable cross-export key for
   reconciliation and the OID→org registry. `clinical:` is a RELEASED vocab (now
-  1.10 after the edge-vocab batch above), so authoring it bumps `clinical` to
-  1.11 and triggers the CLI shape sync.
+  1.11 after the edge-vocab + indication-domain batches above), so authoring it
+  bumps `clinical` to 1.12 and triggers the CLI shape sync.
 - **Trigger to author:** a non-Apple import (raw FHIR / C-CDA with no Apple
   wrapper) needs OID-based attribution, OR the OID→org registry work begins.
 - **Downstream when authored:** full 7-repo checklist (released vocab).
