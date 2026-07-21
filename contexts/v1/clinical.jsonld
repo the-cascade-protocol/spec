@@ -364,6 +364,10 @@
     "linkedCondition": {
       "@id": "clinical:linkedCondition",
       "@type": "@id"
+    },
+    "parsedIndicationReference": {
+      "@id": "clinical:parsedIndicationReference",
+      "@type": "@id"
     }
   }
 }
