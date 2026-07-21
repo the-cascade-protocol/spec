@@ -230,6 +230,56 @@ the rest batches. Slice R3 of the graph-retrieval sequenced plan (root 3.11(b)).
 
 ---
 
+## Pending batch — clinical v1.12 (authored 2026-07-20)
+
+Released-vocab change (`clinical` 1.11 to 1.12), tag `vocab/clinical-v1.12`. One
+new ObjectProperty, additive only. Per the seam table, `spec/` + the `cascade-cli`
+shape sync happen NOW; the rest batches with the v1.10/v1.11 rows above (same 7
+repos, same release boundary). Slice M1 of the graph-meaning plan.
+
+**What was authored (one property + its shape):**
+
+- `clinical:parsedIndicationReference` — `rdfs:subPropertyOf
+  clinical:indicationReference`, range `rdfs:Resource`. Marks an indication edge
+  the importer DERIVED by parsing a coded/free-text reason on a record (FHIR
+  `reasonCode`, or a `clinical:indication` / `clinical:reasonForUse` literal) and
+  matching it to a condition record in the same pod, as distinct from
+  `clinical:indicationReference` proper, which restates a `reasonReference` the
+  source explicitly carried. Subproperty modeling means one traversal over the
+  superproperty returns both families while the predicate carries the basis; no
+  reification, no RDF-star, so the edge stays a plain triple. Carries NO
+  confidence score by design: a deterministic parse of what the record says, not
+  structural/temporal inference (which stays query-time, per GM-Q2).
+- `ParsedIndicationReferenceEdgeShape` — warning-only, `sh:nodeKind sh:IRI`
+  only, no `sh:class`, matching `IndicationReferenceEdgeShape` and the v1.11
+  per-file-validation rationale (root 4.6a).
+
+Motivation (M1 Phase 0 census, counts only): a real provider export reached via
+Apple Health carried 0 `reasonReference` but 50 `reasonCode` instances on
+medication/procedure records, 25 of which resolve unambiguously to a condition
+record by exact coding identity. Those relations are dropped entirely today.
+
+**Synced NOW (not batched):**
+
+- [x] `spec/` — authored (this repo); `VOCAB_VERSIONS` `clinical=1.12`.
+- [ ] `cascade-cli` — `sync-shapes-from-spec.sh` (embedded `clinical.ttl` +
+      `clinical.shapes.ttl`) + `VOCAB_VERSIONS` `clinical=1.12`. PR: (M1 branch
+      `feat/graph-meaning-m1-literal-lifting`).
+
+**Batched (do NOT execute now; fold into the clinical v1.10/v1.11 batch above):**
+
+- [ ] `cascadeprotocol.org` — HTML docs + `cascade-protocol-schemas.md`: document
+      the stated-vs-parsed indication distinction and the subproperty relation.
+- [ ] `conformance` — add a VALID `parsedIndicationReference` edge fixture
+      (medication subject to condition target) alongside the v1.11 fixtures.
+- [ ] `sdk-typescript` / `sdk-python` — register the new predicate; bump
+      `VOCAB_VERSIONS` `clinical=1.12`.
+- [ ] `cascade-agent` — teach the indication query pattern that the parsed
+      variant exists and must be labeled differently in answers; bump
+      `VOCAB_VERSIONS`.
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
@@ -250,4 +300,4 @@ the rest batches. Slice R3 of the graph-retrieval sequenced plan (root 3.11(b)).
 
 ---
 
-_Last updated: 2026-07-16._
+_Last updated: 2026-07-20._
