@@ -6,6 +6,12 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-01: The open-world read/write contract ratified as D-OPENWORLD-1
+
+Second `decisions/` entry, prompted by jayostis/spec#32 (ASK-03). One sentence of it: preservation beats policing at the write boundary — writers write every present key, readers round-trip what they cannot name, `validate()` reports rather than refuses, and `sh:closed` stays out because records deliberately layer vocabularies. See `decisions/2026-09-01-open-world-read-write.md`.
+
+---
+
 ## 2026-09-01: Consent architecture ratified as D-CONSENT-1 (pod-structure 1.4, first decisions/ entry)
 
 No vocabulary change yet. An external contributor's archaeology (jayostis/spec#20) found three half-built, apparently conflicting statements about where consent lives, and correctly refused to build against any of them. The answer is recorded in `decisions/2026-09-01-consent-architecture.md` — the first entry in a new `decisions/` directory, created because the contributor did careful work and still reconstructed the history backwards: the design intent lived in private repositories. Decisions of this kind are now recorded in the public authority repo.
