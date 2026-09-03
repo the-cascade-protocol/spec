@@ -6,6 +6,12 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-03: The published SDK loads in a browser, ratified as D-BROWSER-1
+
+Third `decisions/` entry. No vocabulary change. The TypeScript SDK's browser-safety requirement existed (sdk-typescript#10) but was written nowhere a guard would see it, was already violated upstream by a `node:crypto` import on the package barrel, and the derive-from-spec proposal (jayostis/sdk-typescript#89) built its parser loading on the opposite premise (`createRequire` + CommonJS `require()`, unbundleable). Ratified: the public entry point MUST bundle and run for a browser target; vendoring stays welcome in an ESM build with static imports; Node-only functionality lives behind a separate entry point; a browser-bundle CI gate is required and becomes a merge gate for the epic. See `decisions/2026-09-03-browser-safety.md`.
+
+---
+
 ## 2026-09-03: Three of the seven published contexts were not JSON-LD
 
 No vocabulary change: no term is added, removed or renamed, and no shape moves. Eight keys are removed from three files under `contexts/v1/`, and a check is added so the class cannot recur.
