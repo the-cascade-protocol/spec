@@ -14,6 +14,13 @@ name: shapes
 #     is an EMPTY result set and a nested sh:Warning is therefore re-reported as
 #     a Violation on the referring shape. clinical v1.16 shipped that defect on
 #     six document classes; clinical v1.17 fixed it and added the check.
+#
+#  3. PUBLISHED CONTEXTS ARE JSON-LD: every file under contexts/v1/ must be
+#     accepted by the reference processor (jsonld.js). Three of seven carried
+#     prose-valued keys for months and were refused in their entirety by any
+#     conformant consumer (jayostis/spec#48); every in-house reader was
+#     hand-rolled and read past them. The oracle is the processor, not a rule
+#     written here.
 
 on:
   push:
@@ -27,6 +34,11 @@ on:
       - 'scripts/test-check-nested-severity.sh'
       - 'scripts/nested-severity-baseline.json'
       - 'scripts/requirements.txt'
+      - 'contexts/**'
+      - 'scripts/check-contexts.mjs'
+      - 'scripts/test-check-contexts.sh'
+      - 'scripts/package.json'
+      - 'scripts/package-lock.json'
       - '.github/workflows/shapes.yml'
   workflow_dispatch:
 
@@ -73,3 +85,26 @@ jobs:
 
       - name: Nested-shape severity check
         run: python3 scripts/check-nested-severity.py
+
+  published-contexts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the reference JSON-LD processor
+        run: npm ci --prefix scripts
+
+      # Negative controls reintroduce a prose-valued term into a scratch copy and
+      # require a refusal that names the file and the term, and treat a missing
+      # processor or an empty directory as a hard error, so a check that has
+      # stopped being able to fail is caught here rather than by the first
+      # conformant consumer.
+      - name: Regression suite (check + negative controls)
+        run: sh scripts/test-check-contexts.sh
+
+      - name: Published contexts are accepted by jsonld.js
+        run: node scripts/check-contexts.mjs

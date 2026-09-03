@@ -1,0 +1,8 @@
+{
+  "name": "cascade-spec-checks",
+  "private": true,
+  "description": "Node dependencies for this repository's own checks. jsonld.js is the reference JSON-LD processor and the oracle for check-contexts.mjs; nothing here is published.",
+  "devDependencies": {
+    "jsonld": "9.0.0"
+  }
+}

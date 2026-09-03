@@ -6,6 +6,18 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-03: Three of the seven published contexts were not JSON-LD
+
+No vocabulary change: no term is added, removed or renamed, and no shape moves. Eight keys are removed from three files under `contexts/v1/`, and a check is added so the class cannot recur.
+
+**A conformant processor refused `cascade.jsonld`, `core.jsonld` and `health.jsonld` in their entirety.** Each carried keys written as section dividers or release notes — `"__comment_core": "=== Core Vocabulary (cascade:) ==="`, `"_comment_v3_4": "core v3.4 — pod export manifest ..."`, eight in all. A term definition's value must be an IRI, a compact IRI or a keyword; prose is none of those, and the JSON-LD algorithms treat one invalid term definition as an invalid context, not as one bad entry. Every in-house consumer of these files is hand-rolled and read straight past the keys, so the defect was invisible from inside for as long as the keys existed. It was found by an external contributor (jayostis/spec#48) running the reference implementation, and reproduced here against jsonld.js 9.0.0 before the fix: the three files refused with `invalid IRI mapping`, the other four accepted.
+
+**The eight keys are deleted rather than re-keyed.** Six were dividers, redundant against the files' own structure; two were release notes, redundant against the ontology changelogs. Re-keying to an `@`-prefixed name is not available — `@` names are reserved keywords and an unknown one is itself an error — and there is no comment syntax in JSON-LD to move them to.
+
+**The check is the processor, not an approximation of it.** `scripts/check-contexts.mjs` expands a probe document under each published context with jsonld.js and fails on any refusal, naming the file and the term. This is the first Node-based check in a Python-scripted repository, deliberately: the reference implementation is the oracle that produced the finding, and a structural rule maintained here could disagree with it in either direction. Its regression suite reintroduces the prose key into a scratch copy and requires a named refusal, and treats a missing processor or an empty directory as a hard error rather than a green. The job runs in `shapes.yml`.
+
+---
+
 ## 2026-09-01: The open-world read/write contract ratified as D-OPENWORLD-1
 
 Second `decisions/` entry, prompted by jayostis/spec#32 (ASK-03). One sentence of it: preservation beats policing at the write boundary — writers write every present key, readers round-trip what they cannot name, `validate()` reports rather than refuses, and `sh:closed` stays out because records deliberately layer vocabularies. See `decisions/2026-09-01-open-world-read-write.md`.
