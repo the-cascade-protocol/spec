@@ -9,7 +9,7 @@ A context is a published artefact that MUST agree with them: a context that
 disagrees is the defect, never the ontology. That is D-CONTEXT-1 C1, and this
 check is what makes it a gate rather than a sentence.
 
-Three questions are asked of every term in the six per-vocabulary contexts under
+Four questions are asked of every term in the six per-vocabulary contexts under
 contexts/v1/ (core, health, clinical, coverage, checkup, pots):
 
   1. DECLARED. The term's @id, expanded through the context's own prefixes, is a
@@ -38,6 +38,33 @@ contexts/v1/ (core, health, clinical, coverage, checkup, pots):
   3. CONTAINER AGREES WITH CARDINALITY. A path a shape constrains to
      sh:maxCount 1 must not be published with "@container": "@set" or "@list".
      The context would invite a consumer to write an array the shapes reject.
+
+     THE rdf:List EXCEPTION. A property whose rdfs:range is rdf:List published
+     with "@container": "@list" is NOT a finding, and sh:maxCount 1 on its path
+     is correct rather than a contradiction. An RDF list is ONE node: the
+     property has a single value, the head of the list, and the members hang off
+     that node through rdf:first / rdf:rest. "@container": "@list" is precisely
+     the JSON-LD instruction to build that one node from a JSON array, so the
+     array in the JSON and the single value in the graph are the same fact seen
+     from two sides. cascade:involvedResources and health:monitoredVitalSigns
+     are the two paths this describes; both declare rdfs:range rdf:List and both
+     are capped at one value by their shapes, which is what an ordered list
+     requires. The exception is deliberately narrow: "@container": "@set" on an
+     rdf:List range IS still reported, because @set means several values of the
+     property itself, that is several separate list heads, which sh:maxCount 1
+     does reject.
+
+  4. THE KEY IS THE LOCAL NAME. The JSON key must equal the local name of the
+     predicate or class its @id expands to, the part after the '#' or the last
+     '/'. That is D-CONTEXT-1 C2 stated as a gate: a JSON key is the local name
+     of its predicate, and no implementation invents or renames keys. The keys
+     that fail it today are all the same shape, a vocabulary prefix glued to the
+     front of the real local name to disambiguate a collision by hand
+     (healthTrendDirection for health:trendDirection, coverageMemberId for
+     coverage:memberId), which is exactly the renaming strategy D-CONTEXT-1
+     rejected in favour of type-scoping. The gate lands before the renames so
+     that no NEW key of that shape can be added while the existing ones are
+     worked through; every one that exists at the time of writing is baselined.
 
 WHAT THIS CHECK IS NOT: it is not a JSON-LD processor. scripts/check-contexts.mjs
 already answers "is this file a context at all" with the reference processor as
@@ -95,6 +122,7 @@ except ImportError:  # pragma: no cover - environment guard
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 XSD = "http://www.w3.org/2001/XMLSchema#"
+RDF_LIST = "http://www.w3.org/1999/02/22-rdf-syntax-ns#List"
 CASCADE_NS_PREFIX = "https://ns.cascadeprotocol.org/"
 
 VOCABS = ("core", "health", "clinical", "coverage", "checkup", "pots")
@@ -146,6 +174,7 @@ CLASS_DATATYPE_MISMATCH = "datatype-mismatch"
 CLASS_ENUM_NOT_VOCAB = "enumeration-not-vocab"
 CLASS_STRUCTURED = "structured-term-unscoped"
 CLASS_CONTAINER = "container-vs-cardinality"
+CLASS_KEY_MISMATCH = "key-not-local-name"
 
 FINDING_CLASSES = (
     CLASS_UNDECLARED,
@@ -156,6 +185,7 @@ FINDING_CLASSES = (
     CLASS_ENUM_NOT_VOCAB,
     CLASS_STRUCTURED,
     CLASS_CONTAINER,
+    CLASS_KEY_MISMATCH,
 )
 
 
@@ -177,6 +207,16 @@ def qname(iri):
         if text.startswith(ns):
             return "%s:%s" % (prefix, text[len(ns):])
     return "<%s>" % text
+
+
+def local_name(iri):
+    """The local part of an IRI: what follows the '#', else the last '/'."""
+    text = str(iri)
+    if "#" in text:
+        return text.rsplit("#", 1)[1]
+    if "/" in text:
+        return text.rsplit("/", 1)[1]
+    return ""
 
 
 def vocab_of(iri):
@@ -427,6 +467,18 @@ def check_context(name, ctx, graphs, shaped, single_paths, open_paths):
                  'context says @id "%s", which no prefix in this context expands' % raw_id)
             continue
 
+        # --- 4. The key is the local name (D-CONTEXT-1 C2) --------------------
+        # Asked of every term whose @id expands, Cascade or external: a key that
+        # is not its predicate's local name is a rename, and D-CONTEXT-1 C2 says
+        # no implementation renames. Reported and carried on; a renamed key can
+        # still disagree about its range and its container.
+        expected_key = local_name(iri)
+        if expected_key and expected_key != term:
+            note(term, CLASS_KEY_MISMATCH,
+                 'context key "%s" is not the local name of %s, which is "%s" '
+                 "(D-CONTEXT-1 C2: a JSON key is the local name of its predicate)"
+                 % (term, qname(iri), expected_key))
+
         term_vocab = vocab_of(iri)
         declared = declared_kind(graphs, iri)
 
@@ -498,7 +550,12 @@ def check_context(name, ctx, graphs, shaped, single_paths, open_paths):
                             ('"@type": "%s"' % ctx_type) if ctx_type else "no @type"))
 
         # --- 3. Container agrees with cardinality -----------------------------
-        if ctx_container in CONTAINERS and iri in single_paths:
+        # An rdf:List range published as "@container": "@list" is the exception:
+        # the list is ONE node whose members hang off it, so sh:maxCount 1 on the
+        # path is what an ordered list requires rather than a contradiction.
+        # "@set" on the same range stays a finding: it means several list heads.
+        list_ranged = RDF_LIST in ranges and ctx_container == "@list"
+        if ctx_container in CONTAINERS and iri in single_paths and not list_ranged:
             owners = sorted(single_paths[iri])
             others = sorted(open_paths.get(iri, set()))
             detail = ("shapes constrain this path to sh:maxCount 1 (%s); context says "

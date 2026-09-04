@@ -13,6 +13,14 @@
 # shapes constrain to one value. All four are present in the contexts as
 # published and were found by hand, one issue at a time.
 #
+# Two rules have exceptions or edges worth pinning in both directions. The
+# container rule does not apply to an rdf:List range published as
+# "@container": "@list", because a list is ONE node and sh:maxCount 1 on its
+# path is what an ordered list requires; cases 12 to 14 pin that the exception
+# holds, that it does not stretch to "@set" on the same path, and that a
+# genuine "@set" on a maxCount-1 non-list path is still reported. The
+# key-not-local-name rule (D-CONTEXT-1 C2) is pinned by case 15.
+#
 # Every assertion is paired with a negative control that REINTRODUCES the defect
 # into a scratch copy of contexts/v1 and requires a failure NAMING the term and
 # the finding class. The baseline is tested in both directions: an unlisted
@@ -239,7 +247,76 @@ fi
 
 # ---------------------------------------------------------------------------
 echo ""
-echo "12. Hard-error control: an empty contexts directory must not pass"
+echo "12. The rdf:List exception holds: @list on an rdf:List range is no finding"
+
+# cascade:involvedResources declares rdfs:range rdf:List and its shape caps the
+# path at sh:maxCount 1, which is correct: the list is one node whose members
+# hang off it, and "@container": "@list" is the instruction to build that node
+# from a JSON array. Listing it as a container-vs-cardinality finding therefore
+# describes a disagreement that does not occur, and must fail as stale. Written
+# this way, against the published context rather than by repairing a term, so
+# that no later context fix can make it vacuous.
+DIR="$(scratch list-exception)"
+baseline_add "$DIR" "core.jsonld:involvedResources:container-vs-cardinality"
+run "$DIR"
+if [ $STATUS -eq 0 ]; then
+  fail "an rdf:List range with @list is not a container finding" \
+    "check PASSED; the baseline still lists core.jsonld:involvedResources:container-vs-cardinality"
+elif echo "$OUT" | grep -q "no longer occur" &&
+     echo "$OUT" | grep -q "core.jsonld:involvedResources:container-vs-cardinality"; then
+  pass "an rdf:List range published with @list produces no container finding"
+else
+  fail "an rdf:List range with @list is not a container finding" "$(echo "$OUT" | tail -20)"
+fi
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "13. The rdf:List exception is narrow: @set on the same path still fails"
+
+# "@set" means several values of the property itself, that is several separate
+# list heads, which sh:maxCount 1 does reject. The exception must not stretch
+# from "@list" to "@container" in general.
+DIR="$(scratch list-exception-set)"
+edit "$DIR" core.jsonld \
+  'c["involvedResources"] = {"@id": "cascade:involvedResources", "@container": "@set"}'
+expect_finding "@set on an rdf:List path is still reported" \
+  "$DIR" involvedResources container-vs-cardinality
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "14. A genuine @set on a maxCount-1 non-list path is still reported"
+
+# health:bloodType has rdfs:range xsd:string, not rdf:List, and its shape caps
+# the path at one value. Nothing about the rdf:List exception may reach it.
+DIR="$(scratch container-nonlist)"
+edit "$DIR" health.jsonld \
+  'c["bloodType"] = {"@id": "health:bloodType", "@type": "xsd:string", "@container": "@set"}'
+expect_finding "a container on a maxCount-1 non-list path is reported" \
+  "$DIR" bloodType container-vs-cardinality
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "15. Negative control: a key that is not its predicate's local name"
+
+# D-CONTEXT-1 C2: a JSON key is the local name of its predicate, and no
+# implementation invents or renames keys. The failure must name both halves,
+# the key as written and the local name it should have been.
+DIR="$(scratch key-local-name)"
+edit "$DIR" health.jsonld 'c["healthBodyMass"] = "health:bodyMass"'
+run "$DIR"
+if [ $STATUS -eq 0 ]; then
+  fail "a renamed key is reported by key and local name" \
+    "check PASSED; it should have reported healthBodyMass [key-not-local-name]"
+elif echo "$OUT" | grep -q "healthBodyMass:key-not-local-name" &&
+     echo "$OUT" | grep -q '"bodyMass"'; then
+  pass "a renamed key is reported, naming the key and the local name"
+else
+  fail "a renamed key is reported by key and local name" "$(echo "$OUT" | tail -20)"
+fi
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "16. Hard-error control: an empty contexts directory must not pass"
 
 DIR="$WORK/empty"
 mkdir -p "$DIR/contexts"
@@ -253,7 +330,7 @@ fi
 
 # ---------------------------------------------------------------------------
 echo ""
-echo "13. Hard-error control: a root with no ontologies must not pass"
+echo "17. Hard-error control: a root with no ontologies must not pass"
 
 DIR="$(scratch no-ontologies)"
 OUT="$(CONTEXTS_DIR="$DIR/contexts" CONTEXT_AGREEMENT_BASELINE="$DIR/baseline.json" \
@@ -267,7 +344,7 @@ fi
 
 # ---------------------------------------------------------------------------
 echo ""
-echo "14. Hard-error control: a missing baseline must not pass"
+echo "18. Hard-error control: a missing baseline must not pass"
 
 DIR="$(scratch no-baseline)"
 rm -f "$DIR/baseline.json"
