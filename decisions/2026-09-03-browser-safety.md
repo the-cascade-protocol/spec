@@ -35,7 +35,10 @@ argument for landing importers in this SDK both depend on this property.
   `require()`, and vendored code that itself requires Node builtins (`require("buffer")`).
 - **Allowed with care:** APIs that exist in both environments (`crypto.subtle`, `TextEncoder`,
   `fetch`). Where Node offers a convenience the browser lacks (`node:crypto`'s `createHash`),
-  the shared API is used, not a shim.
+  the shared API is used where one exists; where the browser API is async-only
+  (`crypto.subtle`) and the SDK's API is synchronous, a small vendored pure-JS implementation
+  with identical output is used instead, so identity stays synchronous, aligned with the cli
+  and the desktop app.
 - **Vendoring is allowed** and the current vendored parser is welcome, in its ESM build with
   static imports so a bundler can see it. The problem in PR #89 is the loading mechanism, not
   the decision to vendor.
