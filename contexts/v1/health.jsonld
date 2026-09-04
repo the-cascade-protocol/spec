@@ -58,7 +58,10 @@
       "@id": "health:vo2Max",
       "@type": "xsd:double"
     },
-    "walkingSteadiness": "health:walkingSteadiness",
+    "walkingSteadiness": {
+      "@id": "health:walkingSteadiness",
+      "@type": "xsd:string"
+    },
     "bodyMass": {
       "@id": "health:bodyMass",
       "@type": "xsd:double"
@@ -83,7 +86,10 @@
       "@id": "health:bloodGlucose",
       "@type": "xsd:double"
     },
-    "bloodType": "health:bloodType",
+    "bloodType": {
+      "@id": "health:bloodType",
+      "@type": "xsd:string"
+    },
     "averageDailySteps": {
       "@id": "health:averageDailySteps",
       "@type": "xsd:integer"
@@ -104,7 +110,10 @@
       "@id": "health:averageDurationHours",
       "@type": "xsd:decimal"
     },
-    "sleepQuality": "health:sleepQuality",
+    "sleepQuality": {
+      "@id": "health:sleepQuality",
+      "@type": "xsd:string"
+    },
     "restingHeartRateHistory": {
       "@id": "health:restingHeartRateHistory",
       "@type": "@id"
@@ -141,10 +150,22 @@
       "@id": "health:reportDate",
       "@type": "xsd:dateTime"
     },
-    "reportType": "health:reportType",
-    "completionStatus": "health:completionStatus",
-    "reportContext": "health:reportContext",
-    "reportNotes": "health:reportNotes",
+    "reportType": {
+      "@id": "health:reportType",
+      "@type": "xsd:string"
+    },
+    "completionStatus": {
+      "@id": "health:completionStatus",
+      "@type": "xsd:string"
+    },
+    "reportContext": {
+      "@id": "health:reportContext",
+      "@type": "xsd:string"
+    },
+    "reportNotes": {
+      "@id": "health:reportNotes",
+      "@type": "xsd:string"
+    },
     "vo2Mean": {
       "@id": "health:vo2Mean",
       "@type": "xsd:double"
@@ -165,12 +186,18 @@
       "@id": "health:vo2DaysCovered",
       "@type": "xsd:integer"
     },
-    "vo2TrendDirection": "health:vo2TrendDirection",
+    "vo2TrendDirection": {
+      "@id": "health:vo2TrendDirection",
+      "@type": "xsd:string"
+    },
     "vo2PercentageChange": {
       "@id": "health:vo2PercentageChange",
       "@type": "xsd:double"
     },
-    "fitnessClassification": "health:fitnessClassification",
+    "fitnessClassification": {
+      "@id": "health:fitnessClassification",
+      "@type": "xsd:string"
+    },
     "isSparseData": {
       "@id": "health:isSparseData",
       "@type": "xsd:boolean"
@@ -219,7 +246,10 @@
       "@id": "health:hrvPercentile75",
       "@type": "xsd:double"
     },
-    "hrvTrendDirection": "health:hrvTrendDirection",
+    "hrvTrendDirection": {
+      "@id": "health:hrvTrendDirection",
+      "@type": "xsd:string"
+    },
     "bpSampleCount": {
       "@id": "health:bpSampleCount",
       "@type": "xsd:integer"
@@ -248,12 +278,18 @@
       "@id": "health:bpMaxDiastolic",
       "@type": "xsd:double"
     },
-    "bpCategory": "health:bpCategory",
+    "bpCategory": {
+      "@id": "health:bpCategory",
+      "@type": "xsd:string"
+    },
     "trendMetric": {
       "@id": "health:trendMetric",
       "@type": "@id"
     },
-    "healthTrendDirection": "health:trendDirection",
+    "healthTrendDirection": {
+      "@id": "health:trendDirection",
+      "@type": "xsd:string"
+    },
     "trendMagnitude": {
       "@id": "health:trendMagnitude",
       "@type": "xsd:decimal"
@@ -274,7 +310,10 @@
       "@id": "health:trendCurrentValue",
       "@type": "xsd:decimal"
     },
-    "trendConfidence": "health:trendConfidence",
+    "trendConfidence": {
+      "@id": "health:trendConfidence",
+      "@type": "xsd:string"
+    },
     "trendSource": {
       "@id": "health:trendSource",
       "@type": "@id"
@@ -307,45 +346,138 @@
     "BodyMeasurements": "health:BodyMeasurements",
     "SleepQuality": "health:SleepQuality",
 
-    "notes": "health:notes",
-    "sourceRecordId": "health:sourceRecordId",
-    "status": "health:status",
-    "onsetDate": "health:onsetDate",
-    "conditionName": "health:conditionName",
+    "notes": {
+      "@id": "health:notes",
+      "@type": "xsd:string"
+    },
+    "sourceRecordId": {
+      "@id": "health:sourceRecordId",
+      "@type": "xsd:string"
+    },
+    "status": {
+      "@id": "health:status",
+      "@type": "xsd:string"
+    },
+    "onsetDate": {
+      "@id": "health:onsetDate",
+      "@type": "xsd:dateTime"
+    },
+    "conditionName": {
+      "@id": "health:conditionName",
+      "@type": "xsd:string"
+    },
 
-    "testName": "health:testName",
-    "resultValue": "health:resultValue",
-    "resultUnit": "health:resultUnit",
-    "interpretation": "health:interpretation",
-    "interpretationSourceCode": "health:interpretationSourceCode",
-    "performedDate": "health:performedDate",
-    "reportedDate": "health:reportedDate",
+    "testName": {
+      "@id": "health:testName",
+      "@type": "xsd:string"
+    },
+    "resultValue": {
+      "@id": "health:resultValue",
+      "@type": "xsd:string"
+    },
+    "resultUnit": {
+      "@id": "health:resultUnit",
+      "@type": "xsd:string"
+    },
+    "interpretation": {
+      "@id": "health:interpretation",
+      "@type": "xsd:string"
+    },
+    "interpretationSourceCode": {
+      "@id": "health:interpretationSourceCode",
+      "@type": "xsd:string"
+    },
+    "performedDate": {
+      "@id": "health:performedDate",
+      "@type": "xsd:dateTime"
+    },
+    "reportedDate": {
+      "@id": "health:reportedDate",
+      "@type": "xsd:dateTime"
+    },
     "testCode": { "@id": "health:testCode", "@type": "@id", "@container": "@set" },
-    "labCategory": { "@id": "health:labCategory", "@container": "@set" },
-    "referenceRange": "health:referenceRange",
-    "specimenType": "health:specimenType",
-    "orderingProvider": "health:orderingProvider",
-    "performingLab": "health:performingLab",
+    "labCategory": { "@id": "health:labCategory", "@type": "xsd:string", "@container": "@set" },
+    "referenceRange": {
+      "@id": "health:referenceRange",
+      "@type": "xsd:string"
+    },
+    "specimenType": {
+      "@id": "health:specimenType",
+      "@type": "xsd:string"
+    },
+    "orderingProvider": {
+      "@id": "health:orderingProvider",
+      "@type": "xsd:string"
+    },
+    "performingLab": {
+      "@id": "health:performingLab",
+      "@type": "xsd:string"
+    },
 
     "icd10Code": { "@id": "health:icd10Code", "@type": "@id", "@container": "@set" },
-    "conditionClass": "health:conditionClass",
+    "conditionClass": {
+      "@id": "health:conditionClass",
+      "@type": "xsd:string"
+    },
     "monitoredVitalSigns": { "@id": "health:monitoredVitalSigns", "@container": "@list" },
 
-    "allergen": "health:allergen",
-    "allergyCategory": "health:allergyCategory",
-    "reaction": "health:reaction",
-    "allergySeverity": "health:allergySeverity",
+    "allergen": {
+      "@id": "health:allergen",
+      "@type": "xsd:string"
+    },
+    "allergyCategory": {
+      "@id": "health:allergyCategory",
+      "@type": "xsd:string"
+    },
+    "reaction": {
+      "@id": "health:reaction",
+      "@type": "xsd:string"
+    },
+    "allergySeverity": {
+      "@id": "health:allergySeverity",
+      "@type": "xsd:string"
+    },
 
-    "vaccineName": "health:vaccineName",
-    "administrationDate": "health:administrationDate",
-    "vaccineCode": "health:vaccineCode",
-    "manufacturer": "health:manufacturer",
-    "lotNumber": "health:lotNumber",
-    "doseQuantity": "health:doseQuantity",
-    "route": "health:route",
-    "site": "health:site",
-    "administeringProvider": "health:administeringProvider",
-    "administeringLocation": "health:administeringLocation",
+    "vaccineName": {
+      "@id": "health:vaccineName",
+      "@type": "xsd:string"
+    },
+    "administrationDate": {
+      "@id": "health:administrationDate",
+      "@type": "xsd:dateTime"
+    },
+    "vaccineCode": {
+      "@id": "health:vaccineCode",
+      "@type": "xsd:string"
+    },
+    "manufacturer": {
+      "@id": "health:manufacturer",
+      "@type": "xsd:string"
+    },
+    "lotNumber": {
+      "@id": "health:lotNumber",
+      "@type": "xsd:string"
+    },
+    "doseQuantity": {
+      "@id": "health:doseQuantity",
+      "@type": "xsd:string"
+    },
+    "route": {
+      "@id": "health:route",
+      "@type": "xsd:string"
+    },
+    "site": {
+      "@id": "health:site",
+      "@type": "xsd:string"
+    },
+    "administeringProvider": {
+      "@id": "health:administeringProvider",
+      "@type": "xsd:string"
+    },
+    "administeringLocation": {
+      "@id": "health:administeringLocation",
+      "@type": "xsd:string"
+    },
 
     "onsetAge": { "@id": "health:onsetAge", "@type": "xsd:integer" },
 
