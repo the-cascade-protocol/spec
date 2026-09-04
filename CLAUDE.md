@@ -109,6 +109,7 @@ Before committing any change to an ontology (`.ttl`) file, you MUST:
 - [ ] Update `VOCAB_VERSIONS` file for this vocabulary — stage it with `git add VOCAB_VERSIONS`
 - [ ] Run `python3 scripts/check-shape-targets.py` and get exit 0 (the `shapes` CI job runs it, and its regression suite, on every PR touching `ontologies/`)
 - [ ] Run `python3 scripts/check-nested-severity.py` and get exit 0 — same CI job. Required whenever you add or move an `sh:severity`, and whenever you add an `sh:node`
+- [ ] Run `python3 scripts/check-context-agreement.py` and get exit 0 — same CI job. Required whenever you touch a context, a range, or a cardinality: the check compares every context term against the declared range and the shapes' `sh:maxCount`, and `scripts/known-context-disagreements.json` can only shrink
 - [ ] Tag the commit: `git tag vocab/{name}-v{X.Y}` after committing
 
 After committing, complete the downstream update sequence (in order):
