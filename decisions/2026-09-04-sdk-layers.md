@@ -69,6 +69,33 @@ and D become artefacts, and only B and C are code anyone maintains.
 - **`cascade-sdk-swift` keeps its runtime and gains generated models.** It is the production
   lineage and the one with platform adapters that matter.
 
+## Amendment 2026-09-04: the query layer
+
+The four layers say how data gets into a pod and how it is judged. They say nothing about
+asking the pod a question, and no Cascade application has yet asked its graph anything it
+could not have asked a JSON file. Querying is the payoff of having built a graph, so it is
+named here as a layer of its own, sitting on B and C:
+
+| surface | what it is | which layer it belongs to |
+|---|---|---|
+| **typed queries** | generated accessors from the record-type table and shapes: active medications, results for a code in a date range, a timeline | D (generated) |
+| **SPARQL** | the escape hatch for every question the generated accessors did not anticipate | B (engine) |
+| **traversal** | record to record, and provenance chains back to the source document | B over C's provenance |
+| **as-of** | what the pod said at a date, answered from the amend and retract overlays | C exposed through B |
+| **consent-scoped views** | the subgraph a recipient may see, a `CONSTRUCT` under the ACL: the export primitive | C exposed through B |
+| **search** | full text over notes and attachments; nearest-neighbour over embeddings | B, optional |
+| **federation** | one question over several pods (the caregiver case) | later |
+
+Two rules follow. **Query never bypasses C.** A query surface reads through the same
+decryption, consent and provenance code paths a write uses, so "what may this caller see"
+has one answer. **The engine is a dependency, not a re-implementation.** SPARQL and SHACL
+engines are not written here; one is adopted per language, or one engine is adopted for
+all of them, and the conformance corpus is the oracle that says it agrees with what ships.
+Layer C stays dependency-free; the engine ships as an optional companion package.
+
+**Open:** which engine. An evaluation is in progress; this section is amended when it
+reports.
+
 ## What this does not decide
 
 The format of the published contexts (JSON-LD 1.1 scoping versus unambiguous keys) and
