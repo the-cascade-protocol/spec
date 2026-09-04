@@ -25,7 +25,7 @@ A Cascade pod is patient-carried data, and the places a patient or caregiver mee
 overwhelmingly browsers: the protocol playground, a Tauri desktop app's renderer (Cascade
 Workbench's UI is a WebView; a `node:crypto` import has already crashed its mount once), and
 any patient-facing web application. An SDK that runs only under Node is a library for the CLI,
-not a library for applications. The playground plan (root 3.229) and the demonstrability
+not a library for applications. The playground plan (the playground plan) and the demonstrability
 argument for landing importers in this SDK both depend on this property.
 
 ## What it forbids and what it allows
@@ -62,6 +62,6 @@ gate will catch; it goes in the same change.
    SHA-1 with byte-identical output, so identity stays synchronous, aligned with the cli and
    the desktop app. (Amended 2026-09-04: this originally said `crypto.subtle`, which is
    async-only and would have changed the identity API.)
-3. The browser-bundle CI gate lands in upstream `sdk-typescript` (root 3.328) and is a merge
+3. The browser-bundle CI gate lands in upstream `sdk-typescript` and is a merge
    gate for the derive-from-spec epic.
 4. Nothing here applies to `cascade-cli`, which is a Node program by design.
