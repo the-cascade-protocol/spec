@@ -621,6 +621,36 @@ later one.
 
 ---
 
+## Pending batch — contexts/v1/clinical.jsonld datatypes (context-only, authored 2026-09-05)
+
+**What was authored:** 146 terms in `contexts/v1/clinical.jsonld` gained the `@type`
+their `rdfs:range` in `ontologies/clinical/v1/clinical.ttl` already declared, 139
+`xsd:string`, 6 `xsd:dateTime` (`documentDate`, `encounterDate`, `encounterStart`,
+`encounterEnd`, `onsetDate`, `procedureDate`) and 1 `xsd:base64Binary`
+(`rawFHIRData`). No ontology, shape or `VOCAB_VERSIONS` change, so no tag and no
+`owl:versionInfo` bump: the clinical vocabulary is unchanged at 1.17 and only the
+published dictionary moved. The matching 146 entries were removed from
+`scripts/known-context-disagreements.json`, taking it from 313 to 167.
+
+**Synced NOW (not batched):**
+
+- [x] `spec/` — authored (this repo).
+- [ ] `cascadeprotocol.org` — `scripts/sync-from-spec.sh` copies the contexts
+      verbatim; the site's `check-sync.sh` byte-compares them, so it reads as
+      drift until the sync runs. Nothing else on the site changes: no term,
+      class or range moved, so the HTML docs and
+      `cascade-protocol-schemas.md` are already correct.
+
+**Batched:**
+
+- [ ] `sdk-typescript` / `sdk-python` — a consumer that writes clinical JSON
+      against the published context now emits typed literals for these 146
+      terms, including base64-encoded bytes for `rawFHIRData`. Neither SDK
+      reads the file at runtime, so nothing is blocked; whichever mirrors the
+      mapping in code should mirror the datatypes.
+
+---
+
 ## Pending batch — contexts/v1/health.jsonld datatypes (context-only, authored 2026-09-05)
 
 **What was authored:** 45 terms in `contexts/v1/health.jsonld` gained the `@type`

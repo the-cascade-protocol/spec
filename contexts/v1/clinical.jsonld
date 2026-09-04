@@ -40,26 +40,71 @@
       "@id": "clinical:importedAt",
       "@type": "xsd:dateTime"
     },
-    "sourceEHR": "clinical:sourceEHR",
-    "sourceBundleId": "clinical:sourceBundleId",
-    "fhirResourceId": "clinical:fhirResourceId",
-    "fhirResourceType": "clinical:fhirResourceType",
-    "documentReferenceStatus": "clinical:documentReferenceStatus",
-    "documentAuthorName": { "@id": "clinical:documentAuthorName", "@container": "@set" },
-    "authenticatorName": "clinical:authenticatorName",
-    "documentDate": "clinical:documentDate",
-    "encounterDate": "clinical:encounterDate",
-    "displayName": "clinical:displayName",
-    "narrativeText": "clinical:narrativeText",
-    "narrativeXHTML": "clinical:narrativeXHTML",
-    "rawFHIRData": "clinical:rawFHIRData",
+    "sourceEHR": {
+      "@id": "clinical:sourceEHR",
+      "@type": "xsd:string"
+    },
+    "sourceBundleId": {
+      "@id": "clinical:sourceBundleId",
+      "@type": "xsd:string"
+    },
+    "fhirResourceId": {
+      "@id": "clinical:fhirResourceId",
+      "@type": "xsd:string"
+    },
+    "fhirResourceType": {
+      "@id": "clinical:fhirResourceType",
+      "@type": "xsd:string"
+    },
+    "documentReferenceStatus": {
+      "@id": "clinical:documentReferenceStatus",
+      "@type": "xsd:string"
+    },
+    "documentAuthorName": { "@id": "clinical:documentAuthorName", "@type": "xsd:string", "@container": "@set" },
+    "authenticatorName": {
+      "@id": "clinical:authenticatorName",
+      "@type": "xsd:string"
+    },
+    "documentDate": {
+      "@id": "clinical:documentDate",
+      "@type": "xsd:dateTime"
+    },
+    "encounterDate": {
+      "@id": "clinical:encounterDate",
+      "@type": "xsd:dateTime"
+    },
+    "displayName": {
+      "@id": "clinical:displayName",
+      "@type": "xsd:string"
+    },
+    "narrativeText": {
+      "@id": "clinical:narrativeText",
+      "@type": "xsd:string"
+    },
+    "narrativeXHTML": {
+      "@id": "clinical:narrativeXHTML",
+      "@type": "xsd:string"
+    },
+    "rawFHIRData": {
+      "@id": "clinical:rawFHIRData",
+      "@type": "xsd:base64Binary"
+    },
     "hasSection": {
       "@id": "clinical:hasSection",
       "@type": "@id"
     },
-    "sectionCode": "clinical:sectionCode",
-    "sectionTitle": "clinical:sectionTitle",
-    "sectionContent": "clinical:sectionContent",
+    "sectionCode": {
+      "@id": "clinical:sectionCode",
+      "@type": "xsd:string"
+    },
+    "sectionTitle": {
+      "@id": "clinical:sectionTitle",
+      "@type": "xsd:string"
+    },
+    "sectionContent": {
+      "@id": "clinical:sectionContent",
+      "@type": "xsd:string"
+    },
     "sectionOrder": {
       "@id": "clinical:sectionOrder",
       "@type": "xsd:integer"
@@ -68,28 +113,79 @@
       "@id": "clinical:recordDate",
       "@type": "xsd:dateTime"
     },
-    "status": "clinical:status",
-    "loincCode": "clinical:loincCode",
-    "snomedCode": { "@id": "clinical:snomedCode", "@container": "@set" },
-    "drugName": "clinical:drugName",
-    "dosage": "clinical:dosage",
-    "route": "clinical:route",
-    "frequency": "clinical:frequency",
-    "rxNormCode": "clinical:rxNormCode",
-    "ndcCode": "clinical:ndcCode",
-    "prescriber": "clinical:prescriber",
-    "indication": "clinical:indication",
-    "courseOfTherapyType": "clinical:courseOfTherapyType",
+    "status": {
+      "@id": "clinical:status",
+      "@type": "xsd:string"
+    },
+    "loincCode": {
+      "@id": "clinical:loincCode",
+      "@type": "xsd:string"
+    },
+    "snomedCode": { "@id": "clinical:snomedCode", "@type": "xsd:string", "@container": "@set" },
+    "drugName": {
+      "@id": "clinical:drugName",
+      "@type": "xsd:string"
+    },
+    "dosage": {
+      "@id": "clinical:dosage",
+      "@type": "xsd:string"
+    },
+    "route": {
+      "@id": "clinical:route",
+      "@type": "xsd:string"
+    },
+    "frequency": {
+      "@id": "clinical:frequency",
+      "@type": "xsd:string"
+    },
+    "rxNormCode": {
+      "@id": "clinical:rxNormCode",
+      "@type": "xsd:string"
+    },
+    "ndcCode": {
+      "@id": "clinical:ndcCode",
+      "@type": "xsd:string"
+    },
+    "prescriber": {
+      "@id": "clinical:prescriber",
+      "@type": "xsd:string"
+    },
+    "indication": {
+      "@id": "clinical:indication",
+      "@type": "xsd:string"
+    },
+    "courseOfTherapyType": {
+      "@id": "clinical:courseOfTherapyType",
+      "@type": "xsd:string"
+    },
     "asNeeded": {
       "@id": "clinical:asNeeded",
       "@type": "xsd:boolean"
     },
-    "medicationForm": "clinical:medicationForm",
-    "activeIngredient": "clinical:activeIngredient",
-    "ingredientStrength": "clinical:ingredientStrength",
-    "provenanceClass": "clinical:provenanceClass",
-    "sourceFhirResourceType": "clinical:sourceFhirResourceType",
-    "clinicalIntent": "clinical:clinicalIntent",
+    "medicationForm": {
+      "@id": "clinical:medicationForm",
+      "@type": "xsd:string"
+    },
+    "activeIngredient": {
+      "@id": "clinical:activeIngredient",
+      "@type": "xsd:string"
+    },
+    "ingredientStrength": {
+      "@id": "clinical:ingredientStrength",
+      "@type": "xsd:string"
+    },
+    "provenanceClass": {
+      "@id": "clinical:provenanceClass",
+      "@type": "xsd:string"
+    },
+    "sourceFhirResourceType": {
+      "@id": "clinical:sourceFhirResourceType",
+      "@type": "xsd:string"
+    },
+    "clinicalIntent": {
+      "@id": "clinical:clinicalIntent",
+      "@type": "xsd:string"
+    },
     "refillsAllowed": {
       "@id": "clinical:refillsAllowed",
       "@type": "xsd:integer"
@@ -98,50 +194,155 @@
       "@id": "clinical:supplyDurationDays",
       "@type": "xsd:integer"
     },
-    "dispensedQuantity": "clinical:dispensedQuantity",
-    "prescriptionCategory": "clinical:prescriptionCategory",
-    "administrationRoute": "clinical:administrationRoute",
-    "allergen": "clinical:allergen",
-    "reaction": "clinical:reaction",
-    "severity": "clinical:severity",
-    "allergyCategory": "clinical:allergyCategory",
-    "criticality": "clinical:criticality",
-    "testName": "clinical:testName",
-    "value": "clinical:value",
-    "unit": "clinical:unit",
-    "referenceRange": "clinical:referenceRange",
-    "interpretation": "clinical:interpretation",
-    "interpretationSourceCode": "clinical:interpretationSourceCode",
-    "specimenType": "clinical:specimenType",
-    "conditionName": "clinical:conditionName",
-    "onsetDate": "clinical:onsetDate",
+    "dispensedQuantity": {
+      "@id": "clinical:dispensedQuantity",
+      "@type": "xsd:string"
+    },
+    "prescriptionCategory": {
+      "@id": "clinical:prescriptionCategory",
+      "@type": "xsd:string"
+    },
+    "administrationRoute": {
+      "@id": "clinical:administrationRoute",
+      "@type": "xsd:string"
+    },
+    "allergen": {
+      "@id": "clinical:allergen",
+      "@type": "xsd:string"
+    },
+    "reaction": {
+      "@id": "clinical:reaction",
+      "@type": "xsd:string"
+    },
+    "severity": {
+      "@id": "clinical:severity",
+      "@type": "xsd:string"
+    },
+    "allergyCategory": {
+      "@id": "clinical:allergyCategory",
+      "@type": "xsd:string"
+    },
+    "criticality": {
+      "@id": "clinical:criticality",
+      "@type": "xsd:string"
+    },
+    "testName": {
+      "@id": "clinical:testName",
+      "@type": "xsd:string"
+    },
+    "value": {
+      "@id": "clinical:value",
+      "@type": "xsd:string"
+    },
+    "unit": {
+      "@id": "clinical:unit",
+      "@type": "xsd:string"
+    },
+    "referenceRange": {
+      "@id": "clinical:referenceRange",
+      "@type": "xsd:string"
+    },
+    "interpretation": {
+      "@id": "clinical:interpretation",
+      "@type": "xsd:string"
+    },
+    "interpretationSourceCode": {
+      "@id": "clinical:interpretationSourceCode",
+      "@type": "xsd:string"
+    },
+    "specimenType": {
+      "@id": "clinical:specimenType",
+      "@type": "xsd:string"
+    },
+    "conditionName": {
+      "@id": "clinical:conditionName",
+      "@type": "xsd:string"
+    },
+    "onsetDate": {
+      "@id": "clinical:onsetDate",
+      "@type": "xsd:dateTime"
+    },
     "abatementDate": {
       "@id": "clinical:abatementDate",
       "@type": "xsd:dateTime"
     },
-    "clinicalStatus": "clinical:clinicalStatus",
-    "verificationStatus": "clinical:verificationStatus",
-    "icd10Code": { "@id": "clinical:icd10Code", "@container": "@set" },
-    "vaccineName": "clinical:vaccineName",
-    "vaccineCode": "clinical:vaccineCode",
-    "lotNumber": "clinical:lotNumber",
-    "site": "clinical:site",
-    "doseNumber": "clinical:doseNumber",
-    "manufacturer": "clinical:manufacturer",
+    "clinicalStatus": {
+      "@id": "clinical:clinicalStatus",
+      "@type": "xsd:string"
+    },
+    "verificationStatus": {
+      "@id": "clinical:verificationStatus",
+      "@type": "xsd:string"
+    },
+    "icd10Code": { "@id": "clinical:icd10Code", "@type": "xsd:string", "@container": "@set" },
+    "vaccineName": {
+      "@id": "clinical:vaccineName",
+      "@type": "xsd:string"
+    },
+    "vaccineCode": {
+      "@id": "clinical:vaccineCode",
+      "@type": "xsd:string"
+    },
+    "lotNumber": {
+      "@id": "clinical:lotNumber",
+      "@type": "xsd:string"
+    },
+    "site": {
+      "@id": "clinical:site",
+      "@type": "xsd:string"
+    },
+    "doseNumber": {
+      "@id": "clinical:doseNumber",
+      "@type": "xsd:string"
+    },
+    "manufacturer": {
+      "@id": "clinical:manufacturer",
+      "@type": "xsd:string"
+    },
     "expirationDate": {
       "@id": "clinical:expirationDate",
       "@type": "xsd:date"
     },
-    "procedureName": "clinical:procedureName",
-    "procedureDate": "clinical:procedureDate",
-    "bodySite": "clinical:bodySite",
-    "performer": "clinical:performer",
-    "cptCode": "clinical:cptCode",
-    "outcome": "clinical:outcome",
-    "procedureStatus": "clinical:procedureStatus",
-    "procedureCategory": "clinical:procedureCategory",
-    "procedureSnomedCode": "clinical:procedureSnomedCode",
-    "vitalType": "clinical:vitalType",
+    "procedureName": {
+      "@id": "clinical:procedureName",
+      "@type": "xsd:string"
+    },
+    "procedureDate": {
+      "@id": "clinical:procedureDate",
+      "@type": "xsd:dateTime"
+    },
+    "bodySite": {
+      "@id": "clinical:bodySite",
+      "@type": "xsd:string"
+    },
+    "performer": {
+      "@id": "clinical:performer",
+      "@type": "xsd:string"
+    },
+    "cptCode": {
+      "@id": "clinical:cptCode",
+      "@type": "xsd:string"
+    },
+    "outcome": {
+      "@id": "clinical:outcome",
+      "@type": "xsd:string"
+    },
+    "procedureStatus": {
+      "@id": "clinical:procedureStatus",
+      "@type": "xsd:string"
+    },
+    "procedureCategory": {
+      "@id": "clinical:procedureCategory",
+      "@type": "xsd:string"
+    },
+    "procedureSnomedCode": {
+      "@id": "clinical:procedureSnomedCode",
+      "@type": "xsd:string"
+    },
+    "vitalType": {
+      "@id": "clinical:vitalType",
+      "@type": "xsd:string"
+    },
     "systolicValue": {
       "@id": "clinical:systolicValue",
       "@type": "xsd:decimal"
@@ -150,14 +351,26 @@
       "@id": "clinical:diastolicValue",
       "@type": "xsd:decimal"
     },
-    "deviceName": "clinical:deviceName",
-    "measurementMethod": "clinical:measurementMethod",
-    "valueString": "clinical:valueString",
+    "deviceName": {
+      "@id": "clinical:deviceName",
+      "@type": "xsd:string"
+    },
+    "measurementMethod": {
+      "@id": "clinical:measurementMethod",
+      "@type": "xsd:string"
+    },
+    "valueString": {
+      "@id": "clinical:valueString",
+      "@type": "xsd:string"
+    },
     "effectiveDate": {
       "@id": "clinical:effectiveDate",
       "@type": "xsd:dateTime"
     },
-    "instructions": "clinical:instructions",
+    "instructions": {
+      "@id": "clinical:instructions",
+      "@type": "xsd:string"
+    },
     "startDate": {
       "@id": "clinical:startDate",
       "@type": "xsd:dateTime"
@@ -166,12 +379,27 @@
       "@id": "clinical:endDate",
       "@type": "xsd:dateTime"
     },
-    "allergyType": "clinical:allergyType",
-    "orderingProvider": "clinical:orderingProvider",
-    "performingLab": "clinical:performingLab",
-    "observationStatus": "clinical:observationStatus",
-    "sourceRecordId": "clinical:sourceRecordId",
-    "businessIdentifier": { "@id": "clinical:businessIdentifier", "@container": "@set" },
+    "allergyType": {
+      "@id": "clinical:allergyType",
+      "@type": "xsd:string"
+    },
+    "orderingProvider": {
+      "@id": "clinical:orderingProvider",
+      "@type": "xsd:string"
+    },
+    "performingLab": {
+      "@id": "clinical:performingLab",
+      "@type": "xsd:string"
+    },
+    "observationStatus": {
+      "@id": "clinical:observationStatus",
+      "@type": "xsd:string"
+    },
+    "sourceRecordId": {
+      "@id": "clinical:sourceRecordId",
+      "@type": "xsd:string"
+    },
+    "businessIdentifier": { "@id": "clinical:businessIdentifier", "@type": "xsd:string", "@container": "@set" },
     "panelMembership": {
       "@id": "clinical:panelMembership",
       "@type": "@id"
@@ -184,19 +412,34 @@
       "@id": "clinical:referenceRangeHigh",
       "@type": "xsd:decimal"
     },
-    "referenceRangeText": "clinical:referenceRangeText",
+    "referenceRangeText": {
+      "@id": "clinical:referenceRangeText",
+      "@type": "xsd:string"
+    },
     "issuedDate": {
       "@id": "clinical:issuedDate",
       "@type": "xsd:dateTime"
     },
-    "category": "clinical:category",
-    "notes": "clinical:notes",
+    "category": {
+      "@id": "clinical:category",
+      "@type": "xsd:string"
+    },
+    "notes": {
+      "@id": "clinical:notes",
+      "@type": "xsd:string"
+    },
     "occurrenceDate": {
       "@id": "clinical:occurrenceDate",
       "@type": "xsd:dateTime"
     },
-    "doseQuantity": "clinical:doseQuantity",
-    "cvxCode": "clinical:cvxCode",
+    "doseQuantity": {
+      "@id": "clinical:doseQuantity",
+      "@type": "xsd:string"
+    },
+    "cvxCode": {
+      "@id": "clinical:cvxCode",
+      "@type": "xsd:string"
+    },
     "performedDate": {
       "@id": "clinical:performedDate",
       "@type": "xsd:dateTime"
@@ -205,22 +448,46 @@
       "@id": "clinical:performedEndDate",
       "@type": "xsd:dateTime"
     },
-    "location": "clinical:location",
-    "component1Name": "clinical:component1Name",
+    "location": {
+      "@id": "clinical:location",
+      "@type": "xsd:string"
+    },
+    "component1Name": {
+      "@id": "clinical:component1Name",
+      "@type": "xsd:string"
+    },
     "component1Value": {
       "@id": "clinical:component1Value",
       "@type": "xsd:decimal"
     },
-    "component1Unit": "clinical:component1Unit",
-    "component1LoincCode": "clinical:component1LoincCode",
-    "component2Name": "clinical:component2Name",
+    "component1Unit": {
+      "@id": "clinical:component1Unit",
+      "@type": "xsd:string"
+    },
+    "component1LoincCode": {
+      "@id": "clinical:component1LoincCode",
+      "@type": "xsd:string"
+    },
+    "component2Name": {
+      "@id": "clinical:component2Name",
+      "@type": "xsd:string"
+    },
     "component2Value": {
       "@id": "clinical:component2Value",
       "@type": "xsd:decimal"
     },
-    "component2Unit": "clinical:component2Unit",
-    "component2LoincCode": "clinical:component2LoincCode",
-    "canonicalName": "clinical:canonicalName",
+    "component2Unit": {
+      "@id": "clinical:component2Unit",
+      "@type": "xsd:string"
+    },
+    "component2LoincCode": {
+      "@id": "clinical:component2LoincCode",
+      "@type": "xsd:string"
+    },
+    "canonicalName": {
+      "@id": "clinical:canonicalName",
+      "@type": "xsd:string"
+    },
     "episodeFirstSeenDate": {
       "@id": "clinical:episodeFirstSeenDate",
       "@type": "xsd:dateTime"
@@ -229,14 +496,38 @@
       "@id": "clinical:episodeLastSeenDate",
       "@type": "xsd:dateTime"
     },
-    "currentDose": "clinical:currentDose",
-    "currentFrequency": "clinical:currentFrequency",
-    "currentRoute": "clinical:currentRoute",
-    "inferredStatus": "clinical:inferredStatus",
-    "statusConfidence": "clinical:statusConfidence",
-    "statusReason": "clinical:statusReason",
-    "usePattern": "clinical:usePattern",
-    "therapeuticClass": "clinical:therapeuticClass",
+    "currentDose": {
+      "@id": "clinical:currentDose",
+      "@type": "xsd:string"
+    },
+    "currentFrequency": {
+      "@id": "clinical:currentFrequency",
+      "@type": "xsd:string"
+    },
+    "currentRoute": {
+      "@id": "clinical:currentRoute",
+      "@type": "xsd:string"
+    },
+    "inferredStatus": {
+      "@id": "clinical:inferredStatus",
+      "@type": "xsd:string"
+    },
+    "statusConfidence": {
+      "@id": "clinical:statusConfidence",
+      "@type": "xsd:string"
+    },
+    "statusReason": {
+      "@id": "clinical:statusReason",
+      "@type": "xsd:string"
+    },
+    "usePattern": {
+      "@id": "clinical:usePattern",
+      "@type": "xsd:string"
+    },
+    "therapeuticClass": {
+      "@id": "clinical:therapeuticClass",
+      "@type": "xsd:string"
+    },
     "conceptUri": {
       "@id": "clinical:conceptUri",
       "@type": "@id"
@@ -249,7 +540,10 @@
       "@id": "clinical:derivedFromRecord",
       "@type": "@id"
     },
-    "sourceExternalId": "clinical:sourceExternalId",
+    "sourceExternalId": {
+      "@id": "clinical:sourceExternalId",
+      "@type": "xsd:string"
+    },
     "hasUnresolvedConflicts": {
       "@id": "clinical:hasUnresolvedConflicts",
       "@type": "xsd:boolean"
@@ -258,30 +552,66 @@
       "@id": "clinical:durationDays",
       "@type": "xsd:integer"
     },
-    "supplementName": "clinical:supplementName",
-    "regulatoryStatus": "clinical:regulatoryStatus",
-    "evidenceStrength": "clinical:evidenceStrength",
-    "brand": "clinical:brand",
-    "form": "clinical:form",
-    "dsldId": "clinical:dsldId",
-    "upc": "clinical:upc",
-    "reasonForUse": "clinical:reasonForUse",
+    "supplementName": {
+      "@id": "clinical:supplementName",
+      "@type": "xsd:string"
+    },
+    "regulatoryStatus": {
+      "@id": "clinical:regulatoryStatus",
+      "@type": "xsd:string"
+    },
+    "evidenceStrength": {
+      "@id": "clinical:evidenceStrength",
+      "@type": "xsd:string"
+    },
+    "brand": {
+      "@id": "clinical:brand",
+      "@type": "xsd:string"
+    },
+    "form": {
+      "@id": "clinical:form",
+      "@type": "xsd:string"
+    },
+    "dsldId": {
+      "@id": "clinical:dsldId",
+      "@type": "xsd:string"
+    },
+    "upc": {
+      "@id": "clinical:upc",
+      "@type": "xsd:string"
+    },
+    "reasonForUse": {
+      "@id": "clinical:reasonForUse",
+      "@type": "xsd:string"
+    },
     "clinicalCascadeUri": {
       "@id": "clinical:cascadeUri",
       "@type": "@id"
     },
-    "dose": "clinical:dose",
+    "dose": {
+      "@id": "clinical:dose",
+      "@type": "xsd:string"
+    },
     "isActive": {
       "@id": "clinical:isActive",
       "@type": "xsd:boolean"
     },
-    "canonicalTestName": "clinical:canonicalTestName",
-    "testLoincCode": "clinical:testLoincCode",
+    "canonicalTestName": {
+      "@id": "clinical:canonicalTestName",
+      "@type": "xsd:string"
+    },
+    "testLoincCode": {
+      "@id": "clinical:testLoincCode",
+      "@type": "xsd:string"
+    },
     "testConceptUri": {
       "@id": "clinical:testConceptUri",
       "@type": "@id"
     },
-    "seriesCategory": "clinical:seriesCategory",
+    "seriesCategory": {
+      "@id": "clinical:seriesCategory",
+      "@type": "xsd:string"
+    },
     "firstResultDate": {
       "@id": "clinical:firstResultDate",
       "@type": "xsd:dateTime"
@@ -294,17 +624,38 @@
       "@id": "clinical:resultCount",
       "@type": "xsd:integer"
     },
-    "latestValue": "clinical:latestValue",
-    "latestUnit": "clinical:latestUnit",
-    "latestInterpretation": "clinical:latestInterpretation",
-    "trendDirection": "clinical:trendDirection",
-    "trendConfidence": "clinical:trendConfidence",
-    "trendReason": "clinical:trendReason",
+    "latestValue": {
+      "@id": "clinical:latestValue",
+      "@type": "xsd:string"
+    },
+    "latestUnit": {
+      "@id": "clinical:latestUnit",
+      "@type": "xsd:string"
+    },
+    "latestInterpretation": {
+      "@id": "clinical:latestInterpretation",
+      "@type": "xsd:string"
+    },
+    "trendDirection": {
+      "@id": "clinical:trendDirection",
+      "@type": "xsd:string"
+    },
+    "trendConfidence": {
+      "@id": "clinical:trendConfidence",
+      "@type": "xsd:string"
+    },
+    "trendReason": {
+      "@id": "clinical:trendReason",
+      "@type": "xsd:string"
+    },
     "hasAbnormalHistory": {
       "@id": "clinical:hasAbnormalHistory",
       "@type": "xsd:boolean"
     },
-    "currentReferenceRange": "clinical:currentReferenceRange",
+    "currentReferenceRange": {
+      "@id": "clinical:currentReferenceRange",
+      "@type": "xsd:string"
+    },
     "currentReferenceRangeLow": {
       "@id": "clinical:currentReferenceRangeLow",
       "@type": "xsd:decimal"
@@ -317,13 +668,34 @@
       "@id": "clinical:seriesPanelMembership",
       "@type": "@id"
     },
-    "providerName": "clinical:providerName",
-    "memberId": "clinical:memberId",
-    "groupNumber": "clinical:groupNumber",
-    "planName": "clinical:planName",
-    "planType": "clinical:planType",
-    "coverageType": "clinical:coverageType",
-    "relationship": "clinical:relationship",
+    "providerName": {
+      "@id": "clinical:providerName",
+      "@type": "xsd:string"
+    },
+    "memberId": {
+      "@id": "clinical:memberId",
+      "@type": "xsd:string"
+    },
+    "groupNumber": {
+      "@id": "clinical:groupNumber",
+      "@type": "xsd:string"
+    },
+    "planName": {
+      "@id": "clinical:planName",
+      "@type": "xsd:string"
+    },
+    "planType": {
+      "@id": "clinical:planType",
+      "@type": "xsd:string"
+    },
+    "coverageType": {
+      "@id": "clinical:coverageType",
+      "@type": "xsd:string"
+    },
+    "relationship": {
+      "@id": "clinical:relationship",
+      "@type": "xsd:string"
+    },
     "effectivePeriodStart": {
       "@id": "clinical:effectivePeriodStart",
       "@type": "xsd:date"
@@ -332,11 +704,20 @@
       "@id": "clinical:effectivePeriodEnd",
       "@type": "xsd:date"
     },
-    "payorName": "clinical:payorName",
-    "subscriberId": "clinical:subscriberId",
+    "payorName": {
+      "@id": "clinical:payorName",
+      "@type": "xsd:string"
+    },
+    "subscriberId": {
+      "@id": "clinical:subscriberId",
+      "@type": "xsd:string"
+    },
 
     "SocialHistoryRecord": "clinical:SocialHistoryRecord",
-    "socialHistoryCategory": "clinical:socialHistoryCategory",
+    "socialHistoryCategory": {
+      "@id": "clinical:socialHistoryCategory",
+      "@type": "xsd:string"
+    },
     "packsPerYear": {
       "@id": "clinical:packsPerYear",
       "@type": "xsd:decimal"
@@ -345,22 +726,55 @@
       "@id": "clinical:alcoholDrinksPerWeek",
       "@type": "xsd:decimal"
     },
-    "occupationTitle": "clinical:occupationTitle",
+    "occupationTitle": {
+      "@id": "clinical:occupationTitle",
+      "@type": "xsd:string"
+    },
 
-    "encounterClass": "clinical:encounterClass",
-    "encounterClassDisplay": "clinical:encounterClassDisplay",
+    "encounterClass": {
+
+      "@id": "clinical:encounterClass",
+
+      "@type": "xsd:string"
+
+    },
+    "encounterClassDisplay": {
+      "@id": "clinical:encounterClassDisplay",
+      "@type": "xsd:string"
+    },
     "encounterClassSystem": {
       "@id": "clinical:encounterClassSystem",
       "@type": "xsd:anyURI"
     },
-    "encounterStatus": "clinical:encounterStatus",
-    "encounterType": "clinical:encounterType",
-    "encounterStart": "clinical:encounterStart",
-    "encounterEnd": "clinical:encounterEnd",
-    "facilityName": "clinical:facilityName",
-    "encounterReason": { "@id": "clinical:encounterReason", "@container": "@set" },
-    "admitSource": "clinical:admitSource",
-    "dischargeDisposition": "clinical:dischargeDisposition",
+    "encounterStatus": {
+      "@id": "clinical:encounterStatus",
+      "@type": "xsd:string"
+    },
+    "encounterType": {
+      "@id": "clinical:encounterType",
+      "@type": "xsd:string"
+    },
+    "encounterStart": {
+      "@id": "clinical:encounterStart",
+      "@type": "xsd:dateTime"
+    },
+    "encounterEnd": {
+      "@id": "clinical:encounterEnd",
+      "@type": "xsd:dateTime"
+    },
+    "facilityName": {
+      "@id": "clinical:facilityName",
+      "@type": "xsd:string"
+    },
+    "encounterReason": { "@id": "clinical:encounterReason", "@type": "xsd:string", "@container": "@set" },
+    "admitSource": {
+      "@id": "clinical:admitSource",
+      "@type": "xsd:string"
+    },
+    "dischargeDisposition": {
+      "@id": "clinical:dischargeDisposition",
+      "@type": "xsd:string"
+    },
 
     "EncounterParticipant": "clinical:EncounterParticipant",
     "hasParticipant": {
@@ -368,10 +782,19 @@
       "@type": "@id",
       "@container": "@set"
     },
-    "participantName": "clinical:participantName",
-    "participantRole": "clinical:participantRole",
-    "participantRoleCode": { "@id": "clinical:participantRoleCode", "@container": "@set" },
-    "participantSpecialty": "clinical:participantSpecialty",
+    "participantName": {
+      "@id": "clinical:participantName",
+      "@type": "xsd:string"
+    },
+    "participantRole": {
+      "@id": "clinical:participantRole",
+      "@type": "xsd:string"
+    },
+    "participantRoleCode": { "@id": "clinical:participantRoleCode", "@type": "xsd:string", "@container": "@set" },
+    "participantSpecialty": {
+      "@id": "clinical:participantSpecialty",
+      "@type": "xsd:string"
+    },
 
     "hasEncounter": {
       "@id": "clinical:hasEncounter",
