@@ -54,8 +54,9 @@ shapes graph, and the two are never in the same Graph object.
 cascade.jsonld IS REPORT-ONLY. It merges seven one-meaning dictionaries and must
 therefore pick one meaning per colliding key and drop the rest; that is a
 property of merging, not a defect a per-vocabulary rule can fix, and
-D-CONTEXT-1 C3 retires it as a mapping. Its collisions and its dropped
-@container declarations are printed on every run and never fail the gate.
+D-CONTEXT-1 C3 retires it as a mapping. Its collisions, and the terms whose
+@container does not survive the merge, are printed on every run and never fail
+the gate.
 
 THE BASELINE
 
@@ -541,19 +542,27 @@ def report_aggregate(contexts):
 
     collisions = sorted(t for t, m in meanings.items() if len(set(m.values())) > 1)
     lost = []
+    absent = []
     for term, declared in sorted(containers.items()):
         entry = merged_terms.get(term)
-        if entry is not None and not entry.get("@container"):
-            lost.append((term, sorted(set(declared.values()))))
+        shapes = sorted(set(declared.values()))
+        if entry is None:
+            absent.append((term, shapes))
+        elif not entry.get("@container"):
+            lost.append((term, shapes))
 
     print("  keys whose meaning collides across the six vocabularies: %d" % len(collisions))
     for term in collisions:
         seen = meanings[term]
         print("    %-28s %s" % (term, "; ".join(
             "%s -> %s" % (v, qname(i)) for v, i in sorted(seen.items()))))
-    print("  terms that lost @container relative to the per-vocabulary files: %d" % len(lost))
+    print("  terms whose @container does not survive the merge: %d" % (len(lost) + len(absent)))
     for term, declared in lost:
-        print("    %-28s per-vocabulary files declare %s" % (term, ", ".join(declared)))
+        print("    %-28s per-vocabulary files declare %s; merged entry has none"
+              % (term, ", ".join(declared)))
+    for term, declared in absent:
+        print("    %-28s per-vocabulary files declare %s; no merged entry at all"
+              % (term, ", ".join(declared)))
     print("  A merged dictionary must pick one meaning per key; this is a property of")
     print("  merging, not a defect a per-vocabulary rule can fix. Never fails the gate.")
     print()
