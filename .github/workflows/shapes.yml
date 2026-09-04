@@ -21,6 +21,14 @@ name: shapes
 #     conformant consumer (jayostis/spec#48); every in-house reader was
 #     hand-rolled and read past them. The oracle is the processor, not a rule
 #     written here.
+#
+#  4. CONTEXTS AGREE WITH THE VOCABULARY: every term in the six per-vocabulary
+#     contexts must name something the ontology declares, carry the @type its
+#     declared range implies, and not offer an array on a path the shapes cap at
+#     one value. The ontologies and shapes are normative for the mapping
+#     (D-CONTEXT-1 C1); a context that disagrees is the defect. Being valid
+#     JSON-LD (rule 3) says nothing about whether a dictionary says what the
+#     vocabulary says, so this is a separate job with a separate oracle.
 
 on:
   push:
@@ -37,6 +45,9 @@ on:
       - 'contexts/**'
       - 'scripts/check-contexts.mjs'
       - 'scripts/test-check-contexts.sh'
+      - 'scripts/check-context-agreement.py'
+      - 'scripts/test-check-context-agreement.sh'
+      - 'scripts/known-context-disagreements.json'
       - 'scripts/package.json'
       - 'scripts/package-lock.json'
       - '.github/workflows/shapes.yml'
@@ -108,3 +119,26 @@ jobs:
 
       - name: Published contexts are accepted by jsonld.js
         run: node scripts/check-contexts.mjs
+
+  context-agreement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python3 -m pip install -r scripts/requirements.txt
+
+      # Negative controls reintroduce one instance of each finding class into a
+      # scratch copy of contexts/v1 and require a failure naming the term and the
+      # class, and test the baseline in BOTH directions: an unlisted finding must
+      # fail, and a baselined finding that has been FIXED must fail too, so the
+      # file can only shrink by a deliberate edit.
+      - name: Regression suite (check + negative controls)
+        run: sh scripts/test-check-context-agreement.sh
+
+      - name: Contexts agree with the ontologies and shapes
+        run: python3 scripts/check-context-agreement.py
