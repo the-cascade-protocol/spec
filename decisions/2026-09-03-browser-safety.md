@@ -58,9 +58,10 @@ gate will catch; it goes in the same change.
 
 1. PR #89's `createRequire` + CommonJS loading path is replaced before the epic proceeds:
    vendor n3's ESM build, static imports, resolve the vendored `buffer` reference.
-2. `src/utils/deterministic-uri.ts` moves from `node:crypto` to `crypto.subtle` (or a
-   pure-JS SHA-256 with no runtime dependency), which also removes the one pre-existing browser
-   break upstream.
+2. `src/utils/deterministic-uri.ts` drops `node:crypto` for a vendored synchronous pure-JS
+   SHA-1 with byte-identical output, so identity stays synchronous, aligned with the cli and
+   the desktop app. (Amended 2026-09-04: this originally said `crypto.subtle`, which is
+   async-only and would have changed the identity API.)
 3. The browser-bundle CI gate lands in upstream `sdk-typescript` (root 3.328) and is a merge
    gate for the derive-from-spec epic.
 4. Nothing here applies to `cascade-cli`, which is a Node program by design.
