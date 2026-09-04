@@ -6,6 +6,20 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-05: health.jsonld states the datatype its ontology declares, for 45 terms
+
+No vocabulary change: no term is added, removed or renamed, no range is altered and no shape moves. `contexts/v1/health.jsonld` is the only authored file that changes, and it changes in one direction only, from a term that says nothing about its value to a term that says what `health.ttl` already declares.
+
+**45 terms in the health context carried no `@type` while the ontology declared an `rdfs:range`.** A consumer writing that JSON produced a plain string where the vocabulary promised a typed literal, which for the four date terms among them, `performedDate`, `onsetDate`, `reportedDate` and `administrationDate`, is the case jayostis/spec#46 opened with: a date that round-trips as text and sorts and compares as text everywhere downstream. The other 41 declare `rdfs:range xsd:string`, where the practical cost is smaller but the disagreement is the same one, and leaving them bare would have meant a dictionary that describes its own vocabulary in two different ways depending on the term. Each term now carries exactly the datatype its own `rdfs:range` states, read from the ontology rather than inferred from the key, and no term's `@id` or `@container` is touched: `labCategory` keeps its `"@container": "@set"` alongside its new `xsd:string`.
+
+**The baseline is 45 entries shorter, and the gate is what proved the shrink.** With the context fixed and the baseline untouched, `scripts/check-context-agreement.py` failed naming those 45 entries as stale, which is the direction the file can only move in; deleting them returns the run to green at 313 baselined disagreements, down from 358. The remaining 274 `missing-datatype` findings are in the other five contexts and are untouched here, as are the 36 structured terms, which need the JSON-LD 1.1 move that D-CONTEXT-1 C4 describes and cannot be fixed term by term, the 2 container-versus-cardinality findings and the 1 enumerated range. This is the first instalment of D-CONTEXT-1 C6, which resolves under-specification against what the shapes and ontologies say before any format change lands.
+
+One case in the check's own regression suite moved with it. The suite proved the stale direction by repairing `health:performedDate` in a scratch copy and requiring the run to fail, which the real fix would have made vacuous; it now lists that already-fixed term in a scratch baseline instead, so no further term fixed in any vocabulary can hollow the case out. The suite is 14 cases and the reference-processor check still accepts all seven published contexts.
+
+`contexts/v1/health.jsonld` is copied downstream by script, so the site repository's context sync is the follow-up to this entry.
+
+---
+
 ## 2026-09-05: The contexts are now gated against the ontologies and shapes
 
 No vocabulary change and no context change: this measures. `scripts/check-context-agreement.py` reads each of the six per-vocabulary contexts under `contexts/v1/` against its vocabulary's ontology and its shapes, and asks three questions of every term. Is the `@id` something the ontology actually declares, expanded through the context's own prefixes. Does the `@type` agree with the declared range: `xsd:T` on a datatype property, `"@type": "@vocab"` where the range is an enumeration, and a named class plus a scoped `@context` where the range is a structured class with its own shape. Does the `@container` agree with the cardinality the shapes state, since an array offered on a path capped at `sh:maxCount 1` invites a consumer to write what validation rejects. The ontologies and shapes are normative for the mapping, so a disagreement is the context's defect and never the vocabulary's (D-CONTEXT-1 C1), and this is what turns that sentence into a red job.
