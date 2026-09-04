@@ -72,4 +72,5 @@ and D become artefacts, and only B and C are code anyone maintains.
 ## What this does not decide
 
 The format of the published contexts (JSON-LD 1.1 scoping versus unambiguous keys) and
-whether they are hand-authored or generated. That is a separate decision.
+whether they are hand-authored or generated. That is D-CONTEXT-1
+(`2026-09-04-context-format.md`).

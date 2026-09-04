@@ -53,7 +53,8 @@ the generator is reviewed with the source it reads.
    seeds and requires identical bytes.
 4. **Nothing under `derived/` is edited by hand, and nothing generated lives anywhere else.**
 5. **The context agreement check and the "can the contexts be generated" measurement
-   (the epic's Phases 3 and 5) wait for the context-format decision.** They are in scope; they
+   (the epic's Phases 3 and 5) wait for the context-format decision, D-CONTEXT-1
+   (`2026-09-04-context-format.md`), ratified the same day.** They are in scope; they
    are sequenced behind it.
 6. **Drafts are named in the manifest and not otherwise published.** A `v1-draft` vocabulary
    enters `derived/` when it graduates, by the same generator, with no code change.

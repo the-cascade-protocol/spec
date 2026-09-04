@@ -6,6 +6,12 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-04: The published JSON-LD contexts, ratified as D-CONTEXT-1
+
+Sixth `decisions/` entry. No vocabulary change yet; this decides the shape the contexts will take. Six points: the authored ontologies and shapes are normative and the contexts must agree with them; a JSON key is the local name of its predicate and no implementation invents or renames keys (the Medication `dose`/`dosage` case in sdk-typescript is therefore an SDK fix, since `clinical.jsonld` already publishes both); the six per-vocabulary contexts are the mapping and `cascade.jsonld` is retired as one, kept for a deprecation window with its collision policy stated in the manifest; JSON-LD 1.1 with type-scoped contexts for structured terms and class-dependent keys, `"@type": "@vocab"` for enumerated ranges; generated-with-overrides once D-DERIVED-1's Phase 5 measures the residue; and the under-specification in jayostis/spec#46 is fixed first by the context agreement check. The document carries a primer on why a flat 1.0 context cannot express what the ontologies declare. Decides jayostis/spec#3, #4, #44, #47 and the status of PR #55. See `decisions/2026-09-04-context-format.md`.
+
+---
+
 ## 2026-09-04: What an SDK is for (D-LAYERS-1) and this repository publishes its own derived data (D-DERIVED-1)
 
 Fourth and fifth `decisions/` entries. No vocabulary change.
