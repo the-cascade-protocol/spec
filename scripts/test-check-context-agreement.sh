@@ -72,6 +72,20 @@ with open(path, "w") as handle:
 PYEOF
 }
 
+# baseline_add <dir> <key>  -- list a finding in the scratch baseline that the
+# contexts as published no longer produce, i.e. a disagreement already fixed.
+baseline_add() {
+  "$PYTHON" - "$1/baseline.json" "$2" <<PYEOF
+import json, sys
+path, key = sys.argv[1], sys.argv[2]
+with open(path) as handle:
+    doc = json.load(handle)
+doc["entries"][key] = "fabricated by the regression suite; the context no longer disagrees"
+with open(path, "w") as handle:
+    json.dump(doc, handle, indent=2)
+PYEOF
+}
+
 # run <dir>  -> output on stdout, exit status in $STATUS
 run() {
   OUT="$(CONTEXTS_DIR="$1/contexts" CONTEXT_AGREEMENT_BASELINE="$1/baseline.json" \
@@ -191,9 +205,12 @@ expect_finding "a term outside every known namespace is reported" \
 echo ""
 echo "10. Baseline, other direction: a FIXED disagreement must fail as stale"
 
+# health:performedDate carries its xsd:dateTime in the published context, so
+# listing it as a missing-datatype finding describes a disagreement that has
+# been fixed. The case is written this way rather than by repairing a still
+# baselined term so that fixing any further term cannot make it vacuous.
 DIR="$(scratch stale)"
-edit "$DIR" health.jsonld \
-  'c["performedDate"] = {"@id": "health:performedDate", "@type": "xsd:dateTime"}'
+baseline_add "$DIR" "health.jsonld:performedDate:missing-datatype"
 run "$DIR"
 if [ $STATUS -eq 0 ]; then
   fail "a fixed baseline entry fails as stale" \
