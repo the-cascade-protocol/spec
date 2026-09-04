@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 scripts/node_modules/
+
+# Local agent state
+.claude/
