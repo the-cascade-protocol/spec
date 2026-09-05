@@ -713,6 +713,36 @@ only the published dictionary moved. The matching 13 entries were removed from
 
 ---
 
+## Pending batch — contexts/v1/pots.jsonld datatypes (context-only, authored 2026-09-05)
+
+**What was authored:** 6 terms in `contexts/v1/pots.jsonld` gained the `@type`
+their `rdfs:range` in `ontologies/pots/v1/pots.ttl` already declared. All 6 are
+`xsd:string`: `averageImportedBloodPressure`, which is a `systolic/diastolic`
+string rather than a number or a pair, `postureQualityScore`, a letter grade,
+`protocol`, and the text terms `symptom`, `notes` and
+`earlyTerminationReason`. No ontology, shape or `VOCAB_VERSIONS` change, so no
+tag and no `owl:versionInfo` bump: the POTS vocabulary is unchanged at 1.4 and
+only the published dictionary moved. The matching 6 entries were removed from
+`scripts/known-context-disagreements.json`, taking it from 217 to 211.
+
+**Synced NOW (not batched):**
+
+- [x] `spec/` — authored (this repo).
+- [ ] `cascadeprotocol.org` — `scripts/sync-from-spec.sh` copies the contexts
+      verbatim; the site's `check-sync.sh` byte-compares them, so it reads as
+      drift until the sync runs. Nothing else on the site changes: no term,
+      class or range moved, so the HTML docs and
+      `cascade-protocol-schemas.md` are already correct.
+
+**Batched:**
+
+- [ ] `sdk-typescript` / `sdk-python` — a consumer that writes POTS JSON
+      against the published context now emits typed literals for these 6
+      terms. Neither SDK reads the file at runtime, so nothing is blocked;
+      whichever mirrors the mapping in code should mirror the datatypes.
+
+---
+
 ## Pending batch — contexts/v1/clinical.jsonld datatypes (context-only, authored 2026-09-05)
 
 **What was authored:** 146 terms in `contexts/v1/clinical.jsonld` gained the `@type`
