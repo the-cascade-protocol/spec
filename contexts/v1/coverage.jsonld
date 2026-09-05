@@ -15,13 +15,34 @@
     "Deductible": "coverage:Deductible",
     "CopaySchedule": "coverage:CopaySchedule",
 
-    "coverageProviderName": "coverage:providerName",
-    "coverageMemberId": "coverage:memberId",
-    "coverageGroupNumber": "coverage:groupNumber",
-    "coveragePlanName": "coverage:planName",
-    "coveragePlanType": "coverage:planType",
-    "coverageCoverageType": "coverage:coverageType",
-    "coverageStatus": "coverage:status",
+    "coverageProviderName": {
+      "@id": "coverage:providerName",
+      "@type": "xsd:string"
+    },
+    "coverageMemberId": {
+      "@id": "coverage:memberId",
+      "@type": "xsd:string"
+    },
+    "coverageGroupNumber": {
+      "@id": "coverage:groupNumber",
+      "@type": "xsd:string"
+    },
+    "coveragePlanName": {
+      "@id": "coverage:planName",
+      "@type": "xsd:string"
+    },
+    "coveragePlanType": {
+      "@id": "coverage:planType",
+      "@type": "xsd:string"
+    },
+    "coverageCoverageType": {
+      "@id": "coverage:coverageType",
+      "@type": "xsd:string"
+    },
+    "coverageStatus": {
+      "@id": "coverage:status",
+      "@type": "xsd:string"
+    },
     "effectiveStart": {
       "@id": "coverage:effectiveStart",
       "@type": "xsd:date"
@@ -30,11 +51,29 @@
       "@id": "coverage:effectiveEnd",
       "@type": "xsd:date"
     },
-    "coverageSubscriberId": "coverage:subscriberId",
-    "subscriberName": "coverage:subscriberName",
-    "subscriberRelationship": "coverage:subscriberRelationship",
-    "rxBin": "coverage:rxBin",
-    "rxPcn": "coverage:rxPcn",
-    "rxGroup": "coverage:rxGroup"
+    "coverageSubscriberId": {
+      "@id": "coverage:subscriberId",
+      "@type": "xsd:string"
+    },
+    "subscriberName": {
+      "@id": "coverage:subscriberName",
+      "@type": "xsd:string"
+    },
+    "subscriberRelationship": {
+      "@id": "coverage:subscriberRelationship",
+      "@type": "xsd:string"
+    },
+    "rxBin": {
+      "@id": "coverage:rxBin",
+      "@type": "xsd:string"
+    },
+    "rxPcn": {
+      "@id": "coverage:rxPcn",
+      "@type": "xsd:string"
+    },
+    "rxGroup": {
+      "@id": "coverage:rxGroup",
+      "@type": "xsd:string"
+    }
   }
 }

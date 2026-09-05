@@ -38,6 +38,22 @@ The check's own regression suite needed no change and stays at 18 cases. Every c
 
 ---
 
+## 2026-09-05: coverage.jsonld states the datatype its ontology declares, for 13 terms
+
+No vocabulary change: no term is added, removed or renamed, no range is altered and no shape moves. `contexts/v1/coverage.jsonld` is the only authored file that changes, and it changes in one direction only, from a term that says nothing about its value to a term that says what `coverage.ttl` already declares. The coverage vocabulary stays at 1.6.
+
+**13 terms in the coverage context carried no `@type` while the ontology declared an `rdfs:range`.** Every one of them declares `rdfs:range xsd:string`, and here that is the whole point rather than a formality. `coverage:rxBin`, `coverage:rxPcn` and `coverage:rxGroup` are the pharmacy-benefit routing identifiers a claim is submitted with, and `coverage:memberId`, `coverage:subscriberId` and `coverage:groupNumber` are the identifiers on the card. Every one of them can look like a number and none of them is one: a BIN is a fixed-width digit string whose leading zeros are part of its value, and a consumer that read a bare term as licence to write a JSON number would have destroyed the identifier it was copying. The context now says these are strings, because the vocabulary always did.
+
+Each term now carries exactly the datatype its own `rdfs:range` states, read from the ontology rather than inferred from the key. Every range resolved to a single `xsd:` datatype, so no term in the set was left untouched. No term's `@id` and no term's `@container` is touched, and no term in the set declared a container to begin with. Eight of the 13 also carry a `key-not-local-name` entry, the coverage-prefixed keys such as `coverageMemberId` and `coveragePlanName`; those entries are untouched, because a renamed key can still be right about its range and the two disagreements have different cures.
+
+**The baseline is 13 entries shorter, and the gate is what proved the shrink.** With those 13 entries removed and the context still bare, `scripts/check-context-agreement.py` failed naming exactly those 13 findings as unlisted, and named nothing else; typing the terms returns the run to green at 204 baselined disagreements, down from 217. The remaining 115 `missing-datatype` findings are in core, checkup and pots and are untouched here, as are the 36 structured terms, which need the JSON-LD 1.1 move that D-CONTEXT-1 C4 describes and cannot be fixed term by term, the 52 renamed keys and the 1 enumerated range. This is one instalment of D-CONTEXT-1 C6, after health and clinical.
+
+The check's own regression suite needed no change and stays at 18 cases. Every case that concerns a datatype reintroduces one into a scratch copy rather than repairing one, and the case that proves the stale direction is written against `health:performedDate`, which the health instalment had already fixed, precisely so that no further term typed anywhere could hollow it out. No case names a coverage term this change touches.
+
+`contexts/v1/coverage.jsonld` is copied downstream by script, so the site repository's context sync is the follow-up to this entry.
+
+---
+
 ## 2026-09-05: clinical.jsonld states the datatype its ontology declares, for 146 terms
 
 No vocabulary change: no term is added, removed or renamed, no range is altered and no shape moves. `contexts/v1/clinical.jsonld` is the only authored file that changes, and it changes in one direction only, from a term that says nothing about its value to a term that says what `clinical.ttl` already declares. The clinical vocabulary stays at 1.17.
