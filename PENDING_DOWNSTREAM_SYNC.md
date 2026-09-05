@@ -681,6 +681,38 @@ dictionary moved. The matching 50 entries were removed from
 
 ---
 
+## Pending batch — contexts/v1/coverage.jsonld datatypes (context-only, authored 2026-09-05)
+
+**What was authored:** 13 terms in `contexts/v1/coverage.jsonld` gained the
+`@type` their `rdfs:range` in `ontologies/coverage/v1/coverage.ttl` already
+declared. All 13 are `xsd:string`, among them the pharmacy-benefit routing
+identifiers `rxBin`, `rxPcn` and `rxGroup` and the card identifiers `memberId`,
+`subscriberId` and `groupNumber`, every one of which can look like a number and
+none of which is one. No ontology, shape or `VOCAB_VERSIONS` change, so no tag
+and no `owl:versionInfo` bump: the coverage vocabulary is unchanged at 1.6 and
+only the published dictionary moved. The matching 13 entries were removed from
+`scripts/known-context-disagreements.json`, taking it from 217 to 204.
+
+**Synced NOW (not batched):**
+
+- [x] `spec/` — authored (this repo).
+- [ ] `cascadeprotocol.org` — `scripts/sync-from-spec.sh` copies the contexts
+      verbatim; the site's `check-sync.sh` byte-compares them, so it reads as
+      drift until the sync runs. Nothing else on the site changes: no term,
+      class or range moved, so the HTML docs and
+      `cascade-protocol-schemas.md` are already correct.
+
+**Batched:**
+
+- [ ] `sdk-typescript` / `sdk-python` — a consumer that writes coverage JSON
+      against the published context now emits typed literals for these 13
+      terms, which matters most for the identifiers whose leading zeros a
+      numeric reading would destroy. Neither SDK reads the file at runtime, so
+      nothing is blocked; whichever mirrors the mapping in code should mirror
+      the datatypes.
+
+---
+
 ## Pending batch — contexts/v1/clinical.jsonld datatypes (context-only, authored 2026-09-05)
 
 **What was authored:** 146 terms in `contexts/v1/clinical.jsonld` gained the `@type`
