@@ -6,6 +6,9 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-05: D-CANONICAL-1 amended with two measurements, the layer 1 naming rule is now qualified
+
+`decisions/2026-09-05-two-layer-pod.md` gains an amendment recording what an identity measurement over the public corpora and an IPS 2.0.1 mapping changed before the rulebook went to review. The naming sentence no longer says "JCS for JSON, C14N for XML": plain JCS collapses FHIR decimals and C14N 1.0 breaks on whitespace, both measured, and the rule now requires per-format canonicalisation stated here, a declared exclusion list, the enclosing document's identifier as context, and a uniqueness condition on source identifiers. Rulebook item 8 ties each canonical shape to its IPS profile; items 9 (the naming rule), 10 (section-level absence) and 11 (the clinical/health class split) are added. Sequencing gains a first step: close the four vocabulary gaps the mapping found (patient name, coded allergen and manifestation, a declared medication effective date, authorship). No vocabulary changes.
 ## 2026-09-05: core.jsonld states the datatype its ontology declares, for 59 terms
 
 No vocabulary change: no term is added, removed or renamed, no range is altered and no shape moves. `contexts/v1/core.jsonld` is the only authored file that changes, and it changes in one direction only, from a term that says nothing about its value to a term that says what `core.ttl` already declares. The core vocabulary stays at 3.8.
