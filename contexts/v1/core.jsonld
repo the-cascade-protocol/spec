@@ -33,7 +33,10 @@
     "AdvanceDirectives": "cascade:AdvanceDirectives",
     "EmergencyContact": "cascade:EmergencyContact",
 
-    "schemaVersion": "cascade:schemaVersion",
+    "schemaVersion": {
+      "@id": "cascade:schemaVersion",
+      "@type": "xsd:string"
+    },
     "dataProvenance": {
       "@id": "cascade:dataProvenance",
       "@type": "@id"
@@ -42,18 +45,42 @@
       "@id": "cascade:creatorWebID",
       "@type": "@id"
     },
-    "sourceSystem": "cascade:sourceSystem",
-    "sourceIdentity": "cascade:sourceIdentity",
-    "dataAbsentReason": "cascade:dataAbsentReason",
-    "sourceName": "cascade:sourceName",
-    "sourceBundleId": "cascade:sourceBundleId",
-    "sourceReliabilityTier": "cascade:sourceReliabilityTier",
+    "sourceSystem": {
+      "@id": "cascade:sourceSystem",
+      "@type": "xsd:string"
+    },
+    "sourceIdentity": {
+      "@id": "cascade:sourceIdentity",
+      "@type": "xsd:string"
+    },
+    "dataAbsentReason": {
+      "@id": "cascade:dataAbsentReason",
+      "@type": "xsd:string"
+    },
+    "sourceName": {
+      "@id": "cascade:sourceName",
+      "@type": "xsd:string"
+    },
+    "sourceBundleId": {
+      "@id": "cascade:sourceBundleId",
+      "@type": "xsd:string"
+    },
+    "sourceReliabilityTier": {
+      "@id": "cascade:sourceReliabilityTier",
+      "@type": "xsd:string"
+    },
     "sourceMetricCoverage": {
       "@id": "cascade:sourceMetricCoverage",
       "@type": "@id"
     },
-    "subConcern": "cascade:subConcern",
-    "addedInSchemaVersion": "cascade:addedInSchemaVersion",
+    "subConcern": {
+      "@id": "cascade:subConcern",
+      "@type": "xsd:string"
+    },
+    "addedInSchemaVersion": {
+      "@id": "cascade:addedInSchemaVersion",
+      "@type": "xsd:string"
+    },
     "cascadeUri": {
       "@id": "cascade:cascadeUri",
       "@type": "xsd:anyURI"
@@ -62,23 +89,50 @@
       "@id": "cascade:notificationsEnabled",
       "@type": "xsd:boolean"
     },
-    "preferredUnits": "cascade:preferredUnits",
+    "preferredUnits": {
+      "@id": "cascade:preferredUnits",
+      "@type": "xsd:string"
+    },
     "dateOfBirth": {
       "@id": "cascade:dateOfBirth",
       "@type": "xsd:date"
     },
-    "genderIdentity": "cascade:genderIdentity",
-    "biologicalSex": "cascade:biologicalSex",
-    "ageGroup": "cascade:ageGroup",
-    "emergencyContactName": "cascade:emergencyContactName",
-    "emergencyContactRelationship": "cascade:emergencyContactRelationship",
-    "emergencyContactPhone": "cascade:emergencyContactPhone",
+    "genderIdentity": {
+      "@id": "cascade:genderIdentity",
+      "@type": "xsd:string"
+    },
+    "biologicalSex": {
+      "@id": "cascade:biologicalSex",
+      "@type": "xsd:string"
+    },
+    "ageGroup": {
+      "@id": "cascade:ageGroup",
+      "@type": "xsd:string"
+    },
+    "emergencyContactName": {
+      "@id": "cascade:emergencyContactName",
+      "@type": "xsd:string"
+    },
+    "emergencyContactRelationship": {
+      "@id": "cascade:emergencyContactRelationship",
+      "@type": "xsd:string"
+    },
+    "emergencyContactPhone": {
+      "@id": "cascade:emergencyContactPhone",
+      "@type": "xsd:string"
+    },
     "hasAddress": {
       "@id": "cascade:hasAddress",
       "@type": "@id"
     },
-    "maritalStatus": "cascade:maritalStatus",
-    "raceEthnicity": "cascade:raceEthnicity",
+    "maritalStatus": {
+      "@id": "cascade:maritalStatus",
+      "@type": "xsd:string"
+    },
+    "raceEthnicity": {
+      "@id": "cascade:raceEthnicity",
+      "@type": "xsd:string"
+    },
     "hasPreferredPharmacy": {
       "@id": "cascade:hasPreferredPharmacy",
       "@type": "@id"
@@ -91,11 +145,26 @@
       "@id": "cascade:computedAge",
       "@type": "xsd:integer"
     },
-    "profileId": "cascade:profileId",
-    "pharmacyAddress": "cascade:pharmacyAddress",
-    "contactName": "cascade:contactName",
-    "contactRelationship": "cascade:contactRelationship",
-    "contactPhone": "cascade:contactPhone",
+    "profileId": {
+      "@id": "cascade:profileId",
+      "@type": "xsd:string"
+    },
+    "pharmacyAddress": {
+      "@id": "cascade:pharmacyAddress",
+      "@type": "xsd:string"
+    },
+    "contactName": {
+      "@id": "cascade:contactName",
+      "@type": "xsd:string"
+    },
+    "contactRelationship": {
+      "@id": "cascade:contactRelationship",
+      "@type": "xsd:string"
+    },
+    "contactPhone": {
+      "@id": "cascade:contactPhone",
+      "@type": "xsd:string"
+    },
     "emergencyContact": {
       "@id": "cascade:emergencyContact",
       "@type": "@id"
@@ -112,23 +181,74 @@
       "@id": "cascade:address",
       "@type": "@id"
     },
-    "preferredLanguage": "cascade:preferredLanguage",
-    "streetAddress": "cascade:streetAddress",
-    "city": "cascade:city",
-    "state": "cascade:state",
-    "postalCode": "cascade:postalCode",
-    "country": "cascade:country",
-    "addressUse": "cascade:addressUse",
-    "addressType": "cascade:addressType",
-    "addressText": "cascade:addressText",
-    "addressLine": "cascade:addressLine",
-    "addressCity": "cascade:addressCity",
-    "addressDistrict": "cascade:addressDistrict",
-    "addressState": "cascade:addressState",
-    "addressPostalCode": "cascade:addressPostalCode",
-    "addressCountry": "cascade:addressCountry",
-    "pharmacyName": "cascade:pharmacyName",
-    "pharmacyPhone": "cascade:pharmacyPhone",
+    "preferredLanguage": {
+      "@id": "cascade:preferredLanguage",
+      "@type": "xsd:string"
+    },
+    "streetAddress": {
+      "@id": "cascade:streetAddress",
+      "@type": "xsd:string"
+    },
+    "city": {
+      "@id": "cascade:city",
+      "@type": "xsd:string"
+    },
+    "state": {
+      "@id": "cascade:state",
+      "@type": "xsd:string"
+    },
+    "postalCode": {
+      "@id": "cascade:postalCode",
+      "@type": "xsd:string"
+    },
+    "country": {
+      "@id": "cascade:country",
+      "@type": "xsd:string"
+    },
+    "addressUse": {
+      "@id": "cascade:addressUse",
+      "@type": "xsd:string"
+    },
+    "addressType": {
+      "@id": "cascade:addressType",
+      "@type": "xsd:string"
+    },
+    "addressText": {
+      "@id": "cascade:addressText",
+      "@type": "xsd:string"
+    },
+    "addressLine": {
+      "@id": "cascade:addressLine",
+      "@type": "xsd:string"
+    },
+    "addressCity": {
+      "@id": "cascade:addressCity",
+      "@type": "xsd:string"
+    },
+    "addressDistrict": {
+      "@id": "cascade:addressDistrict",
+      "@type": "xsd:string"
+    },
+    "addressState": {
+      "@id": "cascade:addressState",
+      "@type": "xsd:string"
+    },
+    "addressPostalCode": {
+      "@id": "cascade:addressPostalCode",
+      "@type": "xsd:string"
+    },
+    "addressCountry": {
+      "@id": "cascade:addressCountry",
+      "@type": "xsd:string"
+    },
+    "pharmacyName": {
+      "@id": "cascade:pharmacyName",
+      "@type": "xsd:string"
+    },
+    "pharmacyPhone": {
+      "@id": "cascade:pharmacyPhone",
+      "@type": "xsd:string"
+    },
     "hasLivingWill": {
       "@id": "cascade:hasLivingWill",
       "@type": "xsd:boolean"
@@ -141,7 +261,10 @@
       "@id": "cascade:hasDNR",
       "@type": "xsd:boolean"
     },
-    "advanceDirectiveNotes": "cascade:advanceDirectiveNotes",
+    "advanceDirectiveNotes": {
+      "@id": "cascade:advanceDirectiveNotes",
+      "@type": "xsd:string"
+    },
 
     "HealthRecord": "cascade:HealthRecord",
     "AIExtractionActivity": "cascade:AIExtractionActivity",
@@ -151,8 +274,14 @@
       "@id": "cascade:extractionConfidence",
       "@type": "xsd:decimal"
     },
-    "extractionModel": "cascade:extractionModel",
-    "sourceNarrativeSection": "cascade:sourceNarrativeSection",
+    "extractionModel": {
+      "@id": "cascade:extractionModel",
+      "@type": "xsd:string"
+    },
+    "sourceNarrativeSection": {
+      "@id": "cascade:sourceNarrativeSection",
+      "@type": "xsd:string"
+    },
     "requiresUserReview": {
       "@id": "cascade:requiresUserReview",
       "@type": "xsd:boolean"
@@ -161,8 +290,14 @@
       "@id": "cascade:requiresLLMExtraction",
       "@type": "xsd:boolean"
     },
-    "discardedEntityType": "cascade:discardedEntityType",
-    "discardedFrom": "cascade:discardedFrom",
+    "discardedEntityType": {
+      "@id": "cascade:discardedEntityType",
+      "@type": "xsd:string"
+    },
+    "discardedFrom": {
+      "@id": "cascade:discardedFrom",
+      "@type": "xsd:string"
+    },
     "discardedAt": {
       "@id": "cascade:discardedAt",
       "@type": "xsd:dateTime"
@@ -181,8 +316,14 @@
       "@id": "cascade:proxyWebID",
       "@type": "@id"
     },
-    "proxyRelationship": "cascade:proxyRelationship",
-    "proxyScope": "cascade:proxyScope",
+    "proxyRelationship": {
+      "@id": "cascade:proxyRelationship",
+      "@type": "xsd:string"
+    },
+    "proxyScope": {
+      "@id": "cascade:proxyScope",
+      "@type": "xsd:string"
+    },
     "proxyGrantedAt": {
       "@id": "cascade:proxyGrantedAt",
       "@type": "xsd:dateTime"
@@ -196,15 +337,24 @@
     "RecordSummary": "cascade:RecordSummary",
     "InteractionScenario": "cascade:InteractionScenario",
 
-    "patientProfileVersion": "cascade:patientProfileVersion",
+    "patientProfileVersion": {
+      "@id": "cascade:patientProfileVersion",
+      "@type": "xsd:string"
+    },
     "provenanceLayers": { "@id": "cascade:provenanceLayers", "@container": "@list", "@type": "@id" },
     "clinicalSummary": { "@id": "cascade:clinicalSummary", "@type": "@id" },
     "wellnessSummary": { "@id": "cascade:wellnessSummary", "@type": "@id" },
     "deviceSources": { "@id": "cascade:deviceSources", "@container": "@list" },
     "interactionScenarios": { "@id": "cascade:interactionScenarios", "@container": "@list" },
 
-    "domain": "cascade:domain",
-    "coreNotes": "cascade:notes",
+    "domain": {
+      "@id": "cascade:domain",
+      "@type": "xsd:string"
+    },
+    "coreNotes": {
+      "@id": "cascade:notes",
+      "@type": "xsd:string"
+    },
     "conditionCount": { "@id": "cascade:conditionCount", "@type": "xsd:integer" },
     "medicationCount": { "@id": "cascade:medicationCount", "@type": "xsd:integer" },
     "allergyCount": { "@id": "cascade:allergyCount", "@type": "xsd:integer" },
@@ -219,12 +369,24 @@
     "sleepDays": { "@id": "cascade:sleepDays", "@type": "xsd:integer" },
 
     "involvedResources": { "@id": "cascade:involvedResources", "@container": "@list", "@type": "@id" },
-    "severity": "cascade:severity",
+    "severity": {
+      "@id": "cascade:severity",
+      "@type": "xsd:string"
+    },
     "requiresCrossProvenance": { "@id": "cascade:requiresCrossProvenance", "@type": "xsd:boolean" },
 
-    "sourceType": "cascade:sourceType",
-    "dataTypes": "cascade:dataTypes",
-    "version": "cascade:version",
+    "sourceType": {
+      "@id": "cascade:sourceType",
+      "@type": "xsd:string"
+    },
+    "dataTypes": {
+      "@id": "cascade:dataTypes",
+      "@type": "xsd:string"
+    },
+    "version": {
+      "@id": "cascade:version",
+      "@type": "xsd:string"
+    },
 
     "date": { "@id": "cascade:date", "@type": "xsd:dateTime" },
     "sampleCount": { "@id": "cascade:sampleCount", "@type": "xsd:integer" },
@@ -232,11 +394,26 @@
 
     "Attachment": "cascade:Attachment",
     "hasAttachment": { "@id": "cascade:hasAttachment", "@type": "@id", "@container": "@set" },
-    "attachmentPath": "cascade:attachmentPath",
-    "attachmentMediaType": "cascade:attachmentMediaType",
-    "contentHash": "cascade:contentHash",
-    "hashAlgorithm": "cascade:hashAlgorithm",
+    "attachmentPath": {
+      "@id": "cascade:attachmentPath",
+      "@type": "xsd:string"
+    },
+    "attachmentMediaType": {
+      "@id": "cascade:attachmentMediaType",
+      "@type": "xsd:string"
+    },
+    "contentHash": {
+      "@id": "cascade:contentHash",
+      "@type": "xsd:string"
+    },
+    "hashAlgorithm": {
+      "@id": "cascade:hashAlgorithm",
+      "@type": "xsd:string"
+    },
     "byteSize": { "@id": "cascade:byteSize", "@type": "xsd:integer" },
-    "attachmentTitle": "cascade:attachmentTitle"
+    "attachmentTitle": {
+      "@id": "cascade:attachmentTitle",
+      "@type": "xsd:string"
+    }
   }
 }
