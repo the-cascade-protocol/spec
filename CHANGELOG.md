@@ -6,6 +6,22 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-05: core.jsonld states the datatype its ontology declares, for 59 terms
+
+No vocabulary change: no term is added, removed or renamed, no range is altered and no shape moves. `contexts/v1/core.jsonld` is the only authored file that changes, and it changes in one direction only, from a term that says nothing about its value to a term that says what `core.ttl` already declares. The core vocabulary stays at 3.8.
+
+**59 terms in the core context carried no `@type` while the ontology declared an `rdfs:range`.** Every one of them declares `rdfs:range xsd:string`, so this instalment is a single datatype applied 59 times rather than a mix. That uniformity is not a reason to leave them bare. `cascade:contentHash` is the clearest case: its value is a lowercase hexadecimal digest that is also, byte for byte, the file's name under `attachments/{algorithm}/`, and a dictionary that says nothing about it publishes the one string in the vocabulary whose exact spelling a consumer must not normalise. `cascade:dataTypes` holds a comma-separated list, `cascade:schemaVersion` and `cascade:version` hold version strings, and the address, pharmacy and emergency-contact terms hold text a consumer would otherwise have had to guess was text. Left bare, the core dictionary described its own vocabulary in two different ways depending on the term, which is the disagreement D-CONTEXT-1 C6 names.
+
+Each term now carries exactly the datatype its own `rdfs:range` states, read from the ontology rather than inferred from the key. Every range resolved to a single `xsd:` datatype, so no term in the set was left untouched. No term's `@id` and no term's `@container` is touched, and no term in the set declared a container to begin with.
+
+**The baseline is 59 entries shorter, and the gate is what proved the shrink.** With those 59 entries removed and the context still bare, `scripts/check-context-agreement.py` failed naming exactly those 59 findings as unlisted, and named nothing else; typing the terms returns the run to green at 158 baselined disagreements, down from 217. The remaining 69 `missing-datatype` findings are in checkup, coverage and pots and are untouched here, as are the 36 structured terms, which need the JSON-LD 1.1 move that D-CONTEXT-1 C4 describes and cannot be fixed term by term, the 52 renamed keys and the 1 enumerated range. This is the third instalment of D-CONTEXT-1 C6, after health and clinical.
+
+The check's own regression suite needed no change and stays at 18 cases. Every case that concerns a datatype reintroduces one into a scratch copy rather than repairing one, and the case that proves the stale direction is written against `health:performedDate`, which the health instalment had already fixed, precisely so that no further term typed anywhere could hollow it out. No case names a core term this change touches. The reference-processor check still accepts all seven published contexts.
+
+`contexts/v1/core.jsonld` is copied downstream by script, so the site repository's context sync is the follow-up to this entry.
+
+---
+
 ## 2026-09-05: clinical.jsonld states the datatype its ontology declares, for 146 terms
 
 No vocabulary change: no term is added, removed or renamed, no range is altered and no shape moves. `contexts/v1/clinical.jsonld` is the only authored file that changes, and it changes in one direction only, from a term that says nothing about its value to a term that says what `clinical.ttl` already declares. The clinical vocabulary stays at 1.17.
