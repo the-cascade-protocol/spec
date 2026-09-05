@@ -86,17 +86,11 @@
     "health.jsonld:healthUnit:key-not-local-name": "context key \"healthUnit\" is not the local name of health:unit, which is \"unit\" (D-CONTEXT-1 C2: a JSON key is the local name of its predicate)",
     "health.jsonld:restingHeartRateHistory:structured-term-unscoped": "ontology says rdfs:range health:DailyVitalReading, a structured class shaped by health:DailyVitalReadingShape; context says \"@type\": \"@id\" and no scoped @context, so the nested node's class and children are stated nowhere",
     "health.jsonld:walkingHeartRateHistory:structured-term-unscoped": "ontology says rdfs:range health:DailyVitalReading, a structured class shaped by health:DailyVitalReadingShape; context says \"@type\": \"@id\" and no scoped @context, so the nested node's class and children are stated nowhere",
-    "pots.jsonld:averageImportedBloodPressure:missing-datatype": "ontology says rdfs:range xsd:string; context declares no @type, so a consumer writes an untyped string",
-    "pots.jsonld:earlyTerminationReason:missing-datatype": "ontology says rdfs:range xsd:string; context declares no @type, so a consumer writes an untyped string",
-    "pots.jsonld:postureQualityScore:missing-datatype": "ontology says rdfs:range xsd:string; context declares no @type, so a consumer writes an untyped string",
     "pots.jsonld:potsDate:key-not-local-name": "context key \"potsDate\" is not the local name of pots:date, which is \"date\" (D-CONTEXT-1 C2: a JSON key is the local name of its predicate)",
     "pots.jsonld:potsMaxHeartRateDelta:key-not-local-name": "context key \"potsMaxHeartRateDelta\" is not the local name of pots:maxHeartRateDelta, which is \"maxHeartRateDelta\" (D-CONTEXT-1 C2: a JSON key is the local name of its predicate)",
     "pots.jsonld:potsNotes:key-not-local-name": "context key \"potsNotes\" is not the local name of pots:notes, which is \"notes\" (D-CONTEXT-1 C2: a JSON key is the local name of its predicate)",
-    "pots.jsonld:potsNotes:missing-datatype": "ontology says rdfs:range xsd:string; context declares no @type, so a consumer writes an untyped string",
     "pots.jsonld:potsPotsThresholdMet:key-not-local-name": "context key \"potsPotsThresholdMet\" is not the local name of pots:potsThresholdMet, which is \"potsThresholdMet\" (D-CONTEXT-1 C2: a JSON key is the local name of its predicate)",
-    "pots.jsonld:protocol:missing-datatype": "ontology says rdfs:range xsd:string; context declares no @type, so a consumer writes an untyped string",
     "pots.jsonld:supineBloodPressure:structured-term-unscoped": "ontology says rdfs:range pots:BloodPressureMeasurement, a structured class shaped by pots:BloodPressureMeasurementShape; context says \"@type\": \"@id\" and no scoped @context, so the nested node's class and children are stated nowhere",
-    "pots.jsonld:supineHeartRate:structured-term-unscoped": "ontology says rdfs:range pots:HeartRateMeasurement, a structured class shaped by pots:HeartRateMeasurementShape; context says \"@type\": \"@id\" and no scoped @context, so the nested node's class and children are stated nowhere",
-    "pots.jsonld:symptom:missing-datatype": "ontology says rdfs:range xsd:string; context declares no @type, so a consumer writes an untyped string"
+    "pots.jsonld:supineHeartRate:structured-term-unscoped": "ontology says rdfs:range pots:HeartRateMeasurement, a structured class shaped by pots:HeartRateMeasurementShape; context says \"@type\": \"@id\" and no scoped @context, so the nested node's class and children are stated nowhere"
   }
 }

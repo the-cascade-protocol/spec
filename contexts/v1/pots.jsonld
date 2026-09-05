@@ -24,7 +24,10 @@
       "@id": "pots:date",
       "@type": "xsd:dateTime"
     },
-    "protocol": "pots:protocol",
+    "protocol": {
+      "@id": "pots:protocol",
+      "@type": "xsd:string"
+    },
     "baselineDurationSeconds": {
       "@id": "pots:baselineDurationSeconds",
       "@type": "xsd:integer"
@@ -61,8 +64,14 @@
       "@id": "pots:symptomEvents",
       "@type": "@id"
     },
-    "symptom": "pots:symptom",
-    "potsNotes": "pots:notes",
+    "symptom": {
+      "@id": "pots:symptom",
+      "@type": "xsd:string"
+    },
+    "potsNotes": {
+      "@id": "pots:notes",
+      "@type": "xsd:string"
+    },
     "potsPotsThresholdMet": {
       "@id": "pots:potsThresholdMet",
       "@type": "xsd:boolean"
@@ -79,8 +88,14 @@
       "@id": "pots:isIncomplete",
       "@type": "xsd:boolean"
     },
-    "earlyTerminationReason": "pots:earlyTerminationReason",
-    "postureQualityScore": "pots:postureQualityScore",
+    "earlyTerminationReason": {
+      "@id": "pots:earlyTerminationReason",
+      "@type": "xsd:string"
+    },
+    "postureQualityScore": {
+      "@id": "pots:postureQualityScore",
+      "@type": "xsd:string"
+    },
     "movementArtifactPercentage": {
       "@id": "pots:movementArtifactPercentage",
       "@type": "xsd:double"
@@ -121,7 +136,10 @@
       "@id": "pots:importedHRVHistory",
       "@type": "@id"
     },
-    "averageImportedBloodPressure": "pots:averageImportedBloodPressure",
+    "averageImportedBloodPressure": {
+      "@id": "pots:averageImportedBloodPressure",
+      "@type": "xsd:string"
+    },
     "averageImportedHRV": {
       "@id": "pots:averageImportedHRV",
       "@type": "xsd:double"
