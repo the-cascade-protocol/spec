@@ -22,6 +22,22 @@ The check's own regression suite needed no change and stays at 18 cases. Every c
 
 ---
 
+## 2026-09-05: checkup.jsonld states the datatype its ontology declares, for 50 terms
+
+No vocabulary change: no term is added, removed or renamed, no range is altered and no shape moves. `contexts/v1/checkup.jsonld` is the only authored file that changes, and it changes in one direction only, from a term that says nothing about its value to a term that says what `checkup.ttl` already declares. The checkup vocabulary stays at 3.3.
+
+**50 terms in the checkup context carried no `@type` while the ontology declared an `rdfs:range`.** Every one of them declares `rdfs:range xsd:string`, so this instalment is a single datatype applied 50 times rather than a mix. Two of them are strings that hold a list in disguise: `checkup:enabledDays` is a comma-separated set of weekday names and `checkup:missedMedicationIds` a comma-separated set of UUIDs, and a published dictionary that says nothing about either invites a consumer to treat the value as structured when the vocabulary has committed to text. `checkup:doseQuantity` is a quantity the vocabulary deliberately holds as a string; the questionnaire terms `itemLinkId`, `itemText`, `itemAnswer` and `itemAnswerCode`, and the narrative terms `attentionText`, `insightText`, `correlationText` and `noteContent`, are text and now say so.
+
+Each term now carries exactly the datatype its own `rdfs:range` states, read from the ontology rather than inferred from the key. Every range resolved to a single `xsd:` datatype, so no term in the set was left untouched. No term's `@id` and no term's `@container` is touched, and no term in the set declared a container to begin with. Eight of the 50 also carry a `key-not-local-name` entry, the prefixed keys `checkupAdministrationRoute`, `checkupDoseQuantity`, `checkupLotNumber`, `checkupManufacturer`, `checkupProcedureCategory`, `checkupProcedureName`, `checkupVaccineCode` and `checkupVaccineName`; those entries are untouched, because a renamed key can still be right about its range and the two disagreements have different cures.
+
+**The baseline is 50 entries shorter, and the gate is what proved the shrink.** With those 50 entries removed and the context still bare, `scripts/check-context-agreement.py` failed naming exactly those 50 findings as unlisted, and named nothing else; typing the terms returns the run to green at 167 baselined disagreements, down from 217. The remaining 78 `missing-datatype` findings are in core, coverage and pots and are untouched here, as are the 36 structured terms, which need the JSON-LD 1.1 move that D-CONTEXT-1 C4 describes and cannot be fixed term by term, the 52 renamed keys and the 1 enumerated range. This is one instalment of D-CONTEXT-1 C6, after health and clinical.
+
+The check's own regression suite needed no change and stays at 18 cases. Every case that concerns a datatype reintroduces one into a scratch copy rather than repairing one, and the case that proves the stale direction is written against `health:performedDate`, which the health instalment had already fixed, precisely so that no further term typed anywhere could hollow it out. No case names a checkup term this change touches.
+
+`contexts/v1/checkup.jsonld` is copied downstream by script, so the site repository's context sync is the follow-up to this entry.
+
+---
+
 ## 2026-09-05: clinical.jsonld states the datatype its ontology declares, for 146 terms
 
 No vocabulary change: no term is added, removed or renamed, no range is altered and no shape moves. `contexts/v1/clinical.jsonld` is the only authored file that changes, and it changes in one direction only, from a term that says nothing about its value to a term that says what `clinical.ttl` already declares. The clinical vocabulary stays at 1.17.

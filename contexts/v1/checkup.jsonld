@@ -81,7 +81,10 @@
       "@id": "checkup:needsVerification",
       "@type": "xsd:boolean"
     },
-    "verificationReason": "checkup:verificationReason",
+    "verificationReason": {
+      "@id": "checkup:verificationReason",
+      "@type": "xsd:string"
+    },
     "lastVerifiedDate": {
       "@id": "checkup:lastVerifiedDate",
       "@type": "xsd:dateTime"
@@ -115,16 +118,34 @@
       "@id": "checkup:doctorAware",
       "@type": "xsd:boolean"
     },
-    "checkupVaccineName": "checkup:vaccineName",
+    "checkupVaccineName": {
+      "@id": "checkup:vaccineName",
+      "@type": "xsd:string"
+    },
     "administrationDate": {
       "@id": "checkup:administrationDate",
       "@type": "xsd:dateTime"
     },
-    "immunizationStatus": "checkup:immunizationStatus",
-    "checkupVaccineCode": "checkup:vaccineCode",
-    "vaccineCategory": "checkup:vaccineCategory",
-    "checkupManufacturer": "checkup:manufacturer",
-    "checkupLotNumber": "checkup:lotNumber",
+    "immunizationStatus": {
+      "@id": "checkup:immunizationStatus",
+      "@type": "xsd:string"
+    },
+    "checkupVaccineCode": {
+      "@id": "checkup:vaccineCode",
+      "@type": "xsd:string"
+    },
+    "vaccineCategory": {
+      "@id": "checkup:vaccineCategory",
+      "@type": "xsd:string"
+    },
+    "checkupManufacturer": {
+      "@id": "checkup:manufacturer",
+      "@type": "xsd:string"
+    },
+    "checkupLotNumber": {
+      "@id": "checkup:lotNumber",
+      "@type": "xsd:string"
+    },
     "checkupExpirationDate": {
       "@id": "checkup:expirationDate",
       "@type": "xsd:date"
@@ -133,20 +154,50 @@
       "@id": "checkup:doseNumber",
       "@type": "xsd:integer"
     },
-    "checkupDoseQuantity": "checkup:doseQuantity",
-    "checkupAdministrationRoute": "checkup:administrationRoute",
-    "administrationSite": "checkup:administrationSite",
-    "administeringProvider": "checkup:administeringProvider",
-    "administeringLocation": "checkup:administeringLocation",
-    "immunizationNotes": "checkup:immunizationNotes",
+    "checkupDoseQuantity": {
+      "@id": "checkup:doseQuantity",
+      "@type": "xsd:string"
+    },
+    "checkupAdministrationRoute": {
+      "@id": "checkup:administrationRoute",
+      "@type": "xsd:string"
+    },
+    "administrationSite": {
+      "@id": "checkup:administrationSite",
+      "@type": "xsd:string"
+    },
+    "administeringProvider": {
+      "@id": "checkup:administeringProvider",
+      "@type": "xsd:string"
+    },
+    "administeringLocation": {
+      "@id": "checkup:administeringLocation",
+      "@type": "xsd:string"
+    },
+    "immunizationNotes": {
+      "@id": "checkup:immunizationNotes",
+      "@type": "xsd:string"
+    },
     "immunizationSourceRecord": {
       "@id": "checkup:immunizationSourceRecord",
       "@type": "@id"
     },
-    "labCategory": "checkup:labCategory",
-    "checkupProcedureName": "checkup:procedureName",
-    "checkupProcedureCategory": "checkup:procedureCategory",
-    "procedureLocation": "checkup:procedureLocation",
+    "labCategory": {
+      "@id": "checkup:labCategory",
+      "@type": "xsd:string"
+    },
+    "checkupProcedureName": {
+      "@id": "checkup:procedureName",
+      "@type": "xsd:string"
+    },
+    "checkupProcedureCategory": {
+      "@id": "checkup:procedureCategory",
+      "@type": "xsd:string"
+    },
+    "procedureLocation": {
+      "@id": "checkup:procedureLocation",
+      "@type": "xsd:string"
+    },
     "procedureSourceRecord": {
       "@id": "checkup:procedureSourceRecord",
       "@type": "@id"
@@ -243,7 +294,10 @@
       "@id": "checkup:basedOnTrend",
       "@type": "@id"
     },
-    "basedOnTemplate": "checkup:basedOnTemplate",
+    "basedOnTemplate": {
+      "@id": "checkup:basedOnTemplate",
+      "@type": "xsd:string"
+    },
     "basedOnScreening": {
       "@id": "checkup:basedOnScreening",
       "@type": "@id"
@@ -380,7 +434,10 @@
       "@id": "checkup:wellnessBaselineDate",
       "@type": "xsd:dateTime"
     },
-    "insightText": "checkup:insightText",
+    "insightText": {
+      "@id": "checkup:insightText",
+      "@type": "xsd:string"
+    },
     "insightSourceTrend": {
       "@id": "checkup:insightSourceTrend",
       "@type": "@id"
@@ -397,23 +454,50 @@
       "@id": "checkup:correlationEvent",
       "@type": "@id"
     },
-    "correlationText": "checkup:correlationText",
+    "correlationText": {
+      "@id": "checkup:correlationText",
+      "@type": "xsd:string"
+    },
     "correlationTimeLag": {
       "@id": "checkup:correlationTimeLag",
       "@type": "xsd:integer"
     },
-    "indicatorMetric": "checkup:indicatorMetric",
+    "indicatorMetric": {
+      "@id": "checkup:indicatorMetric",
+      "@type": "xsd:string"
+    },
     "indicatorValue": {
       "@id": "checkup:indicatorValue",
       "@type": "xsd:decimal"
     },
-    "indicatorUnit": "checkup:indicatorUnit",
-    "indicatorLabel": "checkup:indicatorLabel",
-    "indicatorStatus": "checkup:indicatorStatus",
-    "attentionReason": "checkup:attentionReason",
-    "attentionMetric": "checkup:attentionMetric",
-    "attentionText": "checkup:attentionText",
-    "attentionSeverity": "checkup:attentionSeverity",
+    "indicatorUnit": {
+      "@id": "checkup:indicatorUnit",
+      "@type": "xsd:string"
+    },
+    "indicatorLabel": {
+      "@id": "checkup:indicatorLabel",
+      "@type": "xsd:string"
+    },
+    "indicatorStatus": {
+      "@id": "checkup:indicatorStatus",
+      "@type": "xsd:string"
+    },
+    "attentionReason": {
+      "@id": "checkup:attentionReason",
+      "@type": "xsd:string"
+    },
+    "attentionMetric": {
+      "@id": "checkup:attentionMetric",
+      "@type": "xsd:string"
+    },
+    "attentionText": {
+      "@id": "checkup:attentionText",
+      "@type": "xsd:string"
+    },
+    "attentionSeverity": {
+      "@id": "checkup:attentionSeverity",
+      "@type": "xsd:string"
+    },
     "visitPrepDate": {
       "@id": "checkup:visitPrepDate",
       "@type": "xsd:dateTime"
@@ -434,22 +518,46 @@
       "@id": "checkup:visitPrepAttention",
       "@type": "@id"
     },
-    "visitPrepUserNotes": "checkup:visitPrepUserNotes",
-    "noteContent": "checkup:noteContent",
+    "visitPrepUserNotes": {
+      "@id": "checkup:visitPrepUserNotes",
+      "@type": "xsd:string"
+    },
+    "noteContent": {
+      "@id": "checkup:noteContent",
+      "@type": "xsd:string"
+    },
     "checkInDate": {
       "@id": "checkup:checkInDate",
       "@type": "xsd:dateTime"
     },
-    "checkInResponse": "checkup:checkInResponse",
-    "missedMedicationIds": "checkup:missedMedicationIds",
-    "checkInNotes": "checkup:checkInNotes",
+    "checkInResponse": {
+      "@id": "checkup:checkInResponse",
+      "@type": "xsd:string"
+    },
+    "missedMedicationIds": {
+      "@id": "checkup:missedMedicationIds",
+      "@type": "xsd:string"
+    },
+    "checkInNotes": {
+      "@id": "checkup:checkInNotes",
+      "@type": "xsd:string"
+    },
     "submittedAt": {
       "@id": "checkup:submittedAt",
       "@type": "xsd:dateTime"
     },
-    "topicText": "checkup:topicText",
-    "topicCategory": "checkup:topicCategory",
-    "topicSource": "checkup:topicSource",
+    "topicText": {
+      "@id": "checkup:topicText",
+      "@type": "xsd:string"
+    },
+    "topicCategory": {
+      "@id": "checkup:topicCategory",
+      "@type": "xsd:string"
+    },
+    "topicSource": {
+      "@id": "checkup:topicSource",
+      "@type": "xsd:string"
+    },
     "relevanceScore": {
       "@id": "checkup:relevanceScore",
       "@type": "xsd:double"
@@ -458,8 +566,14 @@
       "@id": "checkup:isSelected",
       "@type": "xsd:boolean"
     },
-    "relatedMedicationName": "checkup:relatedMedicationName",
-    "detailText": "checkup:detailText",
+    "relatedMedicationName": {
+      "@id": "checkup:relatedMedicationName",
+      "@type": "xsd:string"
+    },
+    "detailText": {
+      "@id": "checkup:detailText",
+      "@type": "xsd:string"
+    },
     "checkInEnabled": {
       "@id": "checkup:checkInEnabled",
       "@type": "xsd:boolean"
@@ -472,7 +586,10 @@
       "@id": "checkup:notificationMinute",
       "@type": "xsd:integer"
     },
-    "enabledDays": "checkup:enabledDays",
+    "enabledDays": {
+      "@id": "checkup:enabledDays",
+      "@type": "xsd:string"
+    },
     "hasDailyCheckIn": {
       "@id": "checkup:hasDailyCheckIn",
       "@type": "@id"
@@ -485,8 +602,14 @@
       "@id": "checkup:hasCheckInSettings",
       "@type": "@id"
     },
-    "questionnaireId": "checkup:questionnaireId",
-    "questionnaireTitle": "checkup:questionnaireTitle",
+    "questionnaireId": {
+      "@id": "checkup:questionnaireId",
+      "@type": "xsd:string"
+    },
+    "questionnaireTitle": {
+      "@id": "checkup:questionnaireTitle",
+      "@type": "xsd:string"
+    },
     "responseItem": {
       "@id": "checkup:responseItem",
       "@type": "@id"
@@ -495,10 +618,22 @@
       "@id": "checkup:completedAt",
       "@type": "xsd:dateTime"
     },
-    "itemLinkId": "checkup:itemLinkId",
-    "itemText": "checkup:itemText",
-    "itemAnswer": "checkup:itemAnswer",
-    "itemAnswerCode": "checkup:itemAnswerCode",
+    "itemLinkId": {
+      "@id": "checkup:itemLinkId",
+      "@type": "xsd:string"
+    },
+    "itemText": {
+      "@id": "checkup:itemText",
+      "@type": "xsd:string"
+    },
+    "itemAnswer": {
+      "@id": "checkup:itemAnswer",
+      "@type": "xsd:string"
+    },
+    "itemAnswerCode": {
+      "@id": "checkup:itemAnswerCode",
+      "@type": "xsd:string"
+    },
     "itemAnswerCodeSystem": {
       "@id": "checkup:itemAnswerCodeSystem",
       "@type": "xsd:anyURI"
@@ -531,10 +666,22 @@
       "@id": "checkup:hasProcedure",
       "@type": "@id"
     },
-    "changeType": "checkup:changeType",
-    "changedField": "checkup:changedField",
-    "changeRecordPreviousValue": "checkup:changeRecordPreviousValue",
-    "changeRecordNewValue": "checkup:changeRecordNewValue",
+    "changeType": {
+      "@id": "checkup:changeType",
+      "@type": "xsd:string"
+    },
+    "changedField": {
+      "@id": "checkup:changedField",
+      "@type": "xsd:string"
+    },
+    "changeRecordPreviousValue": {
+      "@id": "checkup:changeRecordPreviousValue",
+      "@type": "xsd:string"
+    },
+    "changeRecordNewValue": {
+      "@id": "checkup:changeRecordNewValue",
+      "@type": "xsd:string"
+    },
     "changeDate": {
       "@id": "checkup:changeDate",
       "@type": "xsd:dateTime"
@@ -563,6 +710,9 @@
       "@id": "checkup:supplyEndDate",
       "@type": "xsd:date"
     },
-    "supplementUPC": "checkup:supplementUPC"
+    "supplementUPC": {
+      "@id": "checkup:supplementUPC",
+      "@type": "xsd:string"
+    }
   }
 }
