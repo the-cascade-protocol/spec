@@ -425,6 +425,7 @@
       "@id": "health:allergen",
       "@type": "xsd:string"
     },
+    "allergenCode": { "@id": "health:allergenCode", "@type": "@id", "@container": "@set" },
     "allergyCategory": {
       "@id": "health:allergyCategory",
       "@type": "xsd:string"
@@ -433,6 +434,7 @@
       "@id": "health:reaction",
       "@type": "xsd:string"
     },
+    "manifestationCode": { "@id": "health:manifestationCode", "@type": "@id", "@container": "@set" },
     "allergySeverity": {
       "@id": "health:allergySeverity",
       "@type": "xsd:string"
