@@ -863,6 +863,81 @@ import onward.
 
 ---
 
+## Pending batch — clinical v1.19 (authored 2026-09-06)
+
+Medication effective dates, condition abatement and condition category get their
+declared `clinical:` spellings constrained on the shapes that carry them, and the
+four undeclared `health:` spellings a reference import path writes get a warning
+and a migration window. Tag `vocab/clinical-v1.19`. Additive and strictly
+widening; every new SHACL finding is at `sh:Warning`. See `CHANGELOG.md` for the
+full statement.
+
+**What was authored — 0 terms, 1 domain removal, 4 comments, 6 new constraints:**
+
+- `clinical` 1.18 to 1.19 — **0 terms**; one `rdfs:domain clinical:Condition`
+  DROPPED from `clinical:abatementDate` so it is writable on
+  `health:ConditionRecord`, following the v1.16 treatment of
+  `clinical:verificationStatus` and the v1.18 treatment of
+  `clinical:allergyType`. Comments rewritten on `clinical:startDate`,
+  `clinical:endDate`, `clinical:abatementDate` and `clinical:category`.
+- `clinical.shapes.ttl` — `clinical:startDate` and `clinical:endDate` on
+  `clinical:MedicationShape` (`sh:or` over `xsd:date` / `xsd:dateTime`,
+  `sh:maxCount 1`), plus new `clinical:MedicationDateSpellingShape`
+  (`sh:targetSubjectsOf health:startDate` and `health:endDate`,
+  `sh:maxCount 0`).
+- `health.shapes.ttl` 1.6 to 1.7 — `clinical:abatementDate` and
+  `clinical:category` (bound to the two FHIR R4 `condition-category` codes) on
+  `health:ConditionRecordShape`, plus new `health:ConditionSpellingShape`
+  (`sh:targetSubjectsOf health:abatementDate` and `health:conditionCategory`).
+- **`health` stays at 2.9 and `health.ttl` is not touched.** No `health:` term is
+  minted, which is the ruling itself: one fact, one predicate (health v2.8).
+
+**Synced NOW (this train):**
+
+- [x] `spec/` — authored (this repo); `VOCAB_VERSIONS` `clinical=1.19`. JSON-LD:
+      nothing to do. `contexts/v1/clinical.jsonld` already maps `startDate`,
+      `endDate`, `abatementDate` and `category`; `contexts/v1/health.jsonld`
+      gains nothing.
+
+**Steps 2–7, all pending:**
+
+- [ ] `cascadeprotocol.org` — `scripts/sync-from-spec.sh`, then the clinical and
+      health HTML pages and `cascade-protocol-schemas.md`.
+- [ ] `conformance` — fixtures for a medication carrying both a date-precision
+      and a dateTime effective date, a medication carrying the `health:`
+      spellings, a medication with a plain-string start, a condition with an
+      abatement date and a category, a condition carrying the `health:`
+      spellings, and a condition whose category is the C-CDA word `diagnosis`.
+      Re-pin `scripts/SPEC_PIN`, tag the release.
+- [ ] `cascade-cli` — `scripts/sync-shapes-from-spec.sh`, `VOCAB_VERSIONS`, then
+      **the converter change, which is REQUIRED BEFORE THE MIGRATION WINDOW CAN
+      CLOSE**: write `clinical:startDate` / `clinical:endDate` on a medication
+      and `clinical:abatementDate` / `clinical:category` on a condition, in place
+      of the four `health:` spellings. The medication subject IRI takes the start
+      date as an identity input, so this follows the importer's no-remint
+      pattern: only the PREDICATE the triple is written on changes, the identity
+      input does not, and no existing medication IRI is re-minted. The window
+      closes only once the two spelling warnings are observably absent from
+      conforming output.
+- [ ] `sdk-typescript` — no new term to model; register the `clinical:` spellings
+      on the medication and condition round trips so a reader stops depending on
+      the `health:` ones. `VOCAB_VERSIONS`.
+- [ ] `sdk-python` — same, serializer AND deserializer. `VOCAB_VERSIONS`.
+- [ ] `cascade-agent` — query patterns: a medication's effective period and a
+      condition's abatement and category are answerable under the `clinical:`
+      spellings; a query written against the `health:` ones must add the
+      `clinical:` term now and may drop the `health:` one when the window closes.
+      `VOCAB_VERSIONS`.
+
+**MIGRATION.** Nothing stored changes meaning and nothing has to be rewritten: the
+four facts are optional at the shape level, so no pod fails today for carrying a
+`health:` spelling and none will. A reader querying `health:startDate`,
+`health:endDate`, `health:abatementDate` or `health:conditionCategory` must add
+the `clinical:` term to its query now, and can drop the `health:` term at the
+version that closes the window.
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
@@ -891,4 +966,4 @@ import onward.
 
 ---
 
-_Last updated: 2026-08-15._
+_Last updated: 2026-09-06._
