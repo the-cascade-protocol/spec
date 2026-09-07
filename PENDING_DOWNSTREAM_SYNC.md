@@ -801,6 +801,68 @@ only the published dictionary moved. The matching 45 entries were removed from
 
 ---
 
+## Pending batch — health v2.9 / clinical v1.18 (authored 2026-09-05)
+
+Coded allergen and coded manifestation on `health:AllergyRecord`, plus allergy
+type and criticality made writable on it. Tags `vocab/health-v2.9`,
+`vocab/clinical-v1.18`. Additive and strictly widening; all four new SHACL
+findings are at `sh:Warning`. See `CHANGELOG.md` for the full statement.
+
+**What was authored — 2 terms, 2 domain removals:**
+
+- `health` 2.8 to 2.9 — **2 terms**, both `owl:ObjectProperty`, IRI-valued,
+  repeatable, optional, domain `health:AllergyRecord`:
+  `health:allergenCode` (FHIR R4 `AllergyIntolerance.code.coding`; IPS makes
+  `.code` 1..1 must-support) and `health:manifestationCode`
+  (`AllergyIntolerance.reaction.manifestation.coding`). Modelled on
+  `health:icd10Code`: no `sh:pattern`, no `sh:maxCount`.
+  Comment-only corrections to `health:reaction` (one literal per manifestation,
+  repeatable) and `health:allergySeverity` (observed reaction severity only,
+  never criticality). `health.shapes.ttl` 1.5 to 1.6.
+- `clinical` 1.17 to 1.18 — **0 terms**; two `rdfs:domain clinical:Allergy`
+  declarations DROPPED, from `clinical:allergyType` and `clinical:criticality`,
+  following the v1.16 treatment of `clinical:verificationStatus`.
+  `clinical.shapes.ttl` unchanged.
+
+**Synced NOW (this train):**
+
+- [x] `spec/` — authored (this repo); `VOCAB_VERSIONS` `health=2.9`,
+      `clinical=1.18`. JSON-LD: `allergenCode` and `manifestationCode` added to
+      `contexts/v1/health.jsonld`; `contexts/v1/clinical.jsonld` already carried
+      `allergyType` and `criticality` and is untouched.
+
+**Steps 2–7, all pending:**
+
+- [ ] `cascadeprotocol.org` — `scripts/sync-from-spec.sh`, then the health and
+      clinical HTML pages and `cascade-protocol-schemas.md`.
+- [ ] `conformance` — fixtures for a coded allergen with two coded
+      manifestations, an out-of-set criticality, an out-of-set allergy type, and
+      a string literal where `health:allergenCode` expects an IRI. Re-pin
+      `scripts/SPEC_PIN`, tag the release.
+- [ ] `cascade-cli` — `scripts/sync-shapes-from-spec.sh`, `VOCAB_VERSIONS`, then
+      converter adoption: write `health:allergenCode` from every `code.coding`;
+      write ONE `health:reaction` per manifestation instead of joining them;
+      write `clinical:criticality` from `criticality` and stop folding it into
+      `health:allergySeverity`; write `clinical:allergyType` from `type`.
+      Reverse converters need the same terms or the round trip loses them.
+- [ ] `sdk-typescript` — models + predicates + generated JSON-LD context for the
+      two terms; `VOCAB_VERSIONS`.
+- [ ] `sdk-python` — namespaces + predicates (snake and camel) for the two
+      terms; `VOCAB_VERSIONS`.
+- [ ] `cascade-agent` — query patterns: an allergy's substance and manifestations
+      are now answerable by code and not only by display text; "how dangerous is
+      this allergy" reads `clinical:criticality`, while "how bad was the
+      reaction" reads `health:allergySeverity`, and the two must not be merged
+      in a prompt any more than in the data. `VOCAB_VERSIONS`.
+
+**MIGRATION.** Nothing stored changes meaning, but a converter that has been
+folding `AllergyIntolerance.criticality` into `health:allergySeverity` has been
+writing one axis into the other's slot. Existing values cannot be separated
+after the fact, so the fix is forward-only: emit both predicates from the next
+import onward.
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred

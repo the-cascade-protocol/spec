@@ -21,8 +21,8 @@
     dct:description "Vocabulary for clinical documents, narratives, and structured notes imported from EHR systems via Apple HealthKit"@en ;
     dct:creator "Cascade Agentic Labs" ;
     dct:created "2025-12-26"^^xsd:date ;
-    dct:modified "2026-08-28"^^xsd:date ;
-    owl:versionInfo "1.17" ;
+    dct:modified "2026-09-05"^^xsd:date ;
+    owl:versionInfo "1.18" ;
     rdfs:comment "Domain-specific vocabulary for clinical documentation and structured records imported from patient portals (MyChart, Epic, etc.). Contains EHR-verified clinical data."@en ;
     rdfs:seeAlso <https://cascadeprotocol.org/docs/clinical/v1.0/> .
 
@@ -731,8 +731,12 @@ clinical:allergyCategory a owl:DatatypeProperty ;
 
 clinical:criticality a owl:DatatypeProperty ;
     rdfs:label "Criticality"@en ;
-    rdfs:comment "Potential clinical harm (low, high, unable-to-assess)"@en ;
-    rdfs:domain clinical:Allergy ;
+    rdfs:comment """Potential clinical harm a FUTURE exposure to the substance carries: low | high | unable-to-assess. FHIR R4 AllergyIntolerance.criticality, required binding (https://hl7.org/fhir/R4/valueset-allergy-intolerance-criticality.html).
+
+This is NOT the severity of a reaction that has already happened. That is AllergyIntolerance.reaction.severity, which this vocabulary carries on health:allergySeverity with the value set mild | moderate | severe. The two axes cannot be folded into one slot: a reader given a single stored value cannot afterwards tell which question it answers.
+
+DOMAIN DELIBERATELY ABSENT (v1.18). Through v1.17 this property declared rdfs:domain clinical:Allergy, a class deprecated in v1.13 that no import path emits, so the property was unreachable in practice. The domain is dropped rather than moved to health:AllergyRecord or widened to a union, following the v1.16 treatment of clinical:verificationStatus: a domain on a cross-class predicate makes a reasoner infer the record's class, and the value set belongs in SHACL. In practice this property is written on health:AllergyRecord, where health:AllergyRecordShape binds it."""@en ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/valueset-allergy-intolerance-criticality.html> ;
     rdfs:range xsd:string .
 
 # ============================================================================
@@ -1033,8 +1037,10 @@ clinical:endDate a owl:DatatypeProperty ;
 
 clinical:allergyType a owl:DatatypeProperty ;
     rdfs:label "Allergy Type"@en ;
-    rdfs:comment "Type of allergy (allergy vs intolerance)"@en ;
-    rdfs:domain clinical:Allergy ;
+    rdfs:comment """Whether the record is an immune-mediated allergy or a non-immune intolerance: allergy | intolerance. FHIR R4 AllergyIntolerance.type, required binding (https://hl7.org/fhir/R4/valueset-allergy-intolerance-type.html).
+
+DOMAIN DELIBERATELY ABSENT (v1.18). Through v1.17 this property declared rdfs:domain clinical:Allergy, a class deprecated in v1.13 that no import path emits, so the property was unreachable in practice. The domain is dropped rather than moved to health:AllergyRecord or widened to a union, following the v1.16 treatment of clinical:verificationStatus: a domain on a cross-class predicate makes a reasoner infer the record's class, and the value set belongs in SHACL. In practice this property is written on health:AllergyRecord, where health:AllergyRecordShape binds it."""@en ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/valueset-allergy-intolerance-type.html> ;
     rdfs:range xsd:string .
 
 # ============================================================================
@@ -1421,6 +1427,37 @@ clinical:isActive a owl:DatatypeProperty ;
 # ============================================================================
 # Changelog
 # ============================================================================
+#
+# Version 1.18 (2026-09-05)
+# - NO new terms, no term removed, renamed or deprecated, and no value changes
+#   meaning. Two rdfs:domain declarations are dropped and two rdfs:comment
+#   blocks are rewritten; clinical.ttl otherwise changes only in this
+#   changelog, its dct:modified and its owl:versionInfo.
+# - DOMAINS DROPPED (2). clinical:allergyType and clinical:criticality each
+#   declared rdfs:domain clinical:Allergy. That class was deprecated in v1.13
+#   and no import path emits it, so both properties were unreachable in
+#   practice while the facts they name — FHIR R4 AllergyIntolerance.type and
+#   AllergyIntolerance.criticality, both required bindings — had nowhere to go
+#   on the record that IS emitted, health:AllergyRecord.
+# - This is the v1.16 pattern, applied a second time. v1.16 dropped
+#   clinical:verificationStatus's rdfs:domain clinical:Condition for the same
+#   reason and with the same reasoning: the domain is DROPPED rather than
+#   widened to a union, because a union on a cross-class predicate makes a
+#   reasoner infer that an allergy record is a Condition, and because the
+#   per-class value set belongs in SHACL where two classes can bind the same
+#   predicate differently.
+# - No health: spelling was minted for either fact. That follows the health
+#   v2.8 principle: clinical:status and clinical:verificationStatus are already
+#   the domain-free carriers both import paths write onto health: records, and
+#   a second spelling would give one fact two predicates.
+# - SHACL. No change in this file. The two value sets are declared on
+#   health:AllergyRecordShape in health.shapes.ttl v1.6, which targets the class
+#   that actually carries them, both at sh:Warning per the core v3.5 ratchet.
+#   Paired with health v2.9, which adds health:allergenCode and
+#   health:manifestationCode.
+# - COMPATIBILITY. Strictly widening. Dropping an rdfs:domain removes an
+#   entailment and adds none; no shape encoded either domain, so no pod is
+#   affected and every graph that validated under v1.17 validates under v1.18.
 #
 # Version 1.17 (2026-08-28)
 # - NO new terms, and no term changes meaning. This version is a SHACL severity
