@@ -1,5 +1,42 @@
 # Core Vocabulary Changelog
 
+## v3.9 - 2026-09-08
+
+The pod owner's name gets a declared home. No new term.
+
+- **No class and no property is added.** The name of the person a Pod belongs
+  to lives on `<#me>` in `/profile/extended.ttl` as `foaf:givenName`,
+  `foaf:familyName` and `foaf:name`. FOAF already defines all three, so a
+  `cascade:` spelling would give one fact two predicates for no gain.
+- **The gap.** [IPS `Patient.name`](https://hl7.org/fhir/uv/ips/StructureDefinition-Patient-uv-ips.html)
+  is `1..*` with the SHALL:populate obligation, and invariant `ips-pat-1`
+  requires at least one of `family`, `given` or `text`. Nothing in this
+  repository declared a name for the pod owner, so an export had nowhere to read
+  one from.
+- **Why the extended profile.** `pod-structure.md` section 3.2 makes
+  `/profile/card.ttl` the publicly-readable profile document and forbids PHI in
+  it; a real name is PHI. Section 3.6 is where PHI about the WebID subject
+  already lives, which is the Solid extended-profile convention.
+  `/profile/extended.ttl` is inside the encrypted Pod exactly like every other
+  Pod file. `foaf:name` in `card.ttl` is unchanged and remains a generic display
+  name shown before the Pod is unlocked.
+- The "Patient Profile" comment block in `core.ttl`, which had said the name
+  lived in `card.ttl`, is corrected. Nothing is renamed, removed or deprecated.
+- SHACL (core.shapes.ttl v1.8): `cascade:ExtendedProfileShape`,
+  `sh:targetSubjectsOf cascade:dateOfBirth` because an extended profile carries
+  no `rdf:type` of its own. Three property shapes, each `xsd:string`,
+  `sh:maxCount 1`, `sh:minLength 1`, at `sh:Warning` per the core v3.5 ratchet.
+  `foaf:givenName` is capped at one deliberately; a second given name goes in
+  `foaf:name`. Export mapping: `family` from `foaf:familyName`, `given` from
+  `foaf:givenName`, `text` from `foaf:name`.
+- Compatibility: strictly widening. The shape evaluates only nodes that already
+  carry `cascade:dateOfBirth` and every constraint on it is optional with a
+  `maxCount`, so nothing that validated under v3.8 stops validating.
+  `cascade:PatientProfile` nodes in `/profile/health.ttl` carry
+  `cascade:dateOfBirth` too and are therefore also reached; they pass unchanged.
+- JSON-LD: `givenName`, `familyName` and `name` added to
+  `contexts/v1/core.jsonld`, mapped to the FOAF IRIs with `"@type": "xsd:string"`.
+
 ## v3.7 - 2026-08-27
 
 A Pod gets somewhere to keep the documents its records point at.

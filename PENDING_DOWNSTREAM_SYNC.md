@@ -938,6 +938,75 @@ version that closes the window.
 
 ---
 
+## Pending batch — core v3.9 (authored 2026-09-08)
+
+The pod owner's name gets a declared home: `<#me>` in `/profile/extended.ttl`,
+using `foaf:givenName`, `foaf:familyName` and `foaf:name`. Tag
+`vocab/core-v3.9`. **Zero new terms** — FOAF already defines all three, and not
+minting a `cascade:` spelling is the ruling itself. Additive and strictly
+widening; every new SHACL finding is at `sh:Warning`. Implements
+[spec#46](https://github.com/the-cascade-protocol/spec/issues/46). See
+`CHANGELOG.md` for the full statement.
+
+**What was authored — 0 terms, 1 new shape, 3 context terms, 2 doc sections:**
+
+- `core` 3.8 to 3.9 — **0 terms**. The "Patient Profile" comment block is
+  corrected: it had said since v2.0 that `/profile/card.ttl` carries
+  `foaf:givenName` and `foaf:familyName`, and it must not, because `card.ttl` is
+  publicly readable and a real name is PHI.
+- `core.shapes.ttl` 1.7 to 1.8 — new `cascade:ExtendedProfileShape`,
+  `sh:targetSubjectsOf cascade:dateOfBirth` (an extended profile carries no
+  `rdf:type` of its own), with `foaf:givenName`, `foaf:familyName` and
+  `foaf:name` each `xsd:string`, `sh:maxCount 1`, `sh:minLength 1`, at
+  `sh:Warning`.
+- `contexts/v1/core.jsonld` AND the merged `contexts/v1/cascade.jsonld` —
+  `givenName`, `familyName`, `name`, mapped to the FOAF IRIs with
+  `"@type": "xsd:string"`. Both files, as core v3.7 did: the merged dictionary
+  already carries the v3.5 and v3.7 core additions.
+- `pod-structure.md` 1.4 to 1.5 — section 3.6 gains the three properties on the
+  example, a table marking all three RECOMMENDED and PHI, and the statement that
+  the file is inside the encrypted Pod; section 3.2 gains the cross-reference
+  saying its `foaf:name` is a generic display name.
+
+**Synced NOW (this train):**
+
+- [x] `spec/` — authored (this repo); `VOCAB_VERSIONS` `core=3.9`.
+
+**Steps 2–7, all pending:**
+
+- [ ] `cascadeprotocol.org` — `scripts/sync-from-spec.sh` (this carries
+      `contexts/v1/core.jsonld` and `pod-structure.md` to the site; **the site
+      copy of `pod-structure.md` is script-synced and is never edited there**),
+      then the core HTML page and `cascade-protocol-schemas.md`.
+- [ ] `conformance` — fixtures for an extended profile carrying all three name
+      properties, one carrying `foaf:name` only, one with an empty
+      `foaf:familyName`, and one with two `foaf:givenName` values. Re-pin
+      `scripts/SPEC_PIN`, tag the release.
+- [ ] `cascade-cli` — `scripts/sync-shapes-from-spec.sh`, `VOCAB_VERSIONS`, then
+      **the Patient builder change**: the reverse converter emits a `Patient`
+      with no `name` because it reads `cascade:PatientProfile` only; it must read
+      `<#me>` in `profile/extended.ttl` and map `family` from `foaf:familyName`,
+      `given` from `foaf:givenName`, `text` from `foaf:name`. Also
+      `pod init --owner-name` and `pod profile set-name` should write the three
+      FOAF triples to `profile/extended.ttl` in addition to the `card.ttl`
+      display name; today a supplied owner name reaches only the display name.
+- [ ] `sdk-typescript` — no new Cascade term to model; read and write the FOAF
+      name triples on the extended profile, and round-trip them.
+      `VOCAB_VERSIONS`.
+- [ ] `sdk-python` — same, serializer AND deserializer. `VOCAB_VERSIONS`.
+- [ ] `cascade-agent` — query patterns: the owner's name is answerable from
+      `foaf:givenName` / `foaf:familyName` / `foaf:name` on `<#me>` in
+      `profile/extended.ttl`, and NOT from `card.ttl`, whose `foaf:name` is a
+      generic display name. `VOCAB_VERSIONS`.
+
+**MIGRATION.** Nothing stored changes meaning and nothing has to be rewritten. A
+Pod that carries no name reports nothing at any severity, and a Pod whose
+`card.ttl` carries a generic display name is correct and stays correct. A reader
+that has been treating `foaf:name` in `card.ttl` as the owner's real name should
+stop: it is a display name, and the real name is in the extended profile.
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
