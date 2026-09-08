@@ -959,8 +959,10 @@ widening; every new SHACL finding is at `sh:Warning`. Implements
   `rdf:type` of its own), with `foaf:givenName`, `foaf:familyName` and
   `foaf:name` each `xsd:string`, `sh:maxCount 1`, `sh:minLength 1`, at
   `sh:Warning`.
-- `contexts/v1/core.jsonld` — `givenName`, `familyName`, `name`, mapped to the
-  FOAF IRIs with `"@type": "xsd:string"`.
+- `contexts/v1/core.jsonld` AND the merged `contexts/v1/cascade.jsonld` —
+  `givenName`, `familyName`, `name`, mapped to the FOAF IRIs with
+  `"@type": "xsd:string"`. Both files, as core v3.7 did: the merged dictionary
+  already carries the v3.5 and v3.7 core additions.
 - `pod-structure.md` 1.4 to 1.5 — section 3.6 gains the three properties on the
   example, a table marking all three RECOMMENDED and PHI, and the statement that
   the file is inside the encrypted Pod; section 3.2 gains the cross-reference

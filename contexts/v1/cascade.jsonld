@@ -71,6 +71,18 @@
       "@type": "xsd:boolean"
     },
     "preferredUnits": "cascade:preferredUnits",
+    "givenName": {
+      "@id": "foaf:givenName",
+      "@type": "xsd:string"
+    },
+    "familyName": {
+      "@id": "foaf:familyName",
+      "@type": "xsd:string"
+    },
+    "name": {
+      "@id": "foaf:name",
+      "@type": "xsd:string"
+    },
     "dateOfBirth": {
       "@id": "cascade:dateOfBirth",
       "@type": "xsd:date"
