@@ -1,11 +1,11 @@
 # Cascade Protocol Pod Structure Specification
 
 **Status:** Draft
-**Version:** 1.4
-**Date:** 2026-09-01
+**Version:** 1.5
+**Date:** 2026-09-08
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
-**Vocabulary versions:** core v3.8, health v2.8, clinical v1.17, coverage v1.6
+**Vocabulary versions:** core v3.9, health v2.9, clinical v1.19, coverage v1.6
 
 > **v1.1 correction.** Every `solid:forClass` registration and every file/class table in this document has been checked against the published ontologies and against the [reference patient pod](/reference-patient-pod/README.md). Fourteen class names were corrected: they named classes that no Cascade ontology defines and no implementation writes, inside registration examples an implementer would copy. Two remaining names (`clinical:ScreeningResult`, `clinical:DiagnosticResult`) have no ratified equivalent and are marked rather than invented.
 
@@ -208,6 +208,8 @@ The WebID profile card identifies the Pod owner and links to discovery resources
 
 A Pod exporter SHOULD use a generic display name (e.g., `"Cascade Protocol User"`) rather than the patient's real name in the profile card, unless the user has explicitly consented to include identifying information. PHI (date of birth, address, phone, email) MUST NOT appear in `card.ttl`. It belongs in `profile/extended.ttl` (see Section 3.6).
 
+The owner's real name is PHI and is one of the things this rule covers. `foaf:name` here is a **generic display name** -- the string a client can show before the Pod has been unlocked. The real name lives on the same `<#me>` subject in `profile/extended.ttl` as `foaf:givenName`, `foaf:familyName` and `foaf:name` (see Section 3.6).
+
 ### 3.3 settings/publicTypeIndex.ttl
 
 **Path:** `/settings/publicTypeIndex.ttl`
@@ -300,7 +302,7 @@ By placing `solid:privateTypeIndex` here rather than in `card.ttl`, the private 
 **Status:** RECOMMENDED
 **Access:** Owner-only (MUST NOT be publicly readable)
 
-The extended profile holds PHI that must not appear in the publicly-readable `card.ttl`. This is the Solid extended profile convention (linked via `rdfs:seeAlso` from `card.ttl`).
+The extended profile holds PHI that must not appear in the publicly-readable `card.ttl`. This is the Solid extended profile convention (linked via `rdfs:seeAlso` from `card.ttl`). Like every other file in a Pod, `profile/extended.ttl` is inside the encrypted Pod; what distinguishes it from `card.ttl` is that `card.ttl` is the one profile document a Pod is expected to serve to unauthenticated readers.
 
 ```turtle
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
@@ -309,6 +311,9 @@ The extended profile holds PHI that must not appear in the publicly-readable `ca
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <#me>
+    foaf:givenName "Alex" ;
+    foaf:familyName "Rivera" ;
+    foaf:name "Alex Rivera" ;
     cascade:dateOfBirth "1990-01-01"^^xsd:date ;
     cascade:biologicalSex "M" ;
     vcard:hasTelephone "+1-555-000-0000" ;
@@ -320,6 +325,16 @@ The extended profile holds PHI that must not appear in the publicly-readable `ca
         cascade:addressPostalCode "98101" ;
     ] .
 ```
+
+**The Pod owner's name (core v3.9):**
+
+| Predicate | Object | Notes |
+|-----------|--------|-------|
+| `foaf:givenName` | Literal (`xsd:string`) | RECOMMENDED. **PHI.** At most one; a second given name goes in `foaf:name`. Source of IPS `Patient.name.given` |
+| `foaf:familyName` | Literal (`xsd:string`) | RECOMMENDED. **PHI.** At most one. Source of IPS `Patient.name.family` |
+| `foaf:name` | Literal (`xsd:string`) | RECOMMENDED. **PHI.** The whole name as one string. Source of IPS `Patient.name.text` |
+
+All three are PHI and therefore stay here: they MUST NOT be moved to `card.ttl`, whose `foaf:name` is a generic display name (Section 3.2). A name known only as one string -- because the source never separated it, or because the person's name does not divide into given and family parts -- goes in `foaf:name` alone, which is legal and is what [IPS `Patient.name`](https://hl7.org/fhir/uv/ips/StructureDefinition-Patient-uv-ips.html) invariant `ips-pat-1` accepts. `cascade:ExtendedProfileShape` in `core.shapes.ttl` constrains all three at `sh:Warning`: each is a single non-empty string, and none is required.
 
 Note: the `profile/health.ttl` file (written by the Cascade Swift SDK) serves a similar purpose but contains a richer Cascade-specific health profile (emergency contacts, pharmacy, advance directives, computed demographics). Both files MAY coexist, each linked from `card.ttl` via separate `rdfs:seeAlso` triples.
 
