@@ -1,6 +1,6 @@
 # D-CANONICAL-1: Two layers: a source of record that only adds, and a canonical layer that only merges
 
-**Status:** Proposed; direction ratified by Jed Reinitz on 2026-09-05, rulebook open for review; amended 2026-09-05 with the identity and IPS measurements (below)
+**Status:** Proposed; direction ratified by Jed Reinitz on 2026-09-05, rulebook open for review; amended 2026-09-05 with the identity and IPS measurements, and 2026-09-09 with the rulings from the spec#38 review (both below)
 **Date:** 2026-09-05
 **Proposed by:** Jed Reinitz
 **Prompted by:** the-cascade-protocol/spec#38 (identity is a derived value used as the record's
@@ -83,10 +83,13 @@ omits a source record has failed at the one thing layer 1 exists to guarantee.
   merge data). No regex, key set, comparator or terminology table participates in a name. An
   import batch label never does either. Existing content-hashed IRIs remain valid as opaque
   names; nothing is re-minted.
-- **A canonical record's identifier is minted once and kept for life.** When the reconciler
-  changes its mind, it remaps sources to canonical records; it does not replace a canonical
-  identifier. Annotations, consent scope and human resolutions attach to canonical records and
-  are inherited by their sources, which is why those identifiers must be stable.
+- **A canonical record's identifier names one build of the canonical layer, and nothing
+  durable references it.** (Amended 2026-09-09; the first draft said "minted once and kept for
+  life".) Annotations, consent scope and human resolutions attach to layer 1 records, which
+  never change, and a canonical record is found again through any of its members. When the
+  reconciler changes its mind, the next build emits different rows; no identifier has to
+  survive a merge or a split, and no redirect table is needed. An identifier that must leave
+  the pod is a different thing, minted by a recorded publication event (below).
 - **Sameness is the reconciler's judgement**, made with records side by side, recorded as
   links that can be retracted, driven by key fields declared once in this repository rather
   than in each implementation. The hash of extracted meaning survives as a reconciler
@@ -96,25 +99,45 @@ omits a source record has failed at the one thing layer 1 exists to guarantee.
 
 1. **Creation, merge, split, retire.** When a canonical record is created from a new source;
    when two canonical records are found to be one; when one is found to be two; how a retired
-   record is marked and why it never disappears.
+   record is marked and why it never disappears. Amended 2026-09-09: canonical records are
+   rows of a rebuildable derivation, so creation, merge and split are whatever the next build
+   emits from layer 1 and the judgements, and retirement is a status computed from sources.
 2. **Disagreement.** A conflict between sources is never resolved silently and never shown as
    two records: one canonical record, both values, an explicit unresolved flag, until a rule or
    a person resolves it.
 3. **Precedence.** Who wins when the patient and a clinical source disagree. Proposed: an
    explicit patient correction wins the canonical view and is marked as such; the clinical
-   source is retained unchanged in layer 1.
+   source is retained unchanged in layer 1. Amended 2026-09-09: precedence is declared per
+   class, beside the key declarations, because the right answer for a stopped medication
+   (the patient's statement wins the view) is not the right answer for a clinician-confirmed
+   allergy (stays in the view with the patient's statement attached); and whether a patient
+   may make a sameness judgement outright, or only propose one for a clinician to confirm, is
+   part of that per-class declaration.
 4. **The patient is a source.** An edit in an application is a patient-authored layer 1 record
    with patient-reported provenance plus a canonical update, never an edit of layer 1.
+   Amended 2026-09-09: this extends from edits to decisions. A match, a value choice, a
+   correction and a withdrawal are each a layer 1 record, authored by a person through an
+   application at a time, naming the source records and values it is about, never a canonical
+   row or a conflict entry, so a rebuild cannot orphan it. Withdrawing a judgement is another
+   record citing the first, not a deletion.
 5. **Human resolutions are durable.** A recorded human decision outranks any re-derivation. A
    rule change or re-import may surface a new conflict; it may not silently override a
-   resolution.
+   resolution. Amended 2026-09-09: the reconciler's own confident merges are also recorded in
+   layer 1, as machine-authored judgement records with software-agent provenance and the
+   build's input versions, ranked below every human judgement. That is what lets a person ask
+   "what merged these, when, and under which rule", and undo it with one record.
 6. **Delete means retire; erase is separate.** Retirement keeps sources. Erasure for a legal
    obligation is an explicit layer 1 operation that leaves a tombstone in the journal and
    removes the record from every canonical derivation.
 7. **As-of.** The canonical layer is versioned through the existing amend and retract
    overlays, so "the record as of a date" is answerable.
-8. **Key declarations.** Which fields identify a real thing per class, declared here
-   (`owl:hasKey` with a stated caveat, or a `cascade:` term), consumed by every reconciler.
+8. **Key declarations.** Which fields identify a real thing per class, declared here as a
+   `cascade:` term listing the key fields with a normalisation per field, consumed by every
+   reconciler. Amended 2026-09-09: not `owl:hasKey` on a layer 1 class. In OWL 2 a key is an
+   entailment of sameness, not a constraint: any tool honouring the semantics would conclude
+   that two source records with equal key values are one individual, by inference, with no
+   judgement and no trail, which is the merge this decision exists to prevent; it also
+   compares literals exactly and fires only on named individuals.
    The canonical shape for each class is written against the IPS profile that will export it
    (its must-support elements and bindings), so that a record which satisfies layer 2 is by
    construction a record IPS can carry; see the amendment for what that requires of the
@@ -214,6 +237,62 @@ canonical shape to its IPS profile, and items 9, 10 and 11 are added. Sequencing
 step before the naming rule: close the four vocabulary gaps, since the first canonical class
 (medications) hits one of them directly.
 
+## Amendment 2026-09-09: what the spec#38 review changed
+
+The review of this document on spec#38 (comment of 2026-09-05) accepted the two layers and
+the layer 1 naming rule, and put one test to the canonical layer: delete it, rebuild it, and
+nothing may be lost. Everything the pod cannot regenerate has to live in layer 1, and nothing
+durable may depend on anything that lives only in layer 2. The document as first written
+failed that test in one sentence, "identifiers minted once and kept for life", and in one
+inheritance rule, consent attached to canonical records and inherited by their sources. The
+maintainer accepted the test and the six changes that follow from it. They are rulings; the
+text above is amended in place where a sentence changed, and this section records the whole.
+
+1. **Canonical identifiers are build-scoped.** A canonical record's identifier names one
+   build; nothing durable inside the pod references it; a handle to a canonical record is any
+   member's layer 1 name, re-resolved against the current build. Merge and split need no
+   survivor rule because nothing is attached to the row.
+2. **Judgements are layer 1 records.** Every sameness judgement, value choice, correction and
+   withdrawal, human or machine, is an append-only layer 1 record naming source records and
+   values, with its author, instrument, time and (for machine judgements) the build's input
+   versions. Rulebook items 4 and 5 are amended accordingly.
+3. **Consent never widens on a rebuild.** Consent scope attaches to layer 1 records, to
+   classes, or to codes, never to a canonical grouping, and a record nothing has classified is
+   undecided rather than inherited. A rebuild that regroups records must not change what is
+   shared. This is a constraint on the consent architecture decision of 2026-09-01.
+4. **Key declarations are a `cascade:` term, not `owl:hasKey`** on a layer 1 class, for the
+   reason recorded at rulebook item 8. Normalisation per key field is written in SPARQL
+   `REPLACE` syntax so the regular-expression dialect is pinned by the standard (XPath 2.0
+   functions) rather than by each implementation's host library; Unicode normalisation of
+   layer 1 text is stated at import or declared as a gap, since SPARQL has none.
+5. **No generated identifier leaves the pod by default.** Where one must, it is minted by a
+   **publication event**, a layer 1 record stating that on this date, under these input
+   versions and these judgements, this recipient was told these source records were one
+   thing, called X. X always resolves to what was said, to whom, when and on what basis; a
+   later record withdraws it. A merge is published only when confirmed by a human judgement or
+   by a key match on source-supplied codes; a normaliser's or a table's merge exports as two
+   entries or as one that states the disagreement. No export drops a value the pod may share,
+   or its sources. For the IPS this means the Bundle identifier and each entry's identifier are
+   minted by the export's publication event, which is the same record spec#47 asks
+   `cascade:ExportManifest` to carry as `dct:identifier`; an IPS export is a recorded
+   publication, not a property of the canonical rows.
+6. **The derivation is published as data.** Layer 2 is defined as the triples that published
+   SPARQL `CONSTRUCT` queries emit, run to a fixpoint, over four versioned inputs: layer 1
+   source records, layer 1 judgements, the queries themselves, and reference data (brand to
+   ingredient, code crosswalks) whose shape and location this repository publishes and whose
+   contents are versioned separately with a digest. Every build is stamped with its four input
+   versions. Conformance gains vectors of the form "this layer 1 plus these judgements at these
+   versions yields exactly this layer 2", so an implementation on any platform either produces
+   those triples or does not. Storing layer 2 in the pod stands, for cost and for readers with
+   no engine; what changes is that a stored layer 2 is a cache of a specified derivation, and a
+   reader that rebuilds it must get the same triples.
+
+Two things the review raised are recorded as open rather than decided: which platforms can
+run the queries locally (a SPARQL engine on iOS is a concrete requirement for the SDK-layers
+decision's open engine question), and the cases, if any, in which a recipient outside the pod
+genuinely needs identifier continuity across exports beyond what source identifiers give.
+Each such case is decided per use case before anything is minted, never by default.
+
 ## What this revises
 
 The 2026-08-18 Workbench ruling for condition summaries said: the pod stays raw, the derivation
@@ -224,6 +303,12 @@ about provenance receipts. This document revises its first clause: the canonical
 **in the pod**, as layer 2, so that every reader sees the same clean view without an engine
 and so that consent, annotations and human resolutions have a stable home. The application's
 derivation becomes the first reconciler feeding layer 2, not a private view over layer 1.
+
+The 2026-09-09 amendment revises this document's own first draft in two places: canonical
+identifiers are no longer "minted once and kept for life" but scoped to a build, and consent,
+annotations and human resolutions attach to layer 1 records rather than to canonical records.
+"Every reader sees the same clean view" now rests on a specified derivation with version
+stamps rather than on the stored rows alone.
 
 ## Consequences
 
@@ -246,4 +331,9 @@ input-derived naming for layer 1 next, as rulebook item 9, re-measured on a real
 before the text is normative; the canonical layer and its coverage gate after that, with the
 regenerated reference pod and derivation fixtures landing with it; content-derived naming
 removed from importers last. The IPS export is built on layer 2 as soon as one record class
-(medications) has a canonical form, and grows section by section.
+(medications) has a canonical form, and grows section by section. Amended 2026-09-09: the
+key and precedence declarations, the judgement record shapes and the published queries come
+before any materialised layer 2, since the canonical view exists as soon as the queries do and
+materialisation is worth building when the performance case needs proving; the first
+conformance vectors for layer 2 are written against the queries, not against an
+implementation's output.
