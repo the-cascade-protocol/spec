@@ -1804,17 +1804,21 @@ does not resolve; those stay blank nodes until that conflict is settled on its o
   subject is not optional. Without it, "resting heart rate, 2026-01-20, Apple Watch Series 9" is a
   tuple shared by every owner of that watch, and federated reads across pods would merge two
   people's readings into one record.
-- **A day** is the local day carried in the sample's own UTC offset, not UTC, and never the
-  importing machine's timezone, which would make two machines disagree about the same export.
-  Blood pressure uses no day bucket at all (§12.4).
+- **A day** is cut in the pod's declared zone, never in the export's rendered offset, and every
+  aggregate stores the UTC interval it covers (start and end instants), so the cut is visible in
+  the data. Apple's export renders every timestamp in the exporting device's current zone and
+  carries no per-sample offset (measured: 10.2 million samples, all `-0700`), so a day read from
+  the export is not stable across exports made in different zones. Blood pressure uses no day
+  bucket at all (§12.4).
 - **A period is aggregated only once it is closed**, and the aggregate's name includes a digest of
   the samples that fed it. A re-import of a closed period is then byte-identical and a true no-op,
   while a late-syncing device that adds samples to a closed period produces a second record rather
   than overwriting the first. Nothing is edited in place; no amend mechanism is required.
 
-A conformance vector, and a measured Apple Health exclusion list for volatile sample attributes
-(`sourceVersion`, `device`, `creationDate` are the proposed exclusions), are owed before any of
-this is normative.
+The digest covers `type`, `sourceName`, `unit`, `startDate`, `endDate`, `value`, `sourceVersion`,
+`creationDate` and `device` with the memory address Apple prints inside it removed; measured
+across two real exports, that address is the only volatile attribute. A conformance vector is
+owed before any of this is normative.
 
 Each history entry includes:
 - `cascade:date` -- The date (or, for non-aggregated metrics like blood pressure, the exact

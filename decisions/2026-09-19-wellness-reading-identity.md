@@ -82,30 +82,43 @@ new identities for subsequent days. That is a split, not a merge: recoverable, a
 
 ### Q2. Where does a day start?
 
-**Why it matters:** Apple's timestamps carry local UTC offsets. Which day a 23:30 reading belongs to
-decides which bucket it is aggregated into, and therefore the value of two days' records.
+**Why it matters:** which day a 23:30 reading belongs to decides which bucket it is aggregated into,
+and therefore the value of two days' records. It also decides whether two exports of the same data
+produce the same buckets, which is what identity depends on.
+
+**What measurement found (2026-09-23, two real exports three months apart, write-up in
+`planning/spikes/2026-09-23-apple-health-export-measurement.md`):** every one of the 10.2 million
+samples in both exports carries the offset `-0700`, across twelve years, ski trips, and `HKTimeZone`
+metadata naming Denver, Honolulu and London. The export renders every timestamp in the exporting
+device's *current* zone. **There is no per-sample offset in the file.** An earlier draft of this
+section recommended "the local day carried in the sample's own offset"; that data does not exist.
+Apple does record an IANA zone name as `HKTimeZone` metadata, but only on sleep, workout and
+downhill-snow-distance samples (17,485 entries), never on the high-frequency quantity samples that
+daily aggregates are built from. The disagreement is not cosmetic: 1.65 million samples (16%) sit
+on different sides of midnight in UTC versus the rendered local day.
 
 **What the options imply:**
 
-- **UTC day** is deterministic and machine-independent, but disagrees with what the user saw in the
-  Health app. For a user at UTC+13, nearly every evening reading shifts to the following day; the
-  pod would report a different resting heart rate for a given date than the phone in their pocket.
-- **The importing machine's local day** is non-deterministic across machines: the same export
-  imported on a laptop in Denver and a desktop in London buckets differently. This one is simply
-  wrong; it is named here only because it is the default a naive implementation falls into.
-- **The local day carried in the sample's own UTC offset** is deterministic (the offset travels
-  inside the data, not from the environment) and agrees with the Health app. Its cost is that DST
-  transitions produce 23- and 25-hour days and travel can make two "local days" overlap. Both are real, but
-  they affect which samples land in a bucket, never whether two importers agree.
+- **The rendered local day** is stable only while every export is made in the same zone. Export
+  from London and every day shifts, so every identity built on the day changes. Reject.
+- **The importing machine's local day** is non-deterministic across machines. Reject.
+- **UTC** is invariant across exports and machines. Its cost is that a UTC day disagrees with what
+  the user saw in the Health app, by the 16% above.
+- **A declared zone.** A day is cut in a zone the pod states once (the owner's home zone, a pod
+  setting defaulting to the zone the first import ran in). Deterministic because the setting
+  travels with the pod rather than with the export, and it agrees with the Health app for anyone
+  who lives where the setting says.
 
-**Recommendation:** the local day as recorded in the sample's own offset. This is the same reasoning
-the scope doc's D4 already accepted for sleep ("the date it ends... matches how the Health app
-presents it, so the app and the pod agree"); extending it to day boundaries generally is
-consistency, not a new position. **Blood pressure does not use a day bucket at all.** The scope
-doc's D5 ruled BP is never aggregated (the exact timestamp is the clinically meaningful unit, and
-473 readings across eight years is already pod-sized). A day-level seed would collide a morning and
-an evening cuff reading into one identity. `spec/serialization/index.md` §12.4 is written per
-exact reading.
+**Recommendation:** identity is built from the UTC interval the aggregate covers, and the aggregate
+stores that interval explicitly (start and end instants), so the cut is visible in the data rather
+than implied. The day is cut in the pod's declared zone, never in the export's rendered offset.
+Sessions that carry `HKTimeZone` (sleep, workouts) use the metadata zone for their own local date,
+which keeps D4 ("the date it ends") true for them. **Blood pressure does not use a day bucket at
+all.** The scope doc's D5 ruled BP is never aggregated (the exact timestamp is the clinically
+meaningful unit). Its "473 readings" is the T4 double count it itself warned about: 251 top-level
+readings plus 222 repeated inside `<Correlation>` elements. A day-level seed would collide a
+morning and an evening cuff reading into one identity. `spec/serialization/index.md` §12.4 is
+written per exact reading.
 
 ### Q3. What happens when a re-import produces a different value for the same period?
 
@@ -143,24 +156,46 @@ so the name stays input-derived exactly as layer 1 requires). Together these dis
 instead of handling it: the ordinary re-import is a true no-op, and the rare genuine case (a watch
 that syncs days late and adds samples to an already-closed day) produces a second record rather
 than destroying the first, leaving both visible for layer 2 to reconcile when a wellness reconciler
-exists. Until it does, a reader showing "Tuesday's resting heart rate" picks the record with the
-highest sample count, and that choice lives in the application, not in the pod's names.
+exists. Until it does, a reader showing "Tuesday's resting heart rate" picks the record from the
+**most recent import**, and that choice lives in the application, not in the pod's names. An
+earlier draft said "highest sample count"; measurement showed why that is wrong. Of the 34
+closed-day buckets whose sample count changed between the June and September exports, 27 shrank.
+HealthKit removes samples from closed days (third-party re-syncs, deduplication) more often than a
+late sync adds them, and "highest sample count" would keep the pre-deletion aggregate forever.
 
-**This needs an Apple Health exclusion list**, the same way D-CANONICAL-1 declares one per format
-(FHIR `meta.versionId`, `meta.lastUpdated`, `text`). Proposed: digest over `type`, `sourceName`,
-`unit`, `startDate`, `endDate` and `value`; exclude `sourceVersion`, `device` and `creationDate`,
-all of which churn on app and firmware updates without the reading changing. Measure this against
-the real export before it is normative. D-CANONICAL-1's own amendment found that an unmeasured
-exclusion list was wrong in two places.
+**Measured, not proposed: the claim holds.** Of 74,969 (type, source, day) buckets closed before
+the June export, 74,933 (99.95%) are byte-identical in the September export on the digest fields
+below; 34 differ in sample count, 2 in content, and 1 appeared only in September.
+
+**The Apple Health exclusion list, measured.** D-CANONICAL-1 declares one per format (FHIR
+`meta.versionId`, `meta.lastUpdated`, `text`), and its amendment records that the unmeasured first
+draft of the FHIR list was wrong in two places. The wellness list was measured before being
+written. The digest covers `type`, `sourceName`, `unit`, `startDate`, `endDate`, `value`,
+`sourceVersion`, `creationDate` and `device` **with the memory address Apple prints inside it
+removed** (`<<HKDevice: 0x78a564f00>, name:…`; the `0x…` changes on every export). That address is
+the only volatile attribute: with it stripped, all 74,933 matching buckets stay identical with
+`sourceVersion` and `creationDate` included. An earlier draft proposed excluding both; neither
+needed it. Two further facts for the device axis: `manufacturer:` flips between `Apple` and
+`Apple Inc.` by software version, so device identity is built from name and hardware model, never
+the raw string; and where Apple carries a source-supplied identifier (`HKMetadataKeySyncIdentifier`
+with `SyncVersion` on 48,519 third-party samples, `HKExternalUUID` on 1,767), D-CANONICAL-1's tier
+1 applies to that sample and the digest tier does not.
+
+**Some daily aggregates need no aggregation.** The export carries 3,157 `<ActivitySummary>`
+elements, one per day, holding Apple's own active energy, exercise minutes and stand hours, already
+de-duplicated across sources. Those are source-supplied daily aggregates, input-named by their
+date, and are imported as such. Only steps and the vitals need this document's aggregation, which
+also removes the source-priority question for the three ring metrics.
 
 **One consequence worth stating plainly:** with the source in the name and no winner picked at write
 time, a day on which the watch, the phone and a third-party app all recorded steps yields three
 records, not one. That is deliberate. The scope doc's D3 (source priority, Watch > phone >
 third-party) is a *reading* rule, and applying it at write time would mean a later import that
 changes the winner also changes the identity, churn on top of data loss. Layer 1 records what each
-source said; priority is applied by the reader or by layer 2. This raises the estimated record count
-above the scope doc's 17,000-20,000, plausibly to 30,000-50,000 for a multi-source export. Still
-pod-sized, and measurable before the build.
+source said; priority is applied by the reader or by layer 2. Measured cost: 77,265 (type, source,
+day) units across all 72 sample types in the September export, against 65,722 with a winner picked
+per day, an 18% increase. The scope doc's 17,000-20,000 was a clinically useful subset; either way
+the result is pod-sized.
 
 ## What remains genuinely open
 
@@ -212,11 +247,12 @@ minter should do the same, seeded per Q1.
   updated in this same change.
 - **New follow-up filed:** root backlog 3.472, the "latest reading" convenience-property domain/range
   conflict this document found but did not fix.
-- **Two measurements are owed before Q1-Q3 are normative**, both cheap against the 4.2 GB export
-  already on hand: the Apple Health exclusion list (which sample attributes churn without the
-  reading changing), and the real record count under per-source writing. D-CANONICAL-1's own
-  amendment exists because an unmeasured naming rule was wrong in two places; this one should not
-  repeat that.
+- **The two measurements this document owed are done** (2026-09-23, two real exports diffed;
+  `planning/spikes/2026-09-23-apple-health-export-measurement.md`). They overturned the first
+  draft's Q2 and its reader tiebreak, and settled the exclusion list. Still owed before Q1-Q3 are
+  normative: one conformance vector for the seed. D-CANONICAL-1's own amendment exists because an
+  unmeasured naming rule was wrong in two places; this document has now had the same experience
+  and records it rather than hiding it.
 - The TS wellness aggregator (`cascade-cli`) can be built on the recommendations above without
   waiting for rulebook item 1. If Q3's reading of the digest tier is rejected on review, the
   aggregator's naming changes and pods written before that are re-minted, which is the reason to
