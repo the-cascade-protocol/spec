@@ -1,8 +1,12 @@
 # D-WELLNESS-1: A wellness reading is a named individual; only its compound sub-values stay blank nodes
 
-**Status:** Proposed; direction ratified by Jed Reinitz on 2026-09-19 for the vocabulary/shapes
-question within his tie-break domain (`planning/collaboration/working-agreement.md` r3), open for
-Jay's review before merge per the same agreement. RFC issue: the-cascade-protocol/spec#64.
+**Status:** Ratified. Direction ratified by Jed Reinitz on 2026-09-19 (vocabulary/shapes, his
+tie-break under `planning/collaboration/working-agreement.md` r3); merged 2026-09-24 as spec#65 with
+no objection posted, the review window waived by Jed after a conversation with Jay the same day in
+which the vocabulary was agreed to be the contract between the application and the import pipeline.
+RFC issue: the-cascade-protocol/spec#64. Q3's layer classification is superseded in direction by
+that conversation (a computed aggregate is a derived view, not a layer-1 record); an amendment
+follows.
 **Date:** 2026-09-19
 **Proposed by:** Jed Reinitz
 **Prompted by:** D1 in `cascade-workbench/docs/planning/2026-07-29-apple-health-wellness-aggregator-scope.md`
