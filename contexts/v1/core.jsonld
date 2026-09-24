@@ -403,6 +403,8 @@
     "date": { "@id": "cascade:date", "@type": "xsd:dateTime" },
     "sampleCount": { "@id": "cascade:sampleCount", "@type": "xsd:integer" },
     "coreLoincCode": { "@id": "cascade:loincCode", "@type": "@id" },
+    "statistic": { "@id": "cascade:statistic", "@type": "xsd:string" },
+    "dayZone": { "@id": "cascade:dayZone", "@type": "xsd:string" },
 
     "Attachment": "cascade:Attachment",
     "hasAttachment": { "@id": "cascade:hasAttachment", "@type": "@id", "@container": "@set" },

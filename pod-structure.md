@@ -1,11 +1,11 @@
 # Cascade Protocol Pod Structure Specification
 
 **Status:** Draft
-**Version:** 1.5
-**Date:** 2026-09-08
+**Version:** 1.6
+**Date:** 2026-09-23
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
-**Vocabulary versions:** core v3.9, health v2.9, clinical v1.19, coverage v1.6
+**Vocabulary versions:** core v3.10, health v2.10, clinical v1.19, coverage v1.6
 
 > **v1.1 correction.** Every `solid:forClass` registration and every file/class table in this document has been checked against the published ontologies and against the [reference patient pod](/reference-patient-pod/README.md). Fourteen class names were corrected: they named classes that no Cascade ontology defines and no implementation writes, inside registration examples an implementer would copy. Two remaining names (`clinical:ScreeningResult`, `clinical:DiagnosticResult`) have no ratified equivalent and are marked rather than invented.
 
@@ -315,6 +315,7 @@ The extended profile holds PHI that must not appear in the publicly-readable `ca
     foaf:familyName "Rivera" ;
     foaf:name "Alex Rivera" ;
     cascade:dateOfBirth "1990-01-01"^^xsd:date ;
+    cascade:dayZone "America/Los_Angeles" ;
     cascade:biologicalSex "M" ;
     vcard:hasTelephone "+1-555-000-0000" ;
     vcard:hasEmail "user@example.com" ;
@@ -335,6 +336,20 @@ The extended profile holds PHI that must not appear in the publicly-readable `ca
 | `foaf:name` | Literal (`xsd:string`) | RECOMMENDED. **PHI.** The whole name as one string. Source of IPS `Patient.name.text` |
 
 All three are PHI and therefore stay here: they MUST NOT be moved to `card.ttl`, whose `foaf:name` is a generic display name (Section 3.2). A name known only as one string -- because the source never separated it, or because the person's name does not divide into given and family parts -- goes in `foaf:name` alone, which is legal and is what [IPS `Patient.name`](https://hl7.org/fhir/uv/ips/StructureDefinition-Patient-uv-ips.html) invariant `ips-pat-1` accepts. `cascade:ExtendedProfileShape` in `core.shapes.ttl` constrains all three at `sh:Warning`: each is a single non-empty string, and none is required.
+
+**The day zone (core v3.10):**
+
+| Predicate | Object | Notes |
+|-----------|--------|-------|
+| `cascade:dayZone` | Literal (`xsd:string`) | RECOMMENDED once any wellness data is imported. An IANA time zone name. At most one. Owner-only: a home zone hints at where a person lives, so it MUST NOT be moved to `card.ttl` |
+
+`cascade:dayZone` is the zone in which a day is cut when wellness readings are aggregated into daily records. It exists because a wellness export does not carry a stable day: the Apple Health export renders every timestamp in the exporting device's current zone and carries no per-sample offset, so a day read from the file changes when the next export is made somewhere else. A zone the Pod states once is deterministic across exports and machines.
+
+- **Default.** The first import sets it, and the import log records which rule applied: the majority `HKTimeZone` value in an Apple Health export where one is present; else the `timezone` field of the Google Health profile; else the importing machine's zone.
+- **When it changes.** On a permanent move, and for nothing else. Travel does not change it, which is also how the Health app behaves.
+- **History is never re-minted.** Each aggregate records the zone it was cut in (`health:timeZone`) beside the UTC interval it covers (`health:periodStart`, `health:periodEnd`). A change to `cascade:dayZone` therefore applies to new aggregation only; an aggregate cut in the old zone keeps its interval, its zone and its identity.
+
+`cascade:DayZoneShape` in `core.shapes.ttl` checks the value form at `sh:Warning`: a single IANA name, never a numeric offset such as `-07:00`.
 
 Note: the `profile/health.ttl` file (written by the Cascade Swift SDK) serves a similar purpose but contains a richer Cascade-specific health profile (emergency contacts, pharmacy, advance directives, computed demographics). Both files MAY coexist, each linked from `card.ttl` via separate `rdfs:seeAlso` triples.
 
