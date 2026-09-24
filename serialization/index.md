@@ -1,9 +1,12 @@
 # Cascade Protocol Serialization Specification
 
-**Version:** 2.0 (Phase 2)
-**Date:** 2026-02-19
+**Version:** 2.2
+**Date:** 2026-09-23
 **Status:** Descriptive with normative examples
 **Organization:** Cascade Agentic Labs LLC
+**Vocabulary versions:** core v3.9, health v2.9 (`health.shapes.ttl` v1.7), clinical v1.19, coverage v1.6
+
+> **v2.2 (2026-09-23).** Ports into `spec/` the corrections that until now existed only in the copy of this document published on cascadeprotocol.org (v2.1, 2026-08-03, site commit `2f953d9`): the `clinical:Medication` / `clinical:drugName` migration (Sections 1.1, 1.4, 2, 13 and 14), the `health:*RecordShape` constraint tables and notes for conditions, allergies, lab results and immunizations (Sections 3.6, 4.6, 5.6 and 8.6), the family history shape table and its unresolved-disagreement note (Section 10.6), and the coverage deprecation note (Section 11.8). Every ported table was re-checked against the current shapes, not copied: the v2.1 tables described `health.shapes.ttl` v1.2, and they are corrected here where the shapes have moved since (date-or-dateTime values, repeatable codes, the widened lab interpretation binding, and the `sh:Warning` properties added in shapes v1.5 to v1.7). Medication start and end dates now use `clinical:startDate` / `clinical:endDate`, per clinical v1.19, and the Section 2.6 medication shape table, which both copies shared, is restated against `clinical:MedicationShape` as it stands. The two v2.1 notes in Section 12 are not yet ported (see Document History). From this version the published copy is synced from this file and never edited on the site.
 
 ---
 
@@ -17,19 +20,19 @@ This document specifies how Cascade Protocol health data types are serialized to
 
 **Core Clinical Records (Phase 1):**
 
-1. Medications (clinical `MedicationRecord` and wellness supplements)
-2. Conditions (`ConditionRecord`)
-3. Allergies (`AllergyRecord`)
-4. Lab Results (`LabResultRecord`)
-5. Vital Signs (clinical `VitalSignRecord`)
-6. Patient Profile / Demographics (`PatientProfile`)
+1. Medications (`clinical:Medication` and wellness supplements)
+2. Conditions (`health:ConditionRecord`)
+3. Allergies (`health:AllergyRecord`)
+4. Lab Results (`health:LabResultRecord`)
+5. Vital Signs (`clinical:VitalSign`)
+6. Patient Profile / Demographics (`cascade:PatientProfile`)
 
 **Extended Records (Phase 2):**
 
-7. Immunizations (`ImmunizationRecord`)
-8. Procedures (`ProcedureRecord`)
-9. Family History (`FamilyHistoryRecord`)
-10. Coverage / Insurance (`CoverageRecord` / `InsurancePlan`)
+7. Immunizations (`health:ImmunizationRecord`)
+8. Procedures (`clinical:Procedure`)
+9. Family History (`health:FamilyHistoryRecord`)
+10. Coverage / Insurance (`coverage:InsurancePlan`; legacy `clinical:CoverageRecord`)
 11. Wellness Observations (Heart Rate, Blood Pressure, Activity, Sleep, HRV, VO2 Max, Body Measurements)
 12. Comprehensive Provenance Model (W3C PROV-O integration)
 13. Pod Structure Conventions (cross-reference)
@@ -71,17 +74,17 @@ If you are new to RDF, here is a minimal Turtle primer to help you read the exam
 The period (`.`) ends a statement. A semicolon (`;`) continues with the same subject but a new predicate-object pair:
 
 ```turtle
-<urn:uuid:abc-123> a health:MedicationRecord ;  # "a" is shorthand for rdf:type
-    health:medicationName "Metformin" ;           # string literal
-    health:isActive true ;                        # boolean literal
-    health:startDate "2024-01-15T00:00:00Z"^^xsd:dateTime .  # typed literal
+<urn:uuid:abc-123> a clinical:Medication ;       # "a" is shorthand for rdf:type
+    clinical:drugName "Metformin" ;               # string literal
+    clinical:status "active" ;                    # string literal
+    clinical:startDate "2024-01-15T00:00:00Z"^^xsd:dateTime .  # typed literal
 ```
 
 **Prefixes.** Compact URIs use declared prefixes:
 
 ```turtle
-@prefix health: <https://ns.cascadeprotocol.org/health/v1#> .
-# Now health:medicationName expands to https://ns.cascadeprotocol.org/health/v1#medicationName
+@prefix clinical: <https://ns.cascadeprotocol.org/clinical/v1#> .
+# Now clinical:drugName expands to https://ns.cascadeprotocol.org/clinical/v1#drugName
 ```
 
 **Blank nodes.** Anonymous inline resources use square brackets:
@@ -190,26 +193,26 @@ The shapes use three severity levels:
 
 Medications represent prescription drugs, over-the-counter medications, and other pharmaceutical products. The Cascade Protocol distinguishes between two medication-related types:
 
-- **`health:MedicationRecord`** -- A source record representing a single medication entry from one data source (EHR import, patient entry, pharmacy claim). This is the primary medication serialization type produced by the SDK's `ClinicalRDFSerializer`. Multiple source records may be reconciled into a `MedicationUseEpisode` for longitudinal tracking.
+- **`clinical:Medication`** -- A source record representing a single medication entry from one data source (EHR import, patient entry, pharmacy claim). This is the primary medication serialization type produced by the CLI and SDK converters. Multiple source records may be reconciled into a `MedicationUseEpisode` for longitudinal tracking.
 - **`clinical:Supplement`** -- A dietary supplement, OTC product, or herbal remedy with explicit regulatory status. Supplements are intentionally separate from medications due to different regulatory status and evidence requirements.
 
-**FHIR alignment:** `health:MedicationRecord` aligns with `fhir:MedicationStatement`. The clinical ontology class `clinical:Medication` is defined as a subclass of both `fhir:MedicationStatement` and `prov:Entity`.
+**FHIR alignment:** `clinical:Medication` aligns with `fhir:MedicationStatement`. The clinical ontology defines it as a subclass of both `fhir:MedicationStatement` and `prov:Entity`.
 
-### 2.2 Properties Table -- MedicationRecord
+### 2.2 Properties Table -- Medication
 
 | Property | Predicate URI | XSD Type | Cardinality | Description |
 |---|---|---|---|---|
-| Medication Name | `health:medicationName` | `xsd:string` | MUST (1) | Name of the medication (e.g., "Metformin") |
-| Is Active | `health:isActive` | `xsd:boolean` | MUST (1) | Whether patient is currently taking this medication |
+| Drug Name | `clinical:drugName` | `xsd:string` | MUST (1) | Name of the medication (e.g., "Metformin") |
+| Status | `clinical:status` | `xsd:string` | MAY (0..1) | FHIR status: `active`, `stopped`, `on-hold`, etc. |
 | Data Provenance | `cascade:dataProvenance` | (Object) | MUST (1) | How data was generated (see Section 1.6) |
 | Schema Version | `cascade:schemaVersion` | `xsd:string` | MUST (1) | Schema version (format: "major.minor", e.g., "1.3") |
-| Dose | `health:dose` | `xsd:string` | MAY (0..1) | Dosage information (e.g., "500mg") |
-| Frequency | `health:frequency` | `xsd:string` | MAY (0..1) | How often taken (e.g., "twice daily") |
-| Route | `health:route` | `xsd:string` | MAY (0..1) | Route of administration (e.g., "oral") |
-| Prescriber | `health:prescriber` | `xsd:string` | MAY (0..1) | Name of prescribing physician |
-| Start Date | `health:startDate` | `xsd:dateTime` | MAY (0..1) | When medication was started |
-| End Date | `health:endDate` | `xsd:dateTime` | MAY (0..1) | When medication was stopped |
-| RxNorm Code | `health:rxNormCode` | (URI) | MAY (0..1) | RxNorm concept URI (e.g., `rxnorm:860975`) |
+| Dosage | `clinical:dosage` | `xsd:string` | MAY (0..1) | Dosage information (e.g., "500mg twice daily") |
+| Frequency | `clinical:frequency` | `xsd:string` | MAY (0..1) | How often taken (e.g., "twice daily") |
+| Route | `clinical:route` | `xsd:string` | MAY (0..1) | Route of administration (e.g., "oral") |
+| Prescriber | `clinical:prescriber` | `xsd:string` | MAY (0..1) | Name of prescribing physician |
+| Start Date | `clinical:startDate` | `xsd:date` or `xsd:dateTime` | MAY (0..1) | When medication was started (FHIR `MedicationStatement.effective[x]`) |
+| End Date | `clinical:endDate` | `xsd:date` or `xsd:dateTime` | MAY (0..1) | When medication was stopped |
+| RxNorm Code | `clinical:rxNormCode` | (URI) | MAY (0..1) | RxNorm concept URI (e.g., `rxnorm:860975`) |
 | Notes | `health:notes` | `xsd:string` | MAY (0..1) | Free-text notes |
 | Source Record ID | `health:sourceRecordId` | `xsd:string` | MAY (0..1) | FHIR resource ID from source system |
 | Drug Code | `clinical:drugCode` | (URI) | MAY (0..*) | Drug code URI from any terminology system |
@@ -229,7 +232,7 @@ Medications represent prescription drugs, over-the-counter medications, and othe
 | Medication Class | `health:medicationClass` | `xsd:string` | MAY (0..1) | Therapeutic classification (computed by ClinicalClassifier) |
 | Affects Vital Signs | `health:affectsVitalSigns` | (List) | MAY (0..1) | Vital signs affected by this medication |
 
-### 2.3 Turtle Example -- MedicationRecord (Annotated)
+### 2.3 Turtle Example -- Medication (Annotated)
 
 ```turtle
 @prefix health:   <https://ns.cascadeprotocol.org/health/v1#> .
@@ -239,74 +242,74 @@ Medications represent prescription drugs, over-the-counter medications, and othe
 @prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
 
 # A medication record for Metformin imported from Epic MyChart
-<urn:uuid:a1b2c3d4-e5f6-7890-abcd-ef1234567890> a health:MedicationRecord ;
+<urn:uuid:a1b2c3d4-e5f6-7890-abcd-ef1234567890> a clinical:Medication ;
 
     # --- Required fields ---
-    health:medicationName "Metformin HCl" ;           # Drug name as recorded in EHR
-    health:isActive true ;                             # Patient is currently taking this
-    cascade:dataProvenance cascade:EHRVerified ;       # Imported from verified EHR system
-    cascade:schemaVersion "1.3" ;                      # Schema version for compatibility
+    clinical:drugName "Metformin HCl" ;                # Drug name as recorded in EHR
+    cascade:dataProvenance cascade:EHRVerified ;        # Imported from verified EHR system
+    cascade:schemaVersion "1.3" ;                       # Schema version for compatibility
 
     # --- Core medication details ---
-    health:dose "1000mg" ;                             # Prescribed dosage
-    health:frequency "twice daily" ;                   # How often taken
-    health:route "oral" ;                              # Route of administration
-    health:prescriber "Dr. Sarah Chen" ;               # Prescribing physician
-    health:startDate "2024-01-15T00:00:00Z"^^xsd:dateTime ;  # When started
-    health:notes "Take with meals" ;                   # Patient instructions
+    clinical:status "active" ;                          # FHIR status (active, stopped, etc.)
+    clinical:dosage "1000mg twice daily" ;              # Prescribed dosage
+    clinical:frequency "twice daily" ;                  # How often taken
+    clinical:route "oral" ;                             # Route of administration
+    clinical:prescriber "Dr. Sarah Chen" ;              # Prescribing physician
+    clinical:startDate "2024-01-15T00:00:00Z"^^xsd:dateTime ;  # When started
+    health:notes "Take with meals" ;                    # Patient instructions
 
     # --- Standard coding (RxNorm URI) ---
-    health:rxNormCode <rxnorm:860975> ;                # RxNorm concept for Metformin 1000mg
+    clinical:rxNormCode <rxnorm:860975> ;               # RxNorm concept for Metformin 1000mg
 
     # --- Multi-system drug codes ---
     clinical:drugCode <http://www.nlm.nih.gov/research/umls/rxnorm/860975> ;  # RxNorm
     clinical:drugCode <http://snomed.info/sct/109081006> ;                     # SNOMED CT
 
     # --- Provenance and source tracking ---
-    clinical:provenanceClass "healthKitFHIR" ;         # Read-only EHR import (not editable)
+    clinical:provenanceClass "healthKitFHIR" ;          # Read-only EHR import (not editable)
     clinical:sourceFhirResourceType "MedicationRequest" ;  # Originated from a prescription
-    clinical:clinicalIntent "prescribed" ;             # Provider ordered this medication
-    health:sourceRecordId "epic-med-12345" ;           # FHIR resource ID for traceability
+    clinical:clinicalIntent "prescribed" ;              # Provider ordered this medication
+    health:sourceRecordId "epic-med-12345" ;            # FHIR resource ID for traceability
 
     # --- FHIR-enriched medication details ---
-    clinical:indication "Type 2 Diabetes Mellitus" ;   # Clinical reason for prescribing
-    clinical:courseOfTherapyType "continuous" ;         # Ongoing therapy (not short-course)
-    clinical:asNeeded false ;                          # Fixed schedule, not PRN
-    clinical:medicationForm "tablet" ;                 # Physical form
+    clinical:indication "Type 2 Diabetes Mellitus" ;    # Clinical reason for prescribing
+    clinical:courseOfTherapyType "continuous" ;          # Ongoing therapy (not short-course)
+    clinical:asNeeded false ;                           # Fixed schedule, not PRN
+    clinical:medicationForm "tablet" ;                  # Physical form
     clinical:activeIngredient "metformin hydrochloride" ;  # Active ingredient
-    clinical:ingredientStrength "1000 mg per tablet" ; # Strength per unit
+    clinical:ingredientStrength "1000 mg per tablet" ;  # Strength per unit
 
     # --- Dispensing details ---
-    clinical:refillsAllowed 5 ;                        # 5 refills authorized
-    clinical:supplyDurationDays 90 ;                   # 90-day supply per fill
-    clinical:dispensedQuantity "180 tablets" ;          # Quantity per fill
-    clinical:prescriptionCategory "community" ;        # Community/outpatient prescription
+    clinical:refillsAllowed 5 ;                         # 5 refills authorized
+    clinical:supplyDurationDays 90 ;                    # 90-day supply per fill
+    clinical:dispensedQuantity "180 tablets" ;           # Quantity per fill
+    clinical:prescriptionCategory "community" ;         # Community/outpatient prescription
 
     # --- Classification metadata (computed) ---
-    health:medicationClass "antidiabetic" ;            # Therapeutic class
-    health:affectsVitalSigns ("bloodGlucose") .        # Affects blood glucose
+    health:medicationClass "antidiabetic" ;             # Therapeutic class
+    health:affectsVitalSigns ("bloodGlucose") .         # Affects blood glucose
 ```
 
-### 2.4 JSON-LD Equivalent -- MedicationRecord
+### 2.4 JSON-LD Equivalent -- Medication
 
 ```json
 {
   "@context": "https://ns.cascadeprotocol.org/context/v1/cascade.jsonld",
   "@id": "urn:uuid:a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "@type": "health:MedicationRecord",
-  "health:medicationName": "Metformin HCl",
-  "health:isActive": true,
+  "@type": "clinical:Medication",
+  "clinical:drugName": "Metformin HCl",
+  "clinical:status": "active",
   "cascade:dataProvenance": { "@id": "cascade:EHRVerified" },
   "cascade:schemaVersion": "1.3",
-  "health:dose": "1000mg",
-  "health:frequency": "twice daily",
-  "health:route": "oral",
-  "health:prescriber": "Dr. Sarah Chen",
-  "health:startDate": {
+  "clinical:dosage": "1000mg twice daily",
+  "clinical:frequency": "twice daily",
+  "clinical:route": "oral",
+  "clinical:prescriber": "Dr. Sarah Chen",
+  "clinical:startDate": {
     "@value": "2024-01-15T00:00:00Z",
     "@type": "xsd:dateTime"
   },
-  "health:rxNormCode": { "@id": "rxnorm:860975" },
+  "clinical:rxNormCode": { "@id": "rxnorm:860975" },
   "clinical:provenanceClass": "healthKitFHIR",
   "clinical:sourceFhirResourceType": "MedicationRequest",
   "clinical:clinicalIntent": "prescribed",
@@ -338,21 +341,25 @@ Medication records can originate from multiple sources. The `cascade:dataProvena
 
 ### 2.6 SHACL Constraints -- Medications
 
-The `clinical:MedicationShape` in `clinical.shapes.ttl` enforces these constraints:
+The `clinical:MedicationShape` in `clinical.shapes.ttl` (clinical v1.19) enforces these constraints. A property shape that declares no `sh:severity` reports at SHACL's default, `sh:Violation`:
 
 | Property | Constraint | Severity |
 |---|---|---|
-| `clinical:drugName` | `sh:minCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
-| `cascade:dataProvenance` | `sh:minCount 1`, `sh:in (cascade:ClinicalGenerated, cascade:EHRVerified, cascade:DeviceGenerated, cascade:PatientReported)` | Violation |
-| `cascade:schemaVersion` | `sh:minCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
-| `clinical:courseOfTherapyType` | `sh:in ("acute", "continuous", "unknown")` | Warning |
-| `clinical:provenanceClass` | `sh:in ("healthKitFHIR", "userTracked", "pharmacyClaim", "imported")` | (no severity) |
-| `clinical:sourceFhirResourceType` | `sh:in ("MedicationRequest", "MedicationStatement", "MedicationDispense", "MedicationAdministration")` | (no severity) |
-| `clinical:clinicalIntent` | `sh:in ("reportedUse", "prescribed", "dispensed", "administered")` | (no severity) |
-| `clinical:prescriptionCategory` | `sh:in ("community", "inpatient", "discharge")` | (no severity) |
-| `clinical:refillsAllowed` | `sh:minInclusive 0`, `xsd:integer` | (no severity) |
+| `clinical:drugName` | `sh:minCount 1`, `sh:maxCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
+| `cascade:dataProvenance` | `sh:minCount 1`, `sh:maxCount 1`, `sh:in (cascade:ClinicalGenerated cascade:EHRVerified cascade:DeviceGenerated cascade:PatientReported cascade:SelfReported cascade:AIExtracted)` | Violation |
+| `cascade:schemaVersion` | `sh:minCount 1`, `sh:maxCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
+| `clinical:dosage`, `clinical:route`, `clinical:frequency`, `clinical:status`, `clinical:prescriber`, `clinical:indication`, `clinical:medicationForm`, `clinical:activeIngredient`, `clinical:ingredientStrength`, `clinical:dispensedQuantity` | `xsd:string`, `sh:maxCount 1` each | Violation |
+| `clinical:rxNormCode` | `sh:maxCount 1` | Violation |
+| `clinical:asNeeded` | `xsd:boolean`, `sh:maxCount 1` | Violation |
+| `clinical:courseOfTherapyType` | `sh:in ("acute" "continuous" "unknown")`, `sh:maxCount 1` | Warning |
+| `clinical:provenanceClass` | `sh:in ("healthKitFHIR" "userTracked" "pharmacyClaim" "imported")`, `sh:maxCount 1` | Violation |
+| `clinical:sourceFhirResourceType` | `sh:in ("MedicationRequest" "MedicationStatement" "MedicationDispense" "MedicationAdministration")`, `sh:maxCount 1` | Violation |
+| `clinical:clinicalIntent` | `sh:in ("reportedUse" "prescribed" "dispensed" "administered")`, `sh:maxCount 1` | Violation |
+| `clinical:startDate`, `clinical:endDate` | `xsd:date` or `xsd:dateTime` (`sh:or`), `sh:maxCount 1` each | Warning |
+| `clinical:refillsAllowed`, `clinical:supplyDurationDays` | `xsd:integer`, `sh:minInclusive 0`, `sh:maxCount 1` each | Violation |
+| `clinical:prescriptionCategory` | `sh:in ("community" "inpatient" "discharge")`, `sh:maxCount 1` | Violation |
 
-> **Note on type discrepancy:** The SHACL shape targets `clinical:Medication` and requires `clinical:drugName`, while the reference SDK serializer types the resource as `health:MedicationRecord` and uses `health:medicationName`. This reflects a planned migration from `health:` to `clinical:` namespace for clinical records. Implementers SHOULD follow the SDK serializer patterns shown in Section 2.3.
+> **Migration to the `clinical:` namespace.** As of cascade-cli v0.5.6 and cascade-agent v1.1.3, the medication type and its core properties use the `clinical:` namespace: `clinical:Medication`, `clinical:drugName`, `clinical:dosage`, `clinical:route`, `clinical:frequency`, `clinical:status`, `clinical:rxNormCode`. Those tools no longer emit the deprecated `health:MedicationRecord` / `health:medicationName` forms. Clinical v1.19 completes the medication dates: `clinical:startDate` and `clinical:endDate` are the only defined spellings, and `clinical:MedicationDateSpellingShape` reports a `sh:Warning` wherever the undefined `health:startDate` or `health:endDate` still appears. A consumer that queries `health:startDate` should add `clinical:startDate` to its query now.
 
 ### 2.7 Multi-System Coding -- Medications
 
@@ -530,18 +537,25 @@ Conditions represent medical conditions, diagnoses, and health problems. They ar
 
 ### 3.6 SHACL Constraints -- Conditions
 
-The `clinical:ConditionShape` in `clinical.shapes.ttl` enforces:
+Condition records are typed `health:ConditionRecord`, which health v2.5 defined and `health:ConditionRecordShape` has targeted since `health.shapes.ttl` v1.2. That is the shape that applies to the serialization in Section 3.3; the table states it as of `health.shapes.ttl` v1.7:
 
 | Property | Constraint | Severity |
 |---|---|---|
-| `clinical:conditionName` | `sh:minCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
-| `cascade:dataProvenance` | `sh:minCount 1`, valid provenance class | Violation |
-| `cascade:schemaVersion` | `sh:minCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
-| `clinical:clinicalStatus` | `sh:in ("active", "recurrence", "relapse", "inactive", "remission", "resolved")` | (no severity) |
-| `clinical:verificationStatus` | `sh:in ("unconfirmed", "provisional", "differential", "confirmed", "refuted", "entered-in-error")` | (no severity) |
-| `clinical:onsetDate` | `xsd:dateTime`, `sh:maxCount 1` | (no severity) |
+| `health:conditionName` | `sh:minCount 1`, `sh:maxCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
+| `cascade:dataProvenance` | `sh:minCount 1`, `sh:maxCount 1`, valid provenance class | Violation |
+| `cascade:schemaVersion` | `sh:minCount 1`, `sh:maxCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
+| `health:status` | `sh:in ("active", "recurrence", "relapse", "inactive", "remission", "resolved")`, `sh:maxCount 1` | Violation |
+| `health:onsetDate` | `xsd:date` or `xsd:dateTime` (`sh:or`), `sh:maxCount 1` | Violation |
+| `health:icd10Code`, `health:snomedCode` | repeatable (no `sh:maxCount`, no `sh:pattern`): FHIR `CodeableConcept.coding` is 0..* and dual coding is normal | Violation |
+| `health:conditionClass`, `health:monitoredVitalSigns`, `health:sourceRecordId` | `sh:maxCount 1` each | Violation |
+| `clinical:abatementDate` | `xsd:date` or `xsd:dateTime` (`sh:or`), `sh:maxCount 1` | Warning |
+| `clinical:category` | `sh:in ("problem-list-item" "encounter-diagnosis")`, `sh:maxCount 1` | Warning |
 
-> **Note on type discrepancy:** The SHACL shape targets `clinical:Condition` and requires `clinical:conditionName`, while the reference SDK serializer types the resource as `health:ConditionRecord` and uses `health:conditionName`. This mirrors the medication namespace migration (see Section 2.6). Implementers SHOULD follow the SDK serializer patterns shown in Section 3.3.
+`health:ConditionSpellingShape` also reports a `sh:Warning` on any record carrying `health:abatementDate` or `health:conditionCategory`. Neither is defined: write `clinical:abatementDate` and `clinical:category` instead.
+
+> **What changed, and what it means for existing data.** Until health v2.5, `health:ConditionRecord` was emitted but undefined, and no shape targeted it. A condition record therefore validated against nothing and reported `PASS` because zero constraints applied, not because it conformed. It is now actually checked. A condition record that reports a violation on first validation after upgrading has not degraded; it is being checked for the first time.
+
+> **On the two class names.** `clinical:Condition` also exists and has its own `clinical:ConditionShape` in `clinical.shapes.ttl`. It is deprecated as of clinical v1.13 in favour of `health:ConditionRecord`, and retained rather than removed because the pod export path still emits it and existing pods contain it. A conforming reader accepts both spellings; a writer should emit `health:ConditionRecord`, which is what every import path already produces.
 
 ### 3.7 Multi-System Coding -- Conditions
 
@@ -634,20 +648,29 @@ Allergies represent allergic reactions and intolerances to substances including 
 
 ### 4.6 SHACL Constraints -- Allergies
 
-The `clinical:AllergyShape` in `clinical.shapes.ttl` enforces:
+Allergy records are typed `health:AllergyRecord`, which health v2.5 defined and `health:AllergyRecordShape` has targeted since `health.shapes.ttl` v1.2. That is the shape that applies to the serialization in Section 4.3; the table states it as of `health.shapes.ttl` v1.7:
 
 | Property | Constraint | Severity |
 |---|---|---|
-| `clinical:allergen` | `sh:minCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
-| `cascade:dataProvenance` | `sh:minCount 1`, valid provenance class | Violation |
-| `cascade:schemaVersion` | `sh:minCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
-| `clinical:severity` | `sh:in ("mild", "moderate", "severe")` | (no severity) |
-| `clinical:criticality` | `sh:in ("low", "high", "unable-to-assess")` | (no severity) |
-| `clinical:category` | `sh:in ("food", "medication", "environment", "biologic")` | (no severity) |
+| `health:allergen` | `sh:minCount 1`, `sh:maxCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
+| `cascade:dataProvenance` | `sh:minCount 1`, `sh:maxCount 1`, valid provenance class | Violation |
+| `cascade:schemaVersion` | `sh:minCount 1`, `sh:maxCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
+| `health:reaction` | `xsd:string`, repeatable (no `sh:maxCount`) | Violation |
+| `health:allergySeverity` | `sh:in ("mild", "moderate", "severe")`, `sh:maxCount 1` | Violation |
+| `health:allergyCategory` | `sh:in ("food", "medication", "environment", "biologic")`, `sh:maxCount 1` | Violation |
+| `health:onsetDate` | `xsd:date` or `xsd:dateTime` (`sh:or`), `sh:maxCount 1` | Violation |
+| `health:sourceRecordId` | `xsd:string`, `sh:maxCount 1` | Violation |
+| `clinical:status` | `sh:in ("active" "inactive" "resolved")`, `sh:maxCount 1` | Warning |
+| `clinical:verificationStatus` | `sh:in ("unconfirmed" "confirmed" "refuted" "entered-in-error")`, `sh:maxCount 1` | Warning |
+| `clinical:allergyType` | `sh:in ("allergy" "intolerance")`, `sh:maxCount 1` | Warning |
+| `clinical:criticality` | `sh:in ("low" "high" "unable-to-assess")`, `sh:maxCount 1` | Warning |
+| `health:allergenCode`, `health:manifestationCode` | `sh:nodeKind sh:IRI`, repeatable | Warning |
 
-> **Note on category values:** The SHACL shape uses FHIR `AllergyIntolerance.category` values (`food`, `medication`, `environment`, `biologic`), while the SDK `AllergyCategoryType` enum includes additional values (`latex`, `contrast`, `insect`, `other`). The SHACL constraint uses `sh:in` without a severity level, meaning extended values are accepted but may trigger informational messages.
+> **Note on category values:** `health:allergyCategory` is constrained to the FHIR `AllergyIntolerance.category` value set (`food`, `medication`, `environment`, `biologic`), while some SDK enums carry additional values (`latex`, `contrast`, `insect`, `other`). Those extended values are outside the constrained set and now report a violation. Map them onto a FHIR category before writing.
 
-> **Note on type discrepancy:** The SHACL shape targets `clinical:Allergy` and requires `clinical:allergen`, while the reference SDK serializer types the resource as `health:AllergyRecord` and uses `health:allergen`. This mirrors the medication namespace migration (see Section 2.6). Implementers SHOULD follow the SDK serializer patterns shown in Section 4.3.
+> **What changed, and what it means for existing data.** Until health v2.5, `health:AllergyRecord` was emitted but undefined, and no shape targeted it. An allergy record therefore validated against nothing and reported `PASS` because zero constraints applied, not because it conformed. It is now actually checked. An allergy record that reports a violation on first validation after upgrading has not degraded; it is being checked for the first time.
+
+> **On the two class names.** `clinical:Allergy` also exists and has its own `clinical:AllergyShape` in `clinical.shapes.ttl`. It is deprecated as of clinical v1.13 in favour of `health:AllergyRecord`, and retained rather than removed because the pod export path still emits it and existing pods contain it. A conforming reader accepts both spellings; a writer should emit `health:AllergyRecord`, which is what every import path already produces.
 
 ### 4.7 Multi-System Coding -- Allergies
 
@@ -763,18 +786,27 @@ Lab results represent individual laboratory test observations with a result valu
 
 ### 5.6 SHACL Constraints -- Lab Results
 
-The `clinical:LabResultShape` in `clinical.shapes.ttl` enforces:
+Lab results are typed `health:LabResultRecord`, which health v2.5 defined and `health:LabResultRecordShape` has targeted since `health.shapes.ttl` v1.2. That is the shape that applies to the serialization in Section 5.3; the table states it as of `health.shapes.ttl` v1.7:
 
 | Property | Constraint | Severity |
 |---|---|---|
-| `clinical:testName` | `sh:minCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
-| `cascade:dataProvenance` | `sh:minCount 1`, valid provenance class | Violation |
-| `cascade:schemaVersion` | `sh:minCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
-| `clinical:interpretation` | `sh:in ("normal", "high", "low", "abnormal", "critical", "Normal", "High", "Low", "Abnormal", "Critical")` | (no severity) |
-| `clinical:value` | `sh:maxCount 1` | (no severity) |
-| `clinical:unit` | `xsd:string`, `sh:maxCount 1` | (no severity) |
+| `health:testName` | `sh:minCount 1`, `sh:maxCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
+| `cascade:dataProvenance` | `sh:minCount 1`, `sh:maxCount 1`, valid provenance class | Violation |
+| `cascade:schemaVersion` | `sh:minCount 1`, `sh:maxCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
+| `health:resultValue` | `sh:maxCount 1` | Violation |
+| `health:resultUnit`, `health:referenceRange` | `xsd:string`, `sh:maxCount 1` each | Violation |
+| `health:interpretation` | `sh:in` over the 49 selectable codes of HL7 v3 ObservationInterpretation, the 15 data-absent-reason codes, and the ten legacy words (`normal`, `high`, `low`, `abnormal`, `critical` in lower and title case, kept so older data validates and not recommended for new writes); `sh:maxCount 1` | Violation |
+| `health:interpretationSourceCode` | `xsd:string`, `sh:maxCount 1`: a source code in no bound value set, verbatim | Violation |
+| `clinical:status` | `sh:in` the 8 codes of FHIR R4 `Observation.status`, `sh:maxCount 1` | Warning |
+| `health:performedDate`, `health:reportedDate` | `xsd:date` or `xsd:dateTime` (`sh:or`), `sh:maxCount 1` each | Violation |
+| `health:testCode`, `health:labCategory` | repeatable (no `sh:maxCount`): FHIR `Observation.code.coding` and `Observation.category` are 0..* | Violation |
+| `health:specimenType`, `health:orderingProvider`, `health:performingLab`, `health:sourceRecordId` | `xsd:string`, `sh:maxCount 1` each | Violation |
 
-> **Note on type discrepancy:** The SHACL shape targets `clinical:LabResult` and requires `clinical:testName`, while the reference SDK serializer types the resource as `health:LabResultRecord` and uses `health:testName`. This mirrors the medication namespace migration (see Section 2.6). Implementers SHOULD follow the SDK serializer patterns shown in Section 5.3.
+> **`sh:maxCount 1` on `health:resultValue` is the constraint to know about.** A source bundle carrying two same-day results for one test (a fasting glucose of 95 at 07:30 and a post-prandial 310 at 13:00, an entirely routine pairing) can merge into a single subject asserting both values. A query over that subject then returns `"95, 310"`, one string no consumer can interpret. Before this shape existed the file validated clean, because the class was unconstrained. Writers MUST emit one subject per result.
+
+> **What changed, and what it means for existing data.** Until health v2.5, `health:LabResultRecord` was emitted but undefined, and no shape targeted it. A lab result therefore validated against nothing and reported `PASS` because zero constraints applied, not because it conformed. It is now actually checked. A record that reports a violation on first validation after upgrading has not degraded; it is being checked for the first time.
+
+> **On the two class names.** `clinical:LabResult` also exists and has its own `clinical:LabResultShape` in `clinical.shapes.ttl`. It is deprecated as of clinical v1.13 in favour of `health:LabResultRecord`, and retained rather than removed because the pod export path still emits it and existing pods contain it. A conforming reader accepts both spellings; a writer should emit `health:LabResultRecord`, which is what every import path already produces, and which clinical v1.10 already committed to by correcting `clinical:hasLabResult`'s range to it.
 
 ### 5.7 Multi-System Coding -- Lab Results
 
@@ -1262,21 +1294,20 @@ Immunization records are primarily clinical:
 
 ### 8.6 SHACL Constraints -- Immunizations
 
-The `clinical:ImmunizationShape` in `clinical.shapes.ttl` enforces:
+Immunization records are typed `health:ImmunizationRecord`, which health v2.5 defined and `health:ImmunizationRecordShape` has targeted since `health.shapes.ttl` v1.2. That is the shape that applies to the serialization in Section 8.3; the table states it as of `health.shapes.ttl` v1.7:
 
 | Property | Constraint | Severity |
 |---|---|---|
-| `clinical:vaccineName` | `sh:minCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
-| `cascade:dataProvenance` | `sh:minCount 1`, valid provenance class | Violation |
-| `cascade:schemaVersion` | `sh:minCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
-| `clinical:status` | `sh:in ("completed", "entered-in-error", "not-done")` | (no severity) |
-| `clinical:cvxCode` | `sh:maxCount 1` | (no severity) |
-| `clinical:lotNumber` | `xsd:string`, `sh:maxCount 1` | (no severity) |
-| `clinical:site` | `xsd:string`, `sh:maxCount 1` | (no severity) |
-| `clinical:doseQuantity` | `xsd:string`, `sh:maxCount 1` | (no severity) |
-| `clinical:manufacturer` | `xsd:string`, `sh:maxCount 1` | (no severity) |
+| `health:vaccineName` | `sh:minCount 1`, `sh:maxCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
+| `cascade:dataProvenance` | `sh:minCount 1`, `sh:maxCount 1`, valid provenance class | Violation |
+| `cascade:schemaVersion` | `sh:minCount 1`, `sh:maxCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
+| `health:status` | `sh:in ("completed", "entered-in-error", "not-done")`, `sh:maxCount 1` | Violation |
+| `health:administrationDate` | `xsd:date` or `xsd:dateTime` (`sh:or`), `sh:maxCount 1` | Violation |
+| `health:vaccineCode`, `health:manufacturer`, `health:lotNumber`, `health:doseQuantity`, `health:route`, `health:site`, `health:administeringProvider`, `health:administeringLocation`, `health:sourceRecordId` | `xsd:string`, `sh:maxCount 1` each | Violation |
 
-> **Note on type discrepancy:** The SHACL shape targets `clinical:Immunization` and requires `clinical:vaccineName`, while the reference SDK serializer types the resource as `health:ImmunizationRecord` and uses `health:vaccineName`. This mirrors the medication namespace migration (see Section 2.6). Implementers SHOULD follow the SDK serializer patterns shown in Section 8.3.
+> **What changed, and what it means for existing data.** Until health v2.5, `health:ImmunizationRecord` was emitted but undefined, and no shape targeted it. An immunization record therefore validated against nothing and reported `PASS` because zero constraints applied, not because it conformed. It is now actually checked. A record that reports a violation on first validation after upgrading has not degraded; it is being checked for the first time.
+
+> **On the two class names.** `clinical:Immunization` also exists and has its own `clinical:ImmunizationShape` in `clinical.shapes.ttl`. It is deprecated as of clinical v1.13 in favour of `health:ImmunizationRecord`, and retained rather than removed because the pod export path still emits it and existing pods contain it. A conforming reader accepts both spellings; a writer should emit `health:ImmunizationRecord`, which is what every import path already produces.
 
 ### 8.7 Multi-System Coding -- Immunizations
 
@@ -1505,19 +1536,24 @@ Family history records represent medical conditions in blood relatives that may 
 
 ### 10.6 SHACL Constraints -- Family History
 
-Family history does not currently have a dedicated SHACL shape in the published shapes files. The following constraints are enforced by the SDK serializer and SHOULD be respected by implementers:
+`health:FamilyHistoryRecord` is defined in health v2.5 and has been targeted by `health:FamilyHistoryRecordShape` since `health.shapes.ttl` v1.2. As of `health.shapes.ttl` v1.7 it enforces:
 
 | Property | Constraint | Severity |
 |---|---|---|
-| `health:relationship` | Required, non-empty string, from enumerated values | Violation (SDK-enforced) |
-| `health:condition` | Required, non-empty string | Violation (SDK-enforced) |
-| `health:isDeceased` | Required, `xsd:boolean` | Violation (SDK-enforced) |
-| `cascade:dataProvenance` | Required, valid provenance class | Violation (SDK-enforced) |
-| `cascade:schemaVersion` | Required, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation (SDK-enforced) |
-| `health:ageAtDiagnosis` | `xsd:integer`, `sh:minInclusive 0` | (SDK-enforced) |
-| `health:ageAtDeath` | `xsd:integer`, `sh:minInclusive 0` | (SDK-enforced) |
+| `health:conditionName` | `sh:minCount 1`, `sh:maxCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
+| `clinical:relationship` | `sh:minCount 1`, `sh:maxCount 1`, `sh:minLength 1`, `xsd:string` | Violation |
+| `cascade:dataProvenance` | `sh:minCount 1`, `sh:maxCount 1`, valid provenance class | Violation |
+| `cascade:schemaVersion` | `sh:minCount 1`, `sh:maxCount 1`, `sh:pattern "^[0-9]+\\.[0-9]+$"` | Violation |
+| `health:onsetAge` | `xsd:integer`, `sh:minInclusive 0`, `sh:maxInclusive 130`, `sh:maxCount 1` | Violation |
+| `health:sourceRecordId` | `xsd:string`, `sh:maxCount 1` | Violation |
 
-> **Note:** A formal `clinical:FamilyHistoryShape` will be added to `clinical.shapes.ttl` in a future schema release.
+> **UNRESOLVED: this section and the ratified shape disagree, and the disagreement is stated here rather than hidden.**
+>
+> The shape names the condition with `health:conditionName`, the relationship with `clinical:relationship`, and the relative's age at onset with `health:onsetAge`. Sections 10.2 and 10.3 above use `health:condition`, `health:relationship` and `health:ageAtDiagnosis`, which is what the SDK serializer emits. Of the twelve properties in the 10.2 table, four are defined vocabulary (`cascade:dataProvenance`, `cascade:schemaVersion`, `health:notes`, `health:sourceRecordId`). The other eight (`health:relationship`, `health:condition`, `health:isDeceased`, `health:conditionCode`, `health:ageAtDiagnosis`, `health:ageAtDeath`, `health:isFirstDegree`, `health:isEarlyOnset`) are defined in no Cascade ontology.
+>
+> The example in Section 10.3, validated verbatim against `health.shapes.ttl` v1.2 and again against v1.7, reports two violations: no `health:conditionName` and no `clinical:relationship`.
+>
+> **Sections 10.2 and 10.3 have deliberately not been rewritten to match the shape.** They describe what implementations currently emit, and changing the documented serialization would assert a format no implementation produces. Reconciling the two spellings (settling on one and moving the emitters onto it) is a vocabulary decision that has not been taken. Until it is: the shape is authoritative for validation, and a family history record written exactly as Section 10.3 shows will report violations. Treat this section as the one place in this specification where the documented serialization and the ratified shape are known to be out of step.
 
 ### 10.7 Clinical Significance -- Early Onset and First-Degree Flags
 
@@ -1714,7 +1750,9 @@ The `coverage:InsurancePlanShape` in `coverage.shapes.ttl` enforces:
 | `coverage:rxPcn` | `xsd:string`, `sh:maxCount 1` | Info |
 | `coverage:rxGroup` | `xsd:string`, `sh:maxCount 1` | Info |
 
-> **Note on deprecation:** The legacy `clinical:CoverageRecord` type does not have a dedicated SHACL shape. Validation of legacy records relies on the SDK serializer constraints. New implementations SHOULD use `coverage:InsurancePlan` with the `coverage:InsurancePlanShape` validation.
+> **Note on deprecation, stated concretely.** The legacy `clinical:CoverageRecord` type is targeted by no SHACL shape at all, so a validator reports `PASS` on a legacy coverage record because zero constraints apply, not because it conforms: a record missing `providerName`, `memberId` and `coverageType` entirely passes. `coverage:InsurancePlan` is checked by `coverage:InsurancePlanShape`. That difference, not stylistic preference, is why new implementations SHOULD use the preferred type. The reference patient pod's insurance record uses `coverage:InsurancePlan`; note that `coverage:effectiveStart` is `xsd:date`, while legacy records serialized as in Section 11.4 carry `clinical:effectivePeriodStart` as `xsd:dateTime`, so migrating a record means narrowing that value, not just renaming the predicate. (The clinical ontology itself declares `clinical:effectivePeriodStart` with range `xsd:date`; the `xsd:dateTime` in the Section 11.2 table and the Section 11.4 example is what writers emitted, not what the ontology states.)
+>
+> `coverage:` v1.6 has no property corresponding to the legacy `clinical:payorName`: it maps `coverage:providerName` to `fhir:Coverage.payor`, and that property is `sh:maxCount 1`. A record carrying both a provider name and a distinct payor organisation name has no lossless single-predicate target in `coverage:`.
 
 ---
 
@@ -2244,8 +2282,8 @@ For complex data pipelines (e.g., AI extraction from scanned documents), provena
 
 ```turtle
 # A medication extracted from a scanned lab report
-<urn:uuid:med-from-scan-001> a health:MedicationRecord ;
-    health:medicationName "Lisinopril" ;
+<urn:uuid:med-from-scan-001> a clinical:Medication ;
+    clinical:drugName "Lisinopril" ;
     cascade:dataProvenance cascade:AIExtracted ;
     cascade:schemaVersion "1.3" ;
     prov:wasGeneratedBy <urn:uuid:extraction-activity-001> .
@@ -2371,7 +2409,7 @@ cascade-pod/
         publicTypeIndex.ttl            # Public type registrations
         privateTypeIndex.ttl           # Private type registrations
     clinical/
-        medications.ttl                # health:MedicationRecord
+        medications.ttl                # clinical:Medication
         conditions.ttl                 # health:ConditionRecord
         allergies.ttl                  # health:AllergyRecord
         lab-results.ttl                # health:LabResultRecord
@@ -2379,7 +2417,7 @@ cascade-pod/
         immunizations.ttl              # health:ImmunizationRecord
         procedures.ttl                 # clinical:Procedure
         family-history.ttl             # health:FamilyHistoryRecord
-        insurance.ttl                  # clinical:CoverageRecord
+        insurance.ttl                  # coverage:InsurancePlan
     wellness/
         heart-rate.ttl                 # health:HeartRateData
         blood-pressure.ttl             # health:BloodPressureData
@@ -2605,3 +2643,5 @@ The following data types are not yet covered and will be addressed in subsequent
 |---|---|---|
 | 1.0 | 2026-02-19 | Initial release. Phase 1 covering 6 data types: Medications, Conditions, Allergies, Lab Results, Vital Signs, Patient Profile. |
 | 2.0 | 2026-02-19 | Phase 2 completion. Added 7 new sections: Immunizations (Section 8), Procedures (Section 9), Family History (Section 10), Coverage/Insurance (Section 11), Wellness Observations (Section 12), Comprehensive Provenance Model (Section 13), Pod Structure Conventions (Section 14). Updated Appendix D to reflect completed coverage. |
+| 2.1 | 2026-08-03 | Published on cascadeprotocol.org only (site commit `2f953d9`) and never merged into `spec/`, so the two copies diverged in both directions. Migrated medications to `clinical:Medication` / `clinical:drugName`; replaced the `clinical:*Shape` tables for conditions, allergies, lab results and immunizations with the `health:*RecordShape` tables of `health.shapes.ttl` v1.2; added the family history shape table, the coverage deprecation note, and two Section 12 notes (blood-pressure readings untyped; container and daily snapshot shapes). |
+| 2.2 | 2026-09-23 | Union of 2.0 (as since amended in `spec/`, including the Section 1.7 entailment note) and 2.1. The 2.1 changes outside Section 12 are ported with every constraint table re-checked against `health.shapes.ttl` v1.7, `clinical.shapes.ttl` (clinical v1.19) and `coverage.shapes.ttl` (coverage v1.6) and corrected where the shapes moved after August; medication dates move to `clinical:startDate` / `clinical:endDate`. The two 2.1 Section 12 notes are deferred until the pending Section 12 revision for wellness reading identity lands, and need re-checking against the shapes before they are ported: `health:DailyVitalReadingShape` requires a timestamp as either `cascade:date` or `health:date`, not `cascade:date` alone as 2.1 stated. From 2.2 the site copy is synced byte-for-byte from `spec/`. |
