@@ -8,7 +8,7 @@
 # ============================================================================
 # Cascade Protocol -- Core Vocabulary SHACL Validation Shapes
 # ============================================================================
-# Version: 1.9 (2026-09-23)
+# Version: 1.9 (2026-09-24)
 # Validates: cascade:PatientProfile, cascade:Address, cascade:EmergencyContact,
 #            cascade:PharmacyInfo, cascade:AdvanceDirectives, cascade:ProxyAgent,
 #            cascade:ExportManifest, cascade:RecordSummary,
@@ -19,7 +19,7 @@
 #            wherever they appear
 #
 # CHANGELOG
-#   1.9 (2026-09-23) -- Added cascade:StatisticShape and cascade:DayZoneShape
+#   1.9 (2026-09-24) -- Added cascade:StatisticShape and cascade:DayZoneShape
 #                       for core v3.10. Both open-world (sh:targetSubjectsOf),
 #                       both at sh:Warning: the statistic is one of eleven
 #                       values, the day zone an IANA zone name, each at most
@@ -1014,7 +1014,7 @@ cascade:DayZoneShape a sh:NodeShape ;
 # Changelog
 # ============================================================================
 #
-# Version 1.9 (2026-09-23)
+# Version 1.9 (2026-09-24)
 # - Added cascade:StatisticShape and cascade:DayZoneShape for core v3.10's
 #   cascade:statistic and cascade:dayZone. Open-world (sh:targetSubjectsOf) and
 #   at sh:Warning; the presence requirement for the statistic is on the health

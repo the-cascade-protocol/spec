@@ -2,7 +2,7 @@
 
 **Status:** Draft
 **Version:** 1.6
-**Date:** 2026-09-23
+**Date:** 2026-09-24
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
 **Vocabulary versions:** core v3.10, health v2.10, clinical v1.19, coverage v1.6

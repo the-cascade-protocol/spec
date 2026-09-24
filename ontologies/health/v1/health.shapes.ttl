@@ -9,7 +9,7 @@
 # ============================================================================
 # Cascade Protocol — Health & Wellness Vocabulary SHACL Validation Shapes
 # ============================================================================
-# Version: 1.8 (2026-09-23)
+# Version: 1.8 (2026-09-24)
 # Validates: health:SelfReport, health:VO2MaxStatistics, health:HRVStatistics,
 #            health:BPStatistics, health:MetricTrend, health:ActivitySnapshot,
 #            health:SleepSnapshot, health:HealthProfile,
@@ -26,10 +26,10 @@
 # - sh:Warning = Should address (important for completeness) - e.g., missing period
 # - sh:Info = Nice to have (suggested enrichment) - e.g., optional context fields
 #
-# Validates against: health.ttl v2.10 (2026-09-23), core.ttl v3.10
+# Validates against: health.ttl v2.10 (2026-09-24), core.ttl v3.10
 #
 # CHANGELOG
-# v1.8 (2026-09-23): Wellness and fitness records (health v2.10, core v3.10).
+# v1.8 (2026-09-24): Wellness and fitness records (health v2.10, core v3.10).
 #     Seven new node shapes. Nothing that validated under v1.7 stops
 #     validating: every new finding on a class that existed in health v2.9 is
 #     at sh:Warning, per the core v3.5 ratchet.
@@ -54,8 +54,8 @@
 #        properties, are sh:Violation: no pod written before v2.10 can contain
 #        these classes, so there is no existing data to be lenient toward (the
 #        core v3.7 AttachmentShape precedent). Soft facts (the zone and offset
-#        forms, the id-space prefix on health:sourceRecordId, the UTC form of
-#        the interval) are sh:Warning, on the separate health:SessionSoftShape,
+#        forms, the closed set of health:sourceIdSpace, the UTC form of the
+#        interval) are sh:Warning, on the separate health:SessionSoftShape,
 #        so that every shape carries one severity story.
 #     3. NEW health:SleepQualitySpellingShape, sh:targetSubjectsOf
 #        health:sleepQuality, sh:maxCount 0 at sh:Warning. health:sleepQuality
@@ -2066,7 +2066,7 @@ health:AggregateReadingShape a sh:NodeShape ;
     sh:targetClass health:DailyActivitySnapshot ;
     sh:targetClass health:DailySleepSnapshot ;
     rdfs:label "Aggregate Reading Shape"@en ;
-    rdfs:comment "Soft constraints (sh:Warning only) that health v2.10 adds to every daily aggregate: the UTC interval it covers, the statistic its value is, the zone its day was cut in, and the device that produced it. Warning because these classes existed in v2.9 and existing pods carry none of these facts. Kept apart from the v1.2 daily shapes, which carry sh:Violation constraints, so each shape has one severity story."@en ;
+    rdfs:comment "Soft constraints (sh:Warning only) that health v2.10 adds to every daily aggregate: the UTC interval it covers, the statistic its value is, the zone its day was cut in, and the device that produced it. Warning because these classes existed in v2.9 and existing pods carry none of these facts. A Google daily rollup carries cascade:date only, because its day boundary is not yet measured (root backlog 3.484): the Warning this shape reports on it is the honest state, not a defect, and must not be silenced by a fabricated interval. Kept apart from the v1.2 daily shapes, which carry sh:Violation constraints, so each shape has one severity story."@en ;
 
     sh:property [
         sh:path health:periodStart ;
@@ -2144,9 +2144,9 @@ health:WorkoutShape a sh:NodeShape ;
         sh:datatype xsd:string ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:pattern "^[a-z][a-z0-9-]*:.+$" ;
+        sh:pattern "^(healthkit|google-health|fitbit):.+$" ;
         sh:name "Activity Type"@en ;
-        sh:message "A workout must carry exactly one health:activityType: the source's own identifier under a source namespace, for example 'healthkit:HKWorkoutActivityTypeCycling', 'google-health:Outdoor Walk' or 'fitbit:90013'."@en ;
+        sh:message "A workout must carry exactly one health:activityType: the source's own identifier under one of the source namespaces this release declares (healthkit, google-health, fitbit), for example 'healthkit:HKWorkoutActivityTypeCycling', 'google-health:Outdoor Walk' or 'fitbit:90013'."@en ;
         sh:severity sh:Violation
     ] ;
 
@@ -2376,7 +2376,7 @@ health:SessionSoftShape a sh:NodeShape ;
     sh:targetClass health:Workout ;
     sh:targetClass health:SleepSession ;
     rdfs:label "Session Soft Shape"@en ;
-    rdfs:comment "Soft constraints (sh:Warning only) shared by the two session classes: the form of the zone and offset, the id-space prefix on a source identifier, and the UTC form of the interval. Warning because each is a form a writer can get slightly wrong without making the record unusable."@en ;
+    rdfs:comment "Soft constraints (sh:Warning only) shared by the two session classes: the form of the zone and offset, the source identifier as a plain string, the closed set of id spaces, and the UTC form of the interval. Warning because each is a form a writer can get slightly wrong without making the record unusable."@en ;
 
     sh:property [
         sh:path health:timeZone ;
@@ -2402,9 +2402,18 @@ health:SessionSoftShape a sh:NodeShape ;
         sh:path health:sourceRecordId ;
         sh:datatype xsd:string ;
         sh:maxCount 1 ;
-        sh:pattern "^[A-Za-z][A-Za-z0-9_-]*:.+$" ;
         sh:name "Source Record Identifier"@en ;
-        sh:message "health:sourceRecordId on a session should name its id space, '{space}:{id}' (for example 'google-health-sleep_id:123456789012345678'), and be a string: ids above 2^53 are routine."@en ;
+        sh:message "health:sourceRecordId on a session is the source's id verbatim, as a single string (ids above 2^53 are routine), with no prefix: the id space goes in health:sourceIdSpace."@en ;
+        sh:severity sh:Warning
+    ] ;
+
+    sh:property [
+        sh:path health:sourceIdSpace ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:in ("healthkit" "google-health" "fitbit") ;
+        sh:name "Source Id Space"@en ;
+        sh:message "health:sourceIdSpace must be one of the id spaces this release declares: healthkit, google-health, fitbit."@en ;
         sh:severity sh:Warning
     ] ;
 

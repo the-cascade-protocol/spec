@@ -23,7 +23,7 @@
     dct:description "Vocabulary for consumer-generated wellness observations from wearable devices and HealthKit. Maps Cascade wellness properties to established SNOMED CT and LOINC codes following the three-layer ontology architecture."@en ;
     dct:creator "Cascade Agentic Labs" ;
     dct:created "2026-01-29"^^xsd:date ;
-    dct:modified "2026-09-23"^^xsd:date ;
+    dct:modified "2026-09-24"^^xsd:date ;
     owl:versionInfo "2.10" ;
     rdfs:comment """Three-layer ontology for wellness data:
         Layer 1 (Established standards): SNOMED CT concept IDs + LOINC observation codes
@@ -32,7 +32,7 @@
     rdfs:seeAlso <https://cascadeprotocol.org/docs/health/v1/> .
 
 # Changelog:
-# v2.10 (2026-09-23): Wellness and fitness records, measured before modelled.
+# v2.10 (2026-09-24): Wellness and fitness records, measured before modelled.
 #     Two new session classes, one new device class, the interval and the
 #     statistic on every daily aggregate, and SOSA/SSN and OWL-Time alignment.
 #     Additive except for one deprecation. Paired with core v3.10, which adds
@@ -65,7 +65,10 @@
 #        exporting device's current zone and carries no per-sample offset, so a
 #        day read from the file is not stable across exports; the interval
 #        makes the cut visible in the data. Google's daily rollups are date
-#        labels written as T00:00:00Z and are never a periodStart.
+#        labels written as T00:00:00Z and are never a periodStart: until their
+#        day boundary is measured (root backlog 3.484) they carry cascade:date
+#        only, and the resulting Warning is the honest state. A sleep
+#        snapshot's interval is the local day the night ends in.
 #     2. NEW health:timeZone and health:utcOffset. The zone a record's local
 #        date belongs to: on an aggregate, the IANA zone the period was cut in
 #        (the pod's cascade:dayZone at the time, recorded so that a later
@@ -129,40 +132,69 @@
 #        ruled dropped on 2026-09-23. Existing pods keep validating;
 #        health:SleepQualitySpellingShape reports each use at sh:Warning. A
 #        score a source supplies is a different fact and is health:sleepScore.
-#     7. health:DailyActivitySnapshot documents where its values come from.
-#        Active energy, exercise minutes and stand hours are imported from
-#        Apple's own <ActivitySummary> (one per day, de-duplicated across
-#        sources by Apple) as source-supplied daily aggregates with
-#        cascade:statistic "sum"; steps still come from sample aggregation.
+#     7. health:DailyActivitySnapshot documents where its values come from,
+#        one record per (source, day). Apple's own <ActivitySummary> (one per
+#        day, de-duplicated across devices by Apple) is a source in its own
+#        right: its active energy, exercise minutes and stand hours form one
+#        snapshot whose source is the ActivitySummary, with cascade:statistic
+#        "sum". Steps come from sample aggregation, one snapshot per device
+#        source. The two are never mixed under one identity.
 #        Google supplies daily resting heart rate, HRV, SpO2, respiratory rate
 #        and VO2 max, but no daily step, distance or energy total.
 #     8. SOSA/SSN AND OWL-TIME ALIGNMENT, additive axioms only
 #        (https://www.w3.org/TR/vocab-ssn/, W3C Recommendation 2017;
 #        https://www.w3.org/TR/owl-time/). Every reading class and both session
-#        classes are rdfs:subClassOf sosa:Observation; health:Device is
-#        rdfs:subClassOf sosa:Platform; health:device is rdfs:subPropertyOf
-#        sosa:madeBySensor. madeBySensor and not a platform property, because
-#        the 2017 Recommendation defines no observation-to-platform property
-#        (sosa:madeBySensor, sosa:madeByActuator and sosa:madeBySampler are
-#        the three); its range is stated only as schema:rangeIncludes
-#        sosa:Sensor, and SOSA's definition of a sensor ("device, agent ... or
-#        software involved in, or implementing, a Procedure") describes a
-#        wearable as a whole, which SOSA does not make disjoint from a
-#        platform. The interval pair is documented as a flattened spelling of
+#        classes are rdfs:subClassOf sosa:Observation, and health:Device is
+#        rdfs:subClassOf sosa:Platform. health:device is deliberately NOT
+#        aligned to any SOSA property; its stated alignment is FHIR
+#        Observation.device. The only candidate, sosa:madeBySensor, is
+#        restricted by the SSN module of the same Recommendation
+#        (https://www.w3.org/ns/ssn/) to owl:cardinality 1 with
+#        owl:allValuesFrom sosa:Sensor on sosa:Observation. Declared a
+#        subproperty, two devices on one aggregate would be inferred
+#        owl:sameAs by an SSN-aware reasoner (a merge driven by a reasoner,
+#        the failure D-CANONICAL-1 exists to prevent), and every device would
+#        be entailed a sensor. A platform hosts sensors, and no consumer export
+#        names the sensor, so the observation-to-sensor link is left unstated
+#        rather than asserted wrongly. The interval pair is documented as a flattened spelling of
 #        sosa:phenomenonTime to a time:Interval with time:hasBeginning and
 #        time:hasEnd; OWL 2 cannot state that as an axiom because property
 #        chains are object-property only, so it is stated in the comments and
 #        not asserted. No data shape changes from this item. The 2023 SOSA
 #        edition's ObservationCollection is the natural home for "the samples
 #        this aggregate came from" and is cited as direction only, since that
-#        edition is a Working Draft.
+#        edition is a Working Draft. The kickoff also named the aggregation as
+#        sosa:usedProcedure; that is deferred to the aggregator round, which
+#        defines the procedure naming it needs (root backlog 3.492).
 #     9. health:sourceRecordId's rdfs:domain widens to include the two session
-#        classes. Where a source supplies an id (Apple HKExternalUUID or
-#        HKMetadataKeySyncIdentifier, Fitbit logId, Google exercise_id or
-#        sleep_id), D-CANONICAL-1 tier 1 names the record from it, and the
-#        value names its id space, because one Google Takeout holds two formats
-#        whose ids never coincide. Ids above 2^53 are measured (462 of 464
-#        Google exercises) and are always strings.
+#        classes, and NEW health:sourceIdSpace names the id space the id
+#        belongs to, from a closed set declared in this file ("healthkit",
+#        "google-health", "fitbit"). Where a source supplies an id (Apple
+#        HKExternalUUID or HKMetadataKeySyncIdentifier, Fitbit logId, Google
+#        exercise_id or sleep_id), D-CANONICAL-1 tier 1 names the record from
+#        it. The id stays raw, one grammar for the predicate, and the space
+#        is a separate fact, because one Google Takeout holds two formats whose
+#        ids never coincide. cascade:sourceIdentity was considered and does not
+#        fit: it is the ORIGIN axis, one organization, and both Fitbit id spaces
+#        belong to one organization; its ns: scheme is for records whose
+#        organization cannot be derived, which here it can. Ids above 2^53 are
+#        measured (462 of 464 Google exercises) and are always strings. How
+#        the identity seed uses the id and its space is specified separately,
+#        with the D-WELLNESS-1 seed vector, and is not decided here.
+#    11. health:snomedCode is an owl:AnnotationProperty, and v2.10 widens its
+#        instance-level use to health:Workout (the optional activity code),
+#        as health.shapes.ttl already did on health:ConditionRecordShape. The
+#        declaration is not changed here; the snomedCode spelling decision is
+#        tracked under root backlog 3.473 (T8).
+#    12. JSON-LD: contexts/v1/health.jsonld gains the three classes and the
+#        datatype terms, and deliberately OMITS the four structured object
+#        properties (health:device, health:workoutRoute, health:workoutHistory,
+#        health:sleepSessionHistory). Published in the "@type": "@id" form the
+#        other history terms use, each would be a new structured-term-unscoped
+#        disagreement, and that baseline may only shrink; the cure is the
+#        JSON-LD 1.1 type-scoped form (D-CONTEXT-1 C4), which health has not
+#        yet adopted. Until then a JSON-LD writer uses full IRIs for these
+#        four (root backlog 3.487).
 #    10. The "latest reading" convenience properties keep their declared
 #        meaning (root backlog 3.472). health:bodyMass is owl:DatatypeProperty
 #        with range xsd:double, and "body mass is 91.2" is what the name reads
@@ -732,7 +764,7 @@ health:HealthProfile a owl:Class ;
 
 health:DailyVitalReading a owl:Class ;
     rdfs:label "Daily Vital Reading"@en ;
-    rdfs:comment "A single period's aggregated vital sign reading with value, unit, date, and sample count. Used in 90-day and 30-day history containers. From health v2.10 an aggregate states the UTC interval it covers (health:periodStart, health:periodEnd), the statistic its value is (cascade:statistic), and the zone its day was cut in (health:timeZone); cascade:date is the display date in that zone. A mean and a maximum over the same samples are two records, not one."@en ;
+    rdfs:comment "A single period's aggregated vital sign reading with value, unit, date, and sample count. Used in 90-day and 30-day history containers. From health v2.10 an aggregate states the UTC interval it covers (health:periodStart, health:periodEnd), the statistic its value is (cascade:statistic), and the zone its day was cut in (health:timeZone); cascade:date is the display date in that zone. A mean and a maximum over the same samples are two records, not one. A Google daily rollup carries cascade:date only and no interval: its day boundary is not yet measured (root backlog 3.484), so writing one would fabricate it, and the Warning health:AggregateReadingShape then reports is the honest state, not a defect."@en ;
     rdfs:subClassOf fhir:Observation ;
     rdfs:subClassOf sosa:Observation .
 
@@ -758,13 +790,13 @@ health:DailyActivitySnapshot a owl:Class ;
     rdfs:label "Daily Activity Snapshot"@en ;
     rdfs:comment """A single day's activity data: steps, active energy, exercise minutes, and stand hours.
 
-WHERE THE VALUES COME FROM (health v2.10). Active energy, exercise minutes and stand hours are imported from Apple's own <ActivitySummary> element, one per day, which Apple has already de-duplicated across sources. They are source-supplied daily aggregates, written with cascade:statistic "sum" and the summary's date as the period, and no source-priority logic applies to them. Steps are not in ActivitySummary and still come from aggregating step samples. Google Health supplies daily resting heart rate, HRV, SpO2, respiratory rate and VO2 max (health:DailyVitalReading), but no daily step, distance or energy total in either of its export formats. Like every aggregate, a snapshot states its UTC interval (health:periodStart, health:periodEnd) and cascade:statistic."""@en ;
+WHERE THE VALUES COME FROM (health v2.10). ONE RECORD PER (SOURCE, DAY); a snapshot never mixes values from different sources under one identity. Apple's <ActivitySummary> element, one per day, is a SOURCE in its own right: it carries Apple's own active energy, exercise minutes and stand hours, already de-duplicated across devices. Those three values form one snapshot whose source is the ActivitySummary (named as such in the source axis, the source name "ActivitySummary", and in its provenance label), written with cascade:statistic "sum" and no health:device, since the summary names none. The ring triple lives ONLY on that snapshot. Steps are not in ActivitySummary: a step snapshot is per device source (the watch, the phone), aggregated from step samples, carrying health:steps and its health:device. No source-priority logic applies at write time to either. Google Health supplies daily resting heart rate, HRV, SpO2, respiratory rate and VO2 max (health:DailyVitalReading), but no daily step, distance or energy total in either of its export formats. Like every aggregate, a snapshot states its UTC interval (health:periodStart, health:periodEnd) and cascade:statistic."""@en ;
     rdfs:subClassOf prov:Entity ;
     rdfs:subClassOf sosa:Observation .
 
 health:DailySleepSnapshot a owl:Class ;
     rdfs:label "Daily Sleep Snapshot"@en ;
-    rdfs:comment "A single night's sleep data: duration in hours. From health v2.10 it is the daily ROLLUP of one or more health:SleepSession records, which are what it is derived from (prov:wasDerivedFrom); it states its UTC interval (health:periodStart, health:periodEnd) and cascade:statistic like every aggregate. Its health:sleepQuality property is deprecated."@en ;
+    rdfs:comment "A single night's sleep data: duration in hours. From health v2.10 it is the daily ROLLUP of one or more health:SleepSession records, which are what it is derived from (prov:wasDerivedFrom), and it states cascade:statistic like every aggregate. ITS INTERVAL IS THE LOCAL DAY THE NIGHT ENDS IN (the wellness-aggregator scope doc's D4): health:periodStart and health:periodEnd bound the day, cut in health:timeZone, that contains the end of the session(s), expressed in UTC. It is not the span of the sessions, which the sessions carry themselves. Its health:sleepQuality property is deprecated."@en ;
     rdfs:subClassOf prov:Entity ;
     rdfs:subClassOf sosa:Observation .
 
@@ -1411,7 +1443,7 @@ health:sourceRecordId a owl:DatatypeProperty ;
     rdfs:label "Source Record Identifier"@en ;
     rdfs:comment """Identifier of this record in the system it was imported from. Opaque to Cascade; used for reconciliation against the source system, not as a Cascade identity.
 
-ON THE SESSION CLASSES (health v2.10) the value names its ID SPACE as a prefix, "{space}:{id}", because one source can carry two id spaces whose values never coincide: a Google Takeout holds the legacy Fitbit export (logId, 11 digits) and the Google Health format (sleep_id, exercise_id, 15 to 19 digits) for largely the same sessions, with zero shared ids. The spaces measured so far: healthkit-external-uuid (HKExternalUUID), healthkit-sync-identifier (HKMetadataKeySyncIdentifier), fitbit-logId, google-health-exercise_id, google-health-sleep_id. Where a source supplies such an id, D-CANONICAL-1 tier 1 names the record from it, per space. ALWAYS A STRING: 462 of 464 measured Google exercise ids exceed 2^53, so a numeric parse silently corrupts them."""@en ;
+ON THE SESSION CLASSES (health v2.10) the value is the source's id exactly as the source writes it, with no prefix: one grammar for this predicate on every class. The id space it belongs to is a separate fact, health:sourceIdSpace, written beside it, because one source can carry two id spaces whose values never coincide: a Google Takeout holds the legacy Fitbit export (logId, 11 digits) and the Google Health format (sleep_id, exercise_id, 15 to 19 digits) for largely the same sessions, with zero shared ids. Where a source supplies such an id, D-CANONICAL-1 tier 1 names the record from it. ALWAYS A STRING: 462 of 464 measured Google exercise ids exceed 2^53, so a numeric parse silently corrupts them."""@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf (
         health:LabResultRecord health:ConditionRecord health:AllergyRecord
         health:ImmunizationRecord health:FamilyHistoryRecord
@@ -1902,6 +1934,19 @@ A "+00:00" from Fitbit is a PLACEHOLDER, not a zone: every measured 2021 sleep c
     rdfs:range xsd:string ;
     owl:versionInfo "Added in health v2.10" .
 
+health:sourceIdSpace a owl:DatatypeProperty ;
+    rdfs:label "Source Id Space"@en ;
+    rdfs:comment """The id space health:sourceRecordId belongs to, written beside it on the session classes. A CLOSED SET PER RELEASE, declared in this property's range: "healthkit" (Apple HKExternalUUID or HKMetadataKeySyncIdentifier), "google-health" (the Google Health format's exercise_id and sleep_id), "fitbit" (the legacy Fitbit Global Export's logId). A new source adds its token in a vocabulary release.
+
+Needed because one source can carry two id spaces whose values never coincide: a Google Takeout holds the legacy Fitbit export and the Google Health format for largely the same sessions, with zero shared ids, so the raw id alone cannot say which space it is from.
+
+NOT cascade:sourceIdentity. That is the ORIGIN axis (core v3.5), one value per organization, and both Fitbit-family id spaces belong to one organization; its ns: scheme is reserved for records whose organization cannot be derived, which here it can.
+
+How the D-WELLNESS-1 identity seed uses health:sourceRecordId and health:sourceIdSpace is specified separately, with the seed's conformance vector, and is not decided by this property."""@en ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( health:Workout health:SleepSession ) ] ;
+    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "healthkit" "google-health" "fitbit" ) ] ;
+    owl:versionInfo "Added in health v2.10" .
+
 # ----------------------------------------------------------------------------
 # Devices (FHIR Device; SOSA Platform)
 # ----------------------------------------------------------------------------
@@ -1924,11 +1969,10 @@ The existing prov:wasGeneratedBy activity on a reading is unchanged and keeps it
 
 health:device a owl:ObjectProperty ;
     rdfs:label "Device"@en ;
-    rdfs:comment """Links a wellness reading, aggregate or session to the health:Device that produced it. FHIR alignment: Observation.device. Repeatable on an aggregate, whose samples can come from more than one device of the same source.
+    rdfs:comment """Links a wellness reading, aggregate or session to the health:Device that produced it. FHIR alignment: Observation.device, which is the stated alignment. Repeatable on an aggregate, whose samples can come from more than one device of the same source.
 
-Alignment: rdfs:subPropertyOf sosa:madeBySensor (SOSA/SSN, W3C Recommendation 2017, https://www.w3.org/TR/vocab-ssn/). The 2017 Recommendation defines no property from an observation to a platform; its three "made by" properties are madeBySensor, madeByActuator and madeBySampler. madeBySensor's range is stated only as schema:rangeIncludes sosa:Sensor, and SOSA's definition of a sensor ("device, agent (including humans), or software (simulation) involved in, or implementing, a Procedure") describes a wearable taken as a whole. SOSA does not make sosa:Sensor and sosa:Platform disjoint, so a health:Device read as both is consistent."""@en ;
+WHY NO SOSA PROPERTY IS ASSERTED. health:Device is a sosa:Platform, but this property is deliberately not declared a subproperty of sosa:madeBySensor. The SSN module of the 2017 Recommendation (https://www.w3.org/ns/ssn/) restricts sosa:Observation to owl:cardinality 1 on madeBySensor with owl:allValuesFrom sosa:Sensor. Under that axiom two devices on one aggregate would be inferred owl:sameAs by an SSN-aware reasoner, which is a merge driven by a reasoner, and every device would be entailed a sensor. A platform hosts sensors, and no consumer export names the sensor that made a reading, so the observation-to-sensor link is left unstated. The 2017 Recommendation defines no observation-to-platform property to use instead."""@en ;
     rdfs:range health:Device ;
-    rdfs:subPropertyOf sosa:madeBySensor ;
     owl:versionInfo "Added in health v2.10" .
 
 health:deviceName a owl:DatatypeProperty ;
@@ -2006,9 +2050,11 @@ Namespaces measured so far:
   healthkit      Apple's HKWorkoutActivityType constant as the export writes it, for example "healthkit:HKWorkoutActivityTypeCycling" (23 values measured).
   google-health  the activity_name display string of the Google Health format, verbatim including any trailing space, for example "google-health:Outdoor Walk" (19 values measured).
   fitbit         the numeric activityTypeId of the legacy Fitbit Global Export, for example "fitbit:90013" (9 values measured); its activityName is display text, not the key.
-The two Fitbit-family spellings of one activity differ ("Walk" against "Outdoor Walk"), which is why the namespace is part of the value rather than implied. A SNOMED CT code for the activity, where one exists, is carried beside this on health:snomedCode; it is optional and never replaces the source key."""@en ;
+The two Fitbit-family spellings of one activity differ ("Walk" against "Outdoor Walk"), which is why the namespace is part of the value rather than implied. THE NAMESPACE TOKENS ARE A CLOSED SET PER RELEASE, declared in this property's range: healthkit, google-health, fitbit. A new source adds its token in a vocabulary release. A SNOMED CT code for the activity, where one exists, is carried beside this on health:snomedCode; it is optional and never replaces the source key."""@en ;
     rdfs:domain health:Workout ;
-    rdfs:range xsd:string ;
+    rdfs:range [ a rdfs:Datatype ;
+        owl:onDatatype xsd:string ;
+        owl:withRestrictions ( [ xsd:pattern "^(healthkit|google-health|fitbit):.+$" ] ) ] ;
     owl:versionInfo "Added in health v2.10" .
 
 health:workoutRoute a owl:ObjectProperty ;

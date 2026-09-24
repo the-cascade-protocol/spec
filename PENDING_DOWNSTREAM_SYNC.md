@@ -1007,7 +1007,7 @@ stop: it is a display name, and the real name is in the extended profile.
 
 ---
 
-## Pending batch: core v3.10 / health v2.10 (authored 2026-09-23)
+## Pending batch: core v3.10 / health v2.10 (authored 2026-09-24)
 
 Wellness and fitness records. Tags `vocab/core-v3.10` and `vocab/health-v2.10`
 at merge. Additive except the deprecation of `health:sleepQuality`; every new
@@ -1025,12 +1025,18 @@ finding on a class that existed in health v2.9 is at `sh:Warning`. See
   `health:workoutRoute`, `health:durationMinutes`, `health:distanceMeters`,
   `health:averageHeartRate`, `health:maximumHeartRate`, `health:indoor`,
   `health:sleepSessionHistory`, `health:algorithmVersion`, `health:sleepScore`,
+  `health:sourceIdSpace` (closed set healthkit / google-health / fitbit),
   and seven stage totals (`inBed`, `awake`, `lightSleep`, `deepSleep`,
   `remSleep`, `restless`, `asleepUnspecified`, each `...Minutes`). Widened:
   `health:periodStart` / `health:periodEnd` (restated, still no domain),
   `health:activeEnergyKcal` and `health:sourceRecordId` (domain unions).
   Deprecated: `health:sleepQuality`, `health:SleepQuality` and its four
-  individuals. SOSA/OWL-Time alignment axioms.
+  individuals. SOSA/OWL-Time alignment axioms (no SOSA property on
+  `health:device`).
+- **Deliberately absent from `contexts/v1/health.jsonld`:** `device`,
+  `workoutRoute`, `workoutHistory`, `sleepSessionHistory`. They need the
+  JSON-LD 1.1 type-scoped form (D-CONTEXT-1 C4); downstream SDKs write them as
+  full IRIs until then (root backlog 3.487). The context says so in `$comment`.
 - `core.shapes.ttl` 1.9, `health.shapes.ttl` 1.8, contexts, `pod-structure.md`
   1.6 (section 3.6), `serialization/index.md` 2.3 (section 12).
 

@@ -1,6 +1,6 @@
 # Core Vocabulary Changelog
 
-## v3.10 - 2026-09-23
+## v3.10 - 2026-09-24
 
 Two properties for wellness aggregation, neither wellness-specific.
 
