@@ -1773,18 +1773,59 @@ All wellness observations follow this structural pattern:
 ```turtle
 <#container-id> a health:DataType ;
     health:historyProperty (
-        [ a health:SnapshotType ; cascade:date "2026-01-20T00:00:00Z"^^xsd:dateTime ; ... ]
-        [ a health:SnapshotType ; cascade:date "2026-01-21T00:00:00Z"^^xsd:dateTime ; ... ]
-        [ a health:SnapshotType ; cascade:date "2026-01-22T00:00:00Z"^^xsd:dateTime ; ... ]
+        <urn:uuid:...> <urn:uuid:...> <urn:uuid:...>
     ) .
+
+<urn:uuid:...> a health:SnapshotType ; cascade:date "2026-01-20T00:00:00Z"^^xsd:dateTime ; ... .
+<urn:uuid:...> a health:SnapshotType ; cascade:date "2026-01-21T00:00:00Z"^^xsd:dateTime ; ... .
+<urn:uuid:...> a health:SnapshotType ; cascade:date "2026-01-22T00:00:00Z"^^xsd:dateTime ; ... .
 ```
 
-The container resource uses a **fragment identifier** (e.g., `<#heart-rate>`) rather than a UUID, because it represents an aggregate rather than a discrete clinical event. Daily snapshots are anonymous **blank nodes** within an RDF list.
+The container resource uses a **fragment identifier** (e.g., `<#heart-rate>`) rather than a UUID,
+because it represents an aggregate rather than a discrete clinical event. Each entry in a
+`*History` list, however, is a **named individual** (`urn:uuid:` IRI), not a blank node
+(D-WELLNESS-1, `spec/decisions/2026-09-19-wellness-reading-identity.md`). A reading is a fact an
+application may need to cite as grounding evidence, and a blank node cannot be cited durably. This
+applies to `restingHeartRateHistory`, `walkingHeartRateHistory`, `hrvHistory`,
+`bloodPressureHistory`, `vo2MaxHistory`, `bodyMassHistory`, `dailyActivityHistory` and
+`dailySleepHistory`, every `owl:ObjectProperty` with domain `health:HealthProfile` in this
+pattern. It does **not** apply to the separate "latest reading" convenience properties
+(`health:restingHeartRate`, `health:heartRateVariability`, `health:bodyMass`, and similar), which
+have their own pre-existing domain/range conflict (declared `owl:DatatypeProperty range
+xsd:double` in `health.ttl`, yet used here as object-valued container links) that D-WELLNESS-1
+does not resolve; those stay blank nodes until that conflict is settled on its own.
 
-Each daily snapshot includes:
-- `cascade:date` -- The date of the observation
+**Recommended, pending review, not yet normative** (D-WELLNESS-1 Q1-Q3 carry the full reasoning):
+
+- **The seed** is `pod subject identifier ‖ Apple's own type identifier ‖ sourceName as the export
+  states it ‖ the time bucket ‖ a digest of the constituent samples`, length-prefixed. Deliberately
+  excluded: the record class (redundant with the metric, and able to disagree with itself) and the
+  LOINC/SNOMED code (naming from meaning, so a corrected mapping would re-mint every pod). The pod
+  subject is not optional. Without it, "resting heart rate, 2026-01-20, Apple Watch Series 9" is a
+  tuple shared by every owner of that watch, and federated reads across pods would merge two
+  people's readings into one record.
+- **A day** is cut in the pod's declared zone, never in the export's rendered offset, and every
+  aggregate stores the UTC interval it covers (start and end instants), so the cut is visible in
+  the data. Apple's export renders every timestamp in the exporting device's current zone and
+  carries no per-sample offset (measured: 10.2 million samples, all `-0700`), so a day read from
+  the export is not stable across exports made in different zones. Blood pressure uses no day
+  bucket at all (§12.4).
+- **A period is aggregated only once it is closed**, and the aggregate's name includes a digest of
+  the samples that fed it. A re-import of a closed period is then byte-identical and a true no-op,
+  while a late-syncing device that adds samples to a closed period produces a second record rather
+  than overwriting the first. Nothing is edited in place; no amend mechanism is required.
+
+The digest covers `type`, `sourceName`, `unit`, `startDate`, `endDate`, `value`, `sourceVersion`,
+`creationDate` and `device` with the memory address Apple prints inside it removed; measured
+across two real exports, that address is the only volatile attribute. A conformance vector is
+owed before any of this is normative.
+
+Each history entry includes:
+- `cascade:date` -- The date (or, for non-aggregated metrics like blood pressure, the exact
+  timestamp, see §12.4) of the observation
 - Metric-specific properties -- Values, counts, and quality indicators
-- `prov:wasGeneratedBy` -- Inline provenance activity identifying the source device
+- `prov:wasGeneratedBy` -- Inline provenance activity identifying the source device (this activity
+  stays a blank node: it has no identity independent of the reading that carries it)
 
 ### 12.3 Heart Rate
 
@@ -1794,8 +1835,8 @@ Heart rate data is stored as `health:HeartRateData` with separate history lists 
 
 | Property | Predicate URI | Type | Description |
 |---|---|---|---|
-| Resting HR (latest) | `health:restingHeartRate` | (Blank node) | Most recent resting HR reading |
-| Walking HR (latest) | `health:walkingHeartRate` | (Blank node) | Most recent walking HR reading |
+| Resting HR (latest) | `health:restingHeartRate` | (Blank node) | Most recent resting HR reading -- out of scope for D-WELLNESS-1 (`spec/decisions/2026-09-19-wellness-reading-identity.md`); this predicate has a pre-existing domain/range conflict (`health.ttl:287-296`) tracked separately |
+| Walking HR (latest) | `health:walkingHeartRate` | (Blank node) | Most recent walking HR reading -- same out-of-scope note as above |
 | Resting HR History | `health:restingHeartRateHistory` | (RDF List) | Daily resting HR readings |
 | Walking HR History | `health:walkingHeartRateHistory` | (RDF List) | Daily walking HR readings |
 
@@ -1824,24 +1865,30 @@ Heart rate data is stored as `health:HeartRateData` with separate history lists 
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
-# Heart rate data container with daily resting heart rate history
+# Heart rate data container with daily resting heart rate history.
+# Each History entry is a named individual (D-WELLNESS-1); health:restingHeartRate
+# ("latest reading") is a separate, out-of-scope convenience property -- see 12.3.1.
 <#heart-rate> a health:HeartRateData ;
     health:restingHeartRateHistory (
-        [ a health:DailyVitalReading ;
-            fhir:code sct:364075005 ;
-            cascade:loincCode loinc:40443-4 ;
-            fhir:valueQuantity [ fhir:value "68"^^xsd:double ; fhir:unit "bpm" ; fhir:system ucum: ] ;
-            cascade:date "2026-01-20T07:00:00Z"^^xsd:dateTime ;
-            cascade:sampleCount "142"^^xsd:integer ;
-            prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] ]
-        [ a health:DailyVitalReading ;
-            fhir:code sct:364075005 ;
-            cascade:loincCode loinc:40443-4 ;
-            fhir:valueQuantity [ fhir:value "65"^^xsd:double ; fhir:unit "bpm" ; fhir:system ucum: ] ;
-            cascade:date "2026-01-21T07:00:00Z"^^xsd:dateTime ;
-            cascade:sampleCount "156"^^xsd:integer ;
-            prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] ]
+        <urn:uuid:7c1b1e2a-0000-5000-8000-000000000020>
+        <urn:uuid:7c1b1e2a-0000-5000-8000-000000000021>
     ) .
+
+<urn:uuid:7c1b1e2a-0000-5000-8000-000000000020> a health:DailyVitalReading ;
+    fhir:code sct:364075005 ;
+    cascade:loincCode loinc:40443-4 ;
+    fhir:valueQuantity [ fhir:value "68"^^xsd:double ; fhir:unit "bpm" ; fhir:system ucum: ] ;
+    cascade:date "2026-01-20T07:00:00Z"^^xsd:dateTime ;
+    cascade:sampleCount "142"^^xsd:integer ;
+    prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] .
+
+<urn:uuid:7c1b1e2a-0000-5000-8000-000000000021> a health:DailyVitalReading ;
+    fhir:code sct:364075005 ;
+    cascade:loincCode loinc:40443-4 ;
+    fhir:valueQuantity [ fhir:value "65"^^xsd:double ; fhir:unit "bpm" ; fhir:system ucum: ] ;
+    cascade:date "2026-01-21T07:00:00Z"^^xsd:dateTime ;
+    cascade:sampleCount "156"^^xsd:integer ;
+    prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] .
 ```
 
 ### 12.4 Blood Pressure (Device)
@@ -1860,23 +1907,29 @@ Device blood pressure data uses `health:BloodPressureData` with the `health:bloo
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
-# Home blood pressure data from Omron BP monitor
+# Home blood pressure data from Omron BP monitor. Unlike the daily-aggregate metrics in
+# this section, BP is never aggregated to a daily mean (D5, cascade-workbench/docs/
+# planning/2026-07-29-apple-health-wellness-aggregator-scope.md) -- each entry is a
+# named individual seeded per EXACT READING (device identity + fhir:effectiveDateTime
+# to the second), not per day, so a morning and an evening reading mint distinct IRIs.
 <#blood-pressure> a health:BloodPressureData ;
     health:bloodPressureHistory (
-        [ a fhir:Observation ;
-            fhir:code sct:75367002 ;                       # Blood pressure (observable)
-            cascade:loincCode loinc:85354-9 ;              # Blood pressure panel
-            fhir:component (
-                [ fhir:code sct:271649006 ;                # Systolic BP
-                  fhir:valueQuantity [ fhir:value "132"^^xsd:double ; fhir:unit "mmHg" ;
-                                       fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
-                [ fhir:code sct:271650006 ;                # Diastolic BP
-                  fhir:valueQuantity [ fhir:value "82"^^xsd:double ; fhir:unit "mmHg" ;
-                                       fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
-            ) ;
-            fhir:effectiveDateTime "2026-01-20T07:30:00Z"^^xsd:dateTime ;
-            prov:wasGeneratedBy [ a prov:Activity ; prov:label "Omron Evolv" ] ]
+        <urn:uuid:9e2d4f10-0000-5000-8000-000000000030>
     ) .
+
+<urn:uuid:9e2d4f10-0000-5000-8000-000000000030> a fhir:Observation ;
+    fhir:code sct:75367002 ;                       # Blood pressure (observable)
+    cascade:loincCode loinc:85354-9 ;              # Blood pressure panel
+    fhir:component (
+        [ fhir:code sct:271649006 ;                # Systolic BP
+          fhir:valueQuantity [ fhir:value "132"^^xsd:double ; fhir:unit "mmHg" ;
+                               fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
+        [ fhir:code sct:271650006 ;                # Diastolic BP
+          fhir:valueQuantity [ fhir:value "82"^^xsd:double ; fhir:unit "mmHg" ;
+                               fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
+    ) ;
+    fhir:effectiveDateTime "2026-01-20T07:30:00Z"^^xsd:dateTime ;
+    prov:wasGeneratedBy [ a prov:Activity ; prov:label "Omron Evolv" ] .
 ```
 
 ### 12.5 Activity
@@ -1902,24 +1955,29 @@ Activity data uses `health:ActivityData` with the `health:dailyActivityHistory` 
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
-# Activity data from Apple Watch
+# Activity data from Apple Watch. Each entry is a named individual, IRI minted from
+# (sourceIdentity="healthKit:Apple Watch Series 9", health:DailyActivitySnapshot, health:steps, date).
 <#activity> a health:ActivityData ;
     health:dailyActivityHistory (
-        [ a health:DailyActivitySnapshot ;
-            cascade:date "2026-01-20T00:00:00Z"^^xsd:dateTime ;
-            health:steps "7842"^^xsd:integer ;
-            health:activeEnergyKcal "312"^^xsd:decimal ;
-            health:exerciseMinutes "22"^^xsd:integer ;
-            health:standHours "10"^^xsd:integer ;
-            prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] ]
-        [ a health:DailyActivitySnapshot ;
-            cascade:date "2026-01-21T00:00:00Z"^^xsd:dateTime ;
-            health:steps "9234"^^xsd:integer ;
-            health:activeEnergyKcal "385"^^xsd:decimal ;
-            health:exerciseMinutes "35"^^xsd:integer ;
-            health:standHours "11"^^xsd:integer ;
-            prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] ]
+        <urn:uuid:3a5c8d40-0000-5000-8000-000000000040>
+        <urn:uuid:3a5c8d40-0000-5000-8000-000000000041>
     ) .
+
+<urn:uuid:3a5c8d40-0000-5000-8000-000000000040> a health:DailyActivitySnapshot ;
+    cascade:date "2026-01-20T00:00:00Z"^^xsd:dateTime ;
+    health:steps "7842"^^xsd:integer ;
+    health:activeEnergyKcal "312"^^xsd:decimal ;
+    health:exerciseMinutes "22"^^xsd:integer ;
+    health:standHours "10"^^xsd:integer ;
+    prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] .
+
+<urn:uuid:3a5c8d40-0000-5000-8000-000000000041> a health:DailyActivitySnapshot ;
+    cascade:date "2026-01-21T00:00:00Z"^^xsd:dateTime ;
+    health:steps "9234"^^xsd:integer ;
+    health:activeEnergyKcal "385"^^xsd:decimal ;
+    health:exerciseMinutes "35"^^xsd:integer ;
+    health:standHours "11"^^xsd:integer ;
+    prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] .
 ```
 
 ### 12.6 Sleep
@@ -1943,20 +2001,25 @@ Sleep data uses `health:SleepData` with the `health:dailySleepHistory` list. Eac
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
-# Sleep data from Apple Watch
+# Sleep data from Apple Watch. Each entry is a named individual, IRI minted from
+# (sourceIdentity="healthKit:Apple Watch Series 9", health:DailySleepSnapshot, health:durationHours, date).
 <#sleep> a health:SleepData ;
     health:dailySleepHistory (
-        [ a health:DailySleepSnapshot ;
-            cascade:date "2026-01-20T00:00:00Z"^^xsd:dateTime ;
-            health:durationHours "7.2"^^xsd:decimal ;
-            health:sleepQuality health:Good ;
-            prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] ]
-        [ a health:DailySleepSnapshot ;
-            cascade:date "2026-01-21T00:00:00Z"^^xsd:dateTime ;
-            health:durationHours "6.8"^^xsd:decimal ;
-            health:sleepQuality health:Fair ;
-            prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] ]
+        <urn:uuid:5f7e9a50-0000-5000-8000-000000000050>
+        <urn:uuid:5f7e9a50-0000-5000-8000-000000000051>
     ) .
+
+<urn:uuid:5f7e9a50-0000-5000-8000-000000000050> a health:DailySleepSnapshot ;
+    cascade:date "2026-01-20T00:00:00Z"^^xsd:dateTime ;
+    health:durationHours "7.2"^^xsd:decimal ;
+    health:sleepQuality health:Good ;
+    prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] .
+
+<urn:uuid:5f7e9a50-0000-5000-8000-000000000051> a health:DailySleepSnapshot ;
+    cascade:date "2026-01-21T00:00:00Z"^^xsd:dateTime ;
+    health:durationHours "6.8"^^xsd:decimal ;
+    health:sleepQuality health:Fair ;
+    prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] .
 ```
 
 ### 12.7 Heart Rate Variability (HRV)
@@ -1989,7 +2052,12 @@ HRV data uses `health:HRVData` with both a latest reading (`health:heartRateVari
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
-# HRV data with statistics and daily history
+# HRV data with statistics and daily history. health:heartRateVariability is a "latest
+# reading" convenience property, out of scope for D-WELLNESS-1 (spec/decisions/
+# 2026-09-19-wellness-reading-identity.md) pending a separate fix to a pre-existing
+# domain/range conflict with this predicate's declaration (health.ttl:309-318) -- it
+# stays a blank node here. health:hrvHistory entries (not shown in this worked example)
+# follow the named-individual rule like every other *History property.
 <#hrv> a health:HRVData ;
     health:heartRateVariability [
         a health:VitalSignReading ;
@@ -2078,7 +2146,12 @@ Body measurements are stored within a `health:BodyMeasurements` container and in
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
-# Body measurements container
+# Body measurements container. These are all "latest reading" convenience properties,
+# out of scope for D-WELLNESS-1 -- health:bodyMass, health:bodyHeight, health:bodyMassIndex,
+# etc. are declared owl:DatatypeProperty range xsd:double (health.ttl:402-430ish), which
+# conflicts with using them as object-valued container links at all; that pre-existing
+# conflict is tracked separately (see 12.9.1 note) and not resolved here. All five stay
+# blank nodes.
 <#body-measurements> a health:BodyMeasurements ;
 
     # --- Body mass (latest reading) ---
@@ -2179,7 +2252,9 @@ The `health.shapes.ttl` file provides shapes for wellness statistical summaries:
 
 ### 12.11 JSON-LD Equivalent -- Wellness Observations
 
-Wellness observation containers can be expressed in JSON-LD. Due to the nested blank node structure, the JSON-LD representation is more verbose:
+Wellness observation containers can be expressed in JSON-LD. Each history entry carries its own
+`@id` (the minted `urn:uuid:` IRI, D-WELLNESS-1) rather than being anonymous; only the inline
+provenance activity stays a blank node:
 
 ```json
 {
@@ -2189,6 +2264,7 @@ Wellness observation containers can be expressed in JSON-LD. Due to the nested b
   "health:dailyActivityHistory": {
     "@list": [
       {
+        "@id": "urn:uuid:3a5c8d40-0000-5000-8000-000000000040",
         "@type": "health:DailyActivitySnapshot",
         "cascade:date": { "@value": "2026-01-20T00:00:00Z", "@type": "xsd:dateTime" },
         "health:steps": 7842,
