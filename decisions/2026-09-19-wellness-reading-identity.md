@@ -72,12 +72,40 @@ decides what *re-mints* when something upstream changes.
 - **Separator choice** is the ordinary injection problem: a source named `a|b` and a source named
   `a` with a metric starting `b` must not produce the same seed string.
 
-**Recommendation:** seed from `pod subject identifier ‖ Apple's own type identifier ‖ sourceName as
-the export states it ‖ the time bucket (Q2) ‖ a digest of the constituent samples (Q3)`,
-length-prefixed rather than delimiter-joined, hashed through the existing deterministic-identity
-functions. No record class. No LOINC or SNOMED code. Write one conformance vector before it is
-normative. **Accepted cost:** a user who renames their watch gets a new source string and therefore
-new identities for subsequent days. That is a split, not a merge: recoverable, and the direction
+**Recommendation (amended 2026-09-24, after the Google measurement and the v2.10 build; the
+original text is in this file's history):** two seeds, one per naming tier of D-CANONICAL-1.
+
+For a record whose source supplies an identifier (a workout, a sleep session, a blood-pressure
+reading, a third-party sample with `HKMetadataKeySyncIdentifier`; Fitbit `logId`; Google
+`sleep_id`/`exercise_id`), tier 1:
+
+```
+pod subject ‖ id space ‖ the raw source identifier
+```
+
+For an aggregate the importer computes, which no source names, the digest tier:
+
+```
+pod subject ‖ id space ‖ device ‖ metric ‖ statistic ‖ UTC interval ‖ digest of the constituent samples
+```
+
+where: **pod subject** is the pod owner's identifier (what that identifier is belongs to spec#63,
+pod identity; the seed only requires that it be stable for the life of the pod); **id space** is
+`health:sourceIdSpace`, the closed set `healthkit`, `google-health`, `fitbit`, needed because one
+Google export holds two id spaces whose values never coincide; **device** is `health:Device`
+identity, the normalized name plus hardware model, never the raw Apple string (it embeds a memory
+address) and never `manufacturer` (it flips between `Apple` and `Apple Inc.`); **metric** is the
+source's own type identifier (`HKQuantityTypeIdentifierRestingHeartRate`, Google's metric name),
+never a LOINC or SNOMED code, so a corrected mapping re-mints nothing; **statistic** is
+`cascade:statistic`, because a mean and a maximum over one window are two records; **UTC
+interval** is `periodStart`/`periodEnd` as Q2 now defines them; and the **digest** covers the
+measured field set from Q3 with the device address stripped. Components are length-prefixed rather
+than delimiter-joined and hashed through the existing deterministic-identity functions. No record
+class in either seed (redundant with the metric or the id space, and a component that can disagree
+with itself). One conformance vector is owed before either seed is normative; that vector, and
+whether the minter lives in the SDK's layer C or in the cli, are open (see "What remains genuinely
+open"). **Accepted cost:** a user who renames a device gets a new device identity and therefore new
+identities for subsequent aggregates. That is a split, not a merge: recoverable, and the direction
 `identity.ts` says to prefer when identity is uncertain.
 
 ### Q2. Where does a day start?
@@ -196,6 +224,28 @@ source said; priority is applied by the reader or by layer 2. Measured cost: 77,
 day) units across all 72 sample types in the September export, against 65,722 with a winner picked
 per day, an 18% increase. The scope doc's 17,000-20,000 was a clinically useful subset; either way
 the result is pod-sized.
+
+## Amendment 2026-09-24: what the second source and the build changed
+
+The Google Health Takeout measurement (`planning/spikes/2026-09-23-google-health-takeout-measurement.md`)
+and the health v2.10 build (spec#68, stacked on this branch) settled or moved the following since
+this RFC was posted:
+
+- Q1's seed gained an id-space component and a statistic component, and its "sourceName" component
+  became the `health:Device` identity; the text above is the current recommendation.
+- Q2 holds for Google: its new-format samples are true UTC with no per-sample offset. Zones arrive
+  as numeric offsets, never names, so `cascade:dayZone` (core v3.10) has a default chain:
+  `HKTimeZone` where present, else the Google profile zone, else the importing machine, logged.
+- Q3's closed-day claim is proven for Apple (74,933 of 74,969 buckets) and unproven for Google
+  until a second export exists (root 3.484). Google's own daily rollups carry `cascade:date` only
+  and take the aggregate shape's Warning rather than a fabricated interval.
+- Source-supplied identifiers are stored raw in `health:sourceRecordId`, with the space in
+  `health:sourceIdSpace`; the build's first draft wrote `"{space}:{id}"` into one literal and a
+  review reversed it so that this seed, not a string grammar, decides identity.
+- Apple's `ActivitySummary` is treated as a source in its own right: its three ring values form one
+  per-day snapshot with `statistic sum`, step snapshots stay per device, one record per (source, day).
+- Nothing here decides T6 (derived interpretations) or the seed vector; both are held for the
+  2026-09-24 conversation.
 
 ## What remains genuinely open
 
