@@ -81,6 +81,18 @@ with the rule that made them.
   `canonical/` is an ordinary container.
 - **Migration is additive.** An existing pod gains `canonical/` on its next derivation. POTS Check
   pods are unaffected until that app adopts the layer.
+- **Model-derived records are derived records too.** The clinical-notes work (Workbench strategy
+  note of 2026-09-24; narrative-predicate round, root 3.501) will produce assertions extracted from
+  note text by a model, carrying `cascade:AIExtracted` provenance and, once root 4.44 lands, a span
+  citation into the source document. Under this decision a note body is a fact (a `ClinicalDocument`
+  record plus a content-addressed attachment, root 3.276) and an extraction is derived: it lives in
+  `canonical/extractions.ttl`, points at the document it read, and names the extractor (model,
+  prompt and version) as its rule. That means the rule registry that `derivation.ttl` depends on
+  must give a model-based rule an IRI and a version exactly as it does a table or a query; the
+  provenance leaf (`AIExtracted` versus a deterministic rule) says how much to trust it, the registry
+  entry says what produced it. Extractions are rebuildable in principle and expensive in practice;
+  the rebuildable set includes them, and a runtime may choose not to re-run them unless the extractor
+  version changes.
 - **Rejected: a `derived/` umbrella** holding canonical records, wellness views and interpretations
   under one root. Cleaner as "one directory to rebuild", but it moves a ratified container two
   shipped apps write to, and it files the record a clinician receives under a name that says cache.
@@ -90,8 +102,8 @@ with the rule that made them.
 
 The canonical identifier seed; the reconciler's rulebook (D-CANONICAL-1 items 1 to 10); whether
 `clinical:` classes or the item 4 marker distinguish layer 2 (item 11); the wellness fact table's
-exact format; and whether interpretations eventually merit a container of their own once their
-number justifies it.
+exact format; and whether interpretations and extractions eventually merit containers of their own once
+their number justifies it.
 
 ## Sequencing
 
