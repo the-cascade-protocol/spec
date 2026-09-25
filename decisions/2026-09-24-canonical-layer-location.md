@@ -4,7 +4,10 @@
 question he raised in conversation the same day, whether layer 2 is stored or is a query, and the
 answer below is "specified as a query, stored as its result". RFC issue: the-cascade-protocol/spec#TBD.
 **Prompted by:** D-CANONICAL-1 ratified that the canonical layer lives in the pod and never said
-where; its rulebook items are about the layer's content. Root backlog 3.489 asked the same
+where; its rulebook items are about the layer's content. Its post-review rulings 1 to 6 (appended
+after spec#38) define what layer 2 is and how it is identified, and this document is written
+against them; a first draft of it argued from identifier permanence, which ruling 1 had already
+retired, and was corrected the same day. Root backlog 3.489 asked the same
 question for devices, workouts and sleep sessions. The cli and the Workbench need a path to write
 to before the first canonical class (medications) is built.
 
@@ -15,11 +18,11 @@ to before the first canonical class (medications) is built.
 1. **A top-level container `canonical/`, mirroring `clinical/`:** one bucket file per record type
    (`canonical/medications.ttl`, `canonical/conditions.ttl`, `canonical/allergies.ttl`, and so on,
    the same names as `clinical/`), plus three files of its own: `canonical/interpretations.ttl` for
-   rule-derived classifications (the T6 decision, pending), `canonical/coverage.ttl` for the
+   classifications the published queries derive (the T6 decision, pending), `canonical/coverage.ttl` for the
    coverage gate's ledger (every layer-1 record linked to a canonical record, or excluded with a
    stated reason, or flagged pending, as D-CANONICAL-1 requires), and `canonical/derivation.ttl`
-   recording, per bucket, the rule versions and the layer-1 state digest the last derivation ran
-   over.
+   recording, per bucket, the build stamp ruling 6 requires: the versions of the four inputs the
+   last derivation ran over (source records, judgements, the queries, reference data).
 2. **`wellness/` keeps its name** and holds the derived wellness views (daily aggregates and
    sessions) as health v2.10 defines them. The raw samples they are rebuilt from live as a compact
    fact table under `attachments/`. This is continuity with a ratified container that two shipped
@@ -35,37 +38,25 @@ to before the first canonical class (medications) is built.
    activity naming the rule and its version; a layer-1 record never carries `wasDerivedFrom` to a
    pod record. Shapes enforce both. Every reader merges every file into one graph, and once it has,
    the directory is gone; the triples are what let it tell the layers apart.
-5. **IRIs are independent of paths.** Canonical records are `urn:uuid:` names minted once and kept
-   for life, so this decision can be revised later without re-minting anything. That is what makes
-   it safe to take now, before the reconciler's rulebook is finished.
+5. **The layout carries no identity weight.** Under ruling 1 a canonical identifier names one
+   build and nothing durable references it; a handle to a canonical record is a layer-1 member's
+   name, re-resolved against the current build. So nothing in the pod points into `canonical/` by
+   path or by IRI, and this decision can be revised later without breaking a reference. That is
+   what makes it safe to take now, before the reconciler's rulebook is finished.
 
-## Why stored, when it could be a query
+## Why stored is not decided here
 
-The rule that produces a canonical record is a query over facts and the owner's judgements, and
-the rule should be published as data (the read-side query work in planning #27 and root 3.467 is
-the place). The result is stored anyway, for reasons D-CANONICAL-1 already gave and one it did not:
+Ruling 6 already decided it: layer 2 is the output of published `CONSTRUCT` queries run to a
+fixpoint over four versioned inputs, and "storing layer 2 in the pod stands, for cost and for
+readers with no engine; a stored layer 2 is a cache of a specified derivation, and a reader that
+rebuilds it must get the same triples." This document takes that as given and decides only where
+the cache lives and what a runtime may regenerate. Two consequences of the rulings shape it:
 
-- **Identifiers.** A query result has no stable names. Consent scopes, annotations and the owner's
-  resolutions attach to canonical identifiers and need them to persist. When the reconciler changes
-  its mind it remaps sources to canonical records; it does not rename them. A remap is state, and a
-  query cannot hold state.
-- **Resolutions are inputs that reference canonical identifiers.** They cannot point at the result
-  of a query that has not run yet.
-- **No Cascade runtime has a SPARQL engine today** (root 3.467). The Workbench renders in a browser
-  WebView, POTS Check is Swift. A virtual layer 2 makes every reader carry an engine to show a
-  medication list.
-- **As-of.** "What did the record say in March" is answered from stored versions and overlays, not
-  by re-running March's rules against March's facts.
-- **Portability and offline.** The pod is complete as a directory. The reader that receives it
-  needs the vocabulary pin, not a rule engine, to show the same record its sender saw.
-- **Both consumers D-CANONICAL-1 was written for**, a model's context window and the International
-  Patient Summary, take a materialized document.
-
-The cost of storing is staleness, and it is paid in the open: `canonical/derivation.ttl` lets a
-reader see whether layer 1 has changed since the last derivation, and item 3 guarantees any
-runtime can rebuild. "Specified as a query, stored as its result" is the reconciliation: the query
-is the rule and travels as data; the stored triples are its cached, citable, portable form, stamped
-with the rule that made them.
+- Because canonical identifiers are build-scoped (ruling 1) and consent, annotations and
+  resolutions attach to layer-1 records, classes or codes (rulings 2 and 3), the cache holds
+  nothing that anything durable points at. Deleting and rebuilding it loses nothing.
+- Because every build is stamped with its four input versions (ruling 6), staleness is
+  detectable: `canonical/derivation.ttl` is that stamp, kept where the cache is.
 
 ## Implications considered
 
@@ -81,18 +72,19 @@ with the rule that made them.
   `canonical/` is an ordinary container.
 - **Migration is additive.** An existing pod gains `canonical/` on its next derivation. POTS Check
   pods are unaffected until that app adopts the layer.
-- **Model-derived records are derived records too.** The clinical-notes work (Workbench strategy
-  note of 2026-09-24; narrative-predicate round, root 3.501) will produce assertions extracted from
-  note text by a model, carrying `cascade:AIExtracted` provenance and, once root 4.44 lands, a span
-  citation into the source document. Under this decision a note body is a fact (a `ClinicalDocument`
-  record plus a content-addressed attachment, root 3.276) and an extraction is derived: it lives in
-  `canonical/extractions.ttl`, points at the document it read, and names the extractor (model,
-  prompt and version) as its rule. That means the rule registry that `derivation.ttl` depends on
-  must give a model-based rule an IRI and a version exactly as it does a table or a query; the
-  provenance leaf (`AIExtracted` versus a deterministic rule) says how much to trust it, the registry
-  entry says what produced it. Extractions are rebuildable in principle and expensive in practice;
-  the rebuildable set includes them, and a runtime may choose not to re-run them unless the extractor
-  version changes.
+- **A model's extraction is a machine judgement, so it is a layer-1 record, not a canonical
+  one.** Ruling 2: every judgement, human or machine, is an append-only layer-1 record naming
+  source records and values, with its author, instrument, time and (for machine judgements) the
+  build's input versions. The clinical-notes work (Workbench strategy note of 2026-09-24; root
+  3.501) will produce assertions extracted from note text by a model; each is written as a
+  record of its class in the ordinary layer-1 bucket (`clinical/medications.ttl` for an extracted
+  medication), with `cascade:AIExtracted` provenance, `prov:used` the document it read (root 4.44
+  adds the span), and the model, prompt and version as its instrument. That is what
+  `buildAIExtractedTurtle` in the cli already does. Nothing model-produced lives under
+  `canonical/`; the published queries may consume such records as inputs, like any other layer-1
+  record, and readers weigh them by their provenance class. The same holds for a classification
+  an app computed and told the patient at the time (POTS Check): a machine judgement, layer 1,
+  instrument named. `canonical/interpretations.ttl` holds only what the published queries derive.
 - **Rejected: a `derived/` umbrella** holding canonical records, wellness views and interpretations
   under one root. Cleaner as "one directory to rebuild", but it moves a ratified container two
   shipped apps write to, and it files the record a clinician receives under a name that says cache.
@@ -102,8 +94,8 @@ with the rule that made them.
 
 The canonical identifier seed; the reconciler's rulebook (D-CANONICAL-1 items 1 to 10); whether
 `clinical:` classes or the item 4 marker distinguish layer 2 (item 11); the wellness fact table's
-exact format; and whether interpretations and extractions eventually merit containers of their own once
-their number justifies it.
+exact format; and whether interpretations eventually merit a container of their own once their number
+justifies it.
 
 ## Sequencing
 
