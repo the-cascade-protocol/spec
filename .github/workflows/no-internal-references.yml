@@ -1,0 +1,46 @@
+name: no-internal-references
+
+# This repository is public. It must never ship a reference to a private
+# tracker: a root ecosystem backlog item, an app-internal backlog slug or
+# source path, or a path into a private planning repository or local drafts
+# folder. On 2026-09-25 four files (two ontology TTLs, a decision document,
+# and serialization/index.md) carried exactly this class of reference, and it
+# was caught only downstream, when cascade-cli's own equivalent check went red
+# after a routine shapes sync. See scripts/check-no-internal-references.py for
+# the full pattern list and rationale.
+#
+# Unlike the other jobs in this repo's CI, this one is not path-filtered: a
+# leaked reference can appear in ANY tracked file (a decision doc, a README,
+# a changelog), not only in ontologies/ or contexts/, so every push and every
+# pull request is scanned in full.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  no-internal-references:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # No third-party dependency: the check and its suite are pure standard
+      # library, so there is nothing to install here.
+
+      # Negative controls plant a violation of each banned category in a
+      # throwaway scratch directory and require the check to catch and name
+      # it, plus a clean-prose control that must NOT false-positive and a
+      # non-vacuity control (an empty tree must be a hard error, never a
+      # silent pass), so a check that has stopped being able to fail is
+      # caught here rather than by the first leak it misses.
+      - name: Regression suite (check + negative controls)
+        run: sh scripts/test-check-no-internal-references.sh
+
+      - name: No internal tracker references in tracked content
+        run: python3 scripts/check-no-internal-references.py

@@ -1,7 +1,7 @@
 # D-WELLNESS-1: A wellness reading is a named individual; only its compound sub-values stay blank nodes
 
 **Status:** Ratified. Direction ratified by Jed Reinitz on 2026-09-19 (vocabulary/shapes, his
-tie-break under `planning/collaboration/working-agreement.md` r3); merged 2026-09-24 as spec#65 with
+tie-break under the ratified working agreement, r3); merged 2026-09-24 as spec#65 with
 no objection posted, the review window waived by Jed after a conversation with Jay the same day in
 which the vocabulary was agreed to be the contract between the application and the import pipeline.
 RFC issue: the-cascade-protocol/spec#64. Q3's layer classification is superseded in direction by
@@ -9,10 +9,9 @@ that conversation (a computed aggregate is a derived view, not a layer-1 record)
 follows.
 **Date:** 2026-09-19
 **Proposed by:** Jed Reinitz
-**Prompted by:** D1 in `cascade-workbench/docs/planning/2026-07-29-apple-health-wellness-aggregator-scope.md`
-(lines 138-146, 378), filed against root backlog 2.24 / Workbench `[WELLNESS-IMPORT]` while scoping
-the Apple Health wellness aggregator. Applies D-CANONICAL-1's identity principle to a class of
-record that document did not name.
+**Prompted by:** D1 in the wellness aggregator scope decision (lines 138-146, 378), tracked
+separately while scoping the Apple Health wellness aggregator. Applies D-CANONICAL-1's identity
+principle to a class of record that document did not name.
 
 ---
 
@@ -30,7 +29,7 @@ and similar). Those are declared `owl:DatatypeProperty` with `rdfs:range xsd:dou
 `health.ttl` (e.g. lines 287-296, 402-422), which already conflicts with their use in
 `spec/serialization/index.md`'s worked examples as object-valued links to a nested reading
 resource, a pre-existing inconsistency this decision found but does not resolve. They stay blank
-nodes, unchanged, until that conflict is settled on its own terms (filed as root backlog 3.472,
+nodes, unchanged, until that conflict is settled on its own terms (a follow-up is filed,
 see Consequences).
 
 **What stays a blank node in the readings this decision does cover:**
@@ -118,8 +117,8 @@ identities for subsequent aggregates. That is a split, not a merge: recoverable,
 and therefore the value of two days' records. It also decides whether two exports of the same data
 produce the same buckets, which is what identity depends on.
 
-**What measurement found (2026-09-23, two real exports three months apart, write-up in
-`planning/spikes/2026-09-23-apple-health-export-measurement.md`):** every one of the 10.2 million
+**What measurement found (2026-09-23, two real exports three months apart, write-up tracked
+separately):** every one of the 10.2 million
 samples in both exports carries the offset `-0700`, across twelve years, ski trips, and `HKTimeZone`
 metadata naming Denver, Honolulu and London. The export renders every timestamp in the exporting
 device's *current* zone. **There is no per-sample offset in the file.** An earlier draft of this
@@ -231,7 +230,7 @@ the result is pod-sized.
 
 ## Amendment 2026-09-24: what the second source and the build changed
 
-The Google Health Takeout measurement (`planning/spikes/2026-09-23-google-health-takeout-measurement.md`)
+The Google Health Takeout measurement (write-up tracked separately)
 and the health v2.10 build (spec#68, stacked on this branch) settled or moved the following since
 this RFC was posted:
 
@@ -241,7 +240,7 @@ this RFC was posted:
   as numeric offsets, never names, so `cascade:dayZone` (core v3.10) has a default chain:
   `HKTimeZone` where present, else the Google profile zone, else the importing machine, logged.
 - Q3's closed-day claim is proven for Apple (74,933 of 74,969 buckets) and unproven for Google
-  until a second export exists (root 3.484). Google's own daily rollups carry `cascade:date` only
+  until a second export exists (tracked separately). Google's own daily rollups carry `cascade:date` only
   and take the aggregate shape's Warning rather than a fabricated interval.
 - Source-supplied identifiers are stored raw in `health:sourceRecordId`, with the space in
   `health:sourceIdSpace`; the build's first draft wrote `"{space}:{id}"` into one literal and a
@@ -263,8 +262,8 @@ assumed settled.
 ## Why the core ruling holds regardless of the above
 
 **The forcing requirement is citation, not the layer-1 naming rule by itself.** Workbench's
-evidence-grounding mechanism (`citedRecordIds`, `cascade-workbench/packages/claims/src/runner.ts:119`)
-requires a URI-shaped string to link a claim to a pod fact. A blank node has no such form. The
+evidence-grounding mechanism (`citedRecordIds`) requires a URI-shaped string to link a claim to a
+pod fact. A blank node has no such form. The
 current `HealthProfileSerializer.swift` (`cascade-sdk-swift`, lines ~187-196, ~850-858) emits
 exactly this shape today, with no per-entry identifier of any kind. Wellness data in the current
 shape cannot durably ground an answer, independent of how Q1-Q3 are eventually resolved. Whatever
@@ -293,16 +292,16 @@ minter should do the same, seeded per Q1.
   and the `*History`-list examples (§12.3, §12.4, §12.5, §12.6, §12.11) show named individuals; the
   "latest reading" convenience properties (§12.3.1, §12.7's `heartRateVariability`, all of §12.9)
   are explicitly left as blank nodes with a note explaining why.
-- Root backlog 2.24 / Workbench `[WELLNESS-IMPORT]`: the blank-node-vs-named-individual half of D1
-  is resolved for `*History` entries by this document; Q1-Q3 carry recommendations that silence
-  accepts. D2 (five undeclared `cascade:` predicates) is separately about 80% resolved: `date`,
+- The wellness aggregator scope decision's D1 (tracked separately): the blank-node-vs-named-individual
+  half of D1 is resolved for `*History` entries by this document; Q1-Q3 carry recommendations that
+  silence accepts. D2 (five undeclared `cascade:` predicates) is separately about 80% resolved: `date`,
   `sourceType`, `sampleCount` and `loincCode` landed in core v3.4 (commit `24681e2`, 2026-08-03);
-  `snomedCode` was never declared and needs its own decision. All three backlog touchpoints are
+  `snomedCode` was never declared and needs its own decision. All three tracked touchpoints are
   updated in this same change.
-- **New follow-up filed:** root backlog 3.472, the "latest reading" convenience-property domain/range
+- **New follow-up filed:** the "latest reading" convenience-property domain/range
   conflict this document found but did not fix.
 - **The two measurements this document owed are done** (2026-09-23, two real exports diffed;
-  `planning/spikes/2026-09-23-apple-health-export-measurement.md`). They overturned the first
+  write-up tracked separately). They overturned the first
   draft's Q2 and its reader tiebreak, and settled the exclusion list. Still owed before Q1-Q3 are
   normative: one conformance vector for the seed. D-CANONICAL-1's own amendment exists because an
   unmeasured naming rule was wrong in two places; this document has now had the same experience

@@ -110,6 +110,7 @@ Before committing any change to an ontology (`.ttl`) file, you MUST:
 - [ ] Run `python3 scripts/check-shape-targets.py` and get exit 0 (the `shapes` CI job runs it, and its regression suite, on every PR touching `ontologies/`)
 - [ ] Run `python3 scripts/check-nested-severity.py` and get exit 0 — same CI job. Required whenever you add or move an `sh:severity`, and whenever you add an `sh:node`
 - [ ] Run `python3 scripts/check-context-agreement.py` and get exit 0 — same CI job. Required whenever you touch a context, a range, or a cardinality: the check compares every context term against the declared range and the shapes' `sh:maxCount`, and `scripts/known-context-disagreements.json` can only shrink
+- [ ] Run `python3 scripts/check-no-internal-references.py` and get exit 0 — own CI job (`no-internal-references`, unfiltered: it runs on every push and PR, not just ones touching `ontologies/`). This repo is public; a comment carrying a root-ecosystem backlog number, an app-internal path or slug, or a private planning-repo path reaches every downstream sync the moment it is committed. Caught this way on 2026-09-25, after such a reference had already synced into `cascade-cli` and tripped its own equivalent check
 - [ ] Tag the commit: `git tag vocab/{name}-v{X.Y}` after committing
 
 After committing, complete the downstream update sequence (in order):
@@ -122,6 +123,8 @@ After committing, complete the downstream update sequence (in order):
 6. **cascade-agent** — update system prompt query patterns, update `VOCAB_VERSIONS`
 
 Run `scripts/check-downstream-versions.sh` at any time to see which repos are behind.
+
+**This repo is public; it carries no private tracker references.** `scripts/check-no-internal-references.py` scans every file in the working tree (tracked plus not-yet-`git add`ed, minus anything `.gitignore`d) for root-ecosystem backlog numbers, app-internal paths or backlog slugs, and private planning-repo or local-drafts-folder paths, and fails naming `file:line` on any hit. It runs on every push and pull request (`no-internal-references` CI job), not only on ontology changes, because the class of leak it catches shows up just as often in a decision document or a changelog entry as in a TTL comment. Rewrite a hit so the sentence's meaning survives without the private identifier ("tracked separately", "a follow-up is filed", or a link to a public issue); never delete the surrounding substance to make the check pass.
 
 The checker refreshes each repo's remote-tracking refs before reading them, so a
 sync that merged upstream a moment ago is seen immediately rather than reported as
