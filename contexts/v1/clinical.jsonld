@@ -77,6 +77,10 @@
       "@id": "clinical:displayName",
       "@type": "xsd:string"
     },
+    "documentType": {
+      "@id": "clinical:documentType",
+      "@type": "xsd:string"
+    },
     "narrativeText": {
       "@id": "clinical:narrativeText",
       "@type": "xsd:string"

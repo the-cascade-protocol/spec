@@ -4,7 +4,7 @@
 # Format: {vocab}={major}.{minor}
 core=3.10
 health=2.11
-clinical=1.19
+clinical=1.20
 coverage=1.6
 checkup=3.3
 pots=1.4
