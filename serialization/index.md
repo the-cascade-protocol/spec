@@ -6,7 +6,7 @@
 **Organization:** Cascade Agentic Labs LLC
 **Vocabulary versions:** core v3.10, health v2.10 (`health.shapes.ttl` v1.8), clinical v1.19, coverage v1.6
 
-> **v2.3 (2026-09-24).** Section 12 is brought to health v2.10 and core v3.10. Every daily aggregate example now states its UTC interval (`health:periodStart`, `health:periodEnd`), the statistic its value is (`cascade:statistic`), the zone its day was cut in (`health:timeZone`) and the device that produced it (`health:device`). New worked examples: a `health:Device` (Section 12.12), a `health:Workout` with a route held as a `cascade:Attachment` (Section 12.13), and a `health:SleepSession` with stage totals and a source-supplied score (Section 12.6.3). Section 12.5 states where each activity value comes from (Apple's `ActivitySummary` versus sample aggregation). The "latest reading" convenience properties are shown with their declared number meaning (`health:bodyMass 91.2`), the object-valued use of those names is removed from every example, and "latest" is defined as the newest `*History` entry (Section 12.2; root backlog 3.472). `health:sleepQuality` is deprecated and no longer appears in examples.
+> **v2.3 (2026-09-24).** Section 12 is brought to health v2.10 and core v3.10. Every daily aggregate example now states its UTC interval (`health:periodStart`, `health:periodEnd`), the statistic its value is (`cascade:statistic`), the zone its day was cut in (`health:timeZone`) and the device that produced it (`health:device`). New worked examples: a `health:Device` (Section 12.12), a `health:Workout` with a route held as a `cascade:Attachment` (Section 12.13), and a `health:SleepSession` with stage totals and a source-supplied score (Section 12.6.3). Section 12.5 states where each activity value comes from (Apple's `ActivitySummary` versus sample aggregation). The "latest reading" convenience properties are shown with their declared number meaning (`health:bodyMass 91.2`), the object-valued use of those names is removed from every example, and "latest" is defined as the newest `*History` entry (Section 12.2; a follow-up is filed). `health:sleepQuality` is deprecated and no longer appears in examples.
 
 > **v2.2 (2026-09-23).** Ports into `spec/` the corrections that until now existed only in the copy of this document published on cascadeprotocol.org (v2.1, 2026-08-03, site commit `2f953d9`): the `clinical:Medication` / `clinical:drugName` migration (Sections 1.1, 1.4, 2, 13 and 14), the `health:*RecordShape` constraint tables and notes for conditions, allergies, lab results and immunizations (Sections 3.6, 4.6, 5.6 and 8.6), the family history shape table and its unresolved-disagreement note (Section 10.6), and the coverage deprecation note (Section 11.8). Every ported table was re-checked against the current shapes, not copied: the v2.1 tables described `health.shapes.ttl` v1.2, and they are corrected here where the shapes have moved since (date-or-dateTime values, repeatable codes, the widened lab interpretation binding, and the `sh:Warning` properties added in shapes v1.5 to v1.7). Medication start and end dates now use `clinical:startDate` / `clinical:endDate`, per clinical v1.19, and the Section 2.6 medication shape table, which both copies shared, is restated against `clinical:MedicationShape` as it stands. The two v2.1 notes in Section 12 are not yet ported (see Document History). From this version the published copy is synced from this file and never edited on the site.
 
@@ -1837,7 +1837,7 @@ Each history entry includes:
 - `health:periodStart` / `health:periodEnd` (health v2.10) -- The UTC interval an aggregate
   covers, half-open (the end is excluded). This, not `cascade:date`, is the identity-bearing cut
   of the day. A source's date label (Google's daily rollups at `T00:00:00Z`) is never a
-  `periodStart`: until the boundary of Google's daily rollups is measured (root backlog 3.484),
+  `periodStart`: until the boundary of Google's daily rollups is measured (tracked separately),
   a Google daily row carries `cascade:date` only, and the Warning that produces is the honest
   state, not a defect. A sleep snapshot's interval is the local day the night ends in (§12.6)
 - `cascade:statistic` (core v3.10) -- Which statistic of the samples the value is: `average`,
@@ -1955,8 +1955,8 @@ Device blood pressure data uses `health:BloodPressureData` with the `health:bloo
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
 # Home blood pressure data from Omron BP monitor. Unlike the daily-aggregate metrics in
-# this section, BP is never aggregated to a daily mean (D5, cascade-workbench/docs/
-# planning/2026-07-29-apple-health-wellness-aggregator-scope.md) -- each entry is a
+# this section, BP is never aggregated to a daily mean (D5, the wellness aggregator
+# scope decision) -- each entry is a
 # named individual seeded per EXACT READING (device identity + fhir:effectiveDateTime
 # to the second), not per day, so a morning and an evening reading mint distinct IRIs.
 <#blood-pressure> a health:BloodPressureData ;
@@ -2256,7 +2256,7 @@ VO2 Max data uses a `health:VO2MaxStatistics` container within the body measurem
 
 ### 12.9 Body Measurements
 
-Body measurements are stored within a `health:BodyMeasurements` container and include body mass, height, BMI, body temperature, SpO2, and blood glucose. The properties in the table below are **scalar** convenience values, `owl:DatatypeProperty` with `rdfs:range xsd:double`: `health:bodyMass "91.2"^^xsd:double` says "body mass is 91.2 kg" and nothing more. A reading with a date, a device and provenance is an entry in a `*History` list (here `health:bodyMassHistory`), and the latest reading is the newest such entry (Section 12.2). Earlier revisions of this section used these names to point at whole reading objects; that use is dropped (health v2.10, root backlog 3.472).
+Body measurements are stored within a `health:BodyMeasurements` container and include body mass, height, BMI, body temperature, SpO2, and blood glucose. The properties in the table below are **scalar** convenience values, `owl:DatatypeProperty` with `rdfs:range xsd:double`: `health:bodyMass "91.2"^^xsd:double` says "body mass is 91.2 kg" and nothing more. A reading with a date, a device and provenance is an entry in a `*History` list (here `health:bodyMassHistory`), and the latest reading is the newest such entry (Section 12.2). Earlier revisions of this section used these names to point at whole reading objects; that use is dropped (health v2.10, a follow-up is filed).
 
 #### 12.9.1 Metrics Table
 

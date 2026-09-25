@@ -6,9 +6,13 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-25: comment hygiene, health v2.11
+
+`health` goes 2.10 to 2.11 and `health.shapes.ttl` goes 1.8 to 1.9. Comment-only change: internal tracker references (backlog numbers, an app-internal source path, a private planning-repo path) removed from TTL comments, `decisions/2026-09-19-wellness-reading-identity.md`, `serialization/index.md`, `PENDING_DOWNSTREAM_SYNC.md` and this changelog, replaced with language that keeps the meaning without the private identifier. No term, range, shape or context change. Adds `scripts/check-no-internal-references.py` to the CI checklist to keep this from recurring.
+
 ## 2026-09-24: wellness and fitness records, measured before modelled
 
-`health` goes 2.9 to 2.10 and `core` goes 3.9 to 3.10; `health.shapes.ttl` goes 1.7 to 1.8 and `core.shapes.ttl` 1.8 to 1.9; `contexts/v1/health.jsonld`, `contexts/v1/core.jsonld` and the merged `contexts/v1/cascade.jsonld` gain the new datatype terms; `serialization/index.md` goes 2.2 to 2.3 and `pod-structure.md` 1.5 to 1.6. Round kickoff: `planning/rounds/2026-09-23-health-v2-10-wellness-fitness-kickoff.md`, tasks T1 to T5 and T7 to T9. Stacked on D-WELLNESS-1 (spec#64, draft PR spec#65).
+`health` goes 2.9 to 2.10 and `core` goes 3.9 to 3.10; `health.shapes.ttl` goes 1.7 to 1.8 and `core.shapes.ttl` 1.8 to 1.9; `contexts/v1/health.jsonld`, `contexts/v1/core.jsonld` and the merged `contexts/v1/cascade.jsonld` gain the new datatype terms; `serialization/index.md` goes 2.2 to 2.3 and `pod-structure.md` 1.5 to 1.6. Round kickoff tracked separately, tasks T1 to T5 and T7 to T9. Stacked on D-WELLNESS-1 (spec#64, draft PR spec#65).
 
 **Why now.** The Apple Health importer brings in clinical records and none of the watch data, and D-WELLNESS-1 records why re-minting a pod after the aggregator ships is the failure to avoid. The shapes are settled before the aggregator writes its first pod. Every term is adopted from a ratified standard (OWL-Time, SOSA/SSN 2017, FHIR Device and Observation, IEEE 1752.1, AASM stage names) or measured against two real exports: an Apple Health store exported twice three months apart (10.2 million samples) and a Google Health / Fitbit Takeout (3,985 files, two formats).
 
@@ -18,7 +22,7 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 **JSON-LD.** `health.jsonld` gains the three classes and the datatype terms and deliberately omits `device`, `workoutRoute`, `workoutHistory` and `sleepSessionHistory`: their correct mapping is the JSON-LD 1.1 type-scoped form, which health has not adopted, and the `@id` form would grow a shrink-only baseline. Write them as full IRIs for now.
 
-**T8.** The "latest reading" properties keep their declared number meaning (`health:bodyMass` is a double); the serialization examples that used those names as links to reading objects are corrected, and "latest" is the newest `*History` entry (root backlog 3.472).
+**T8.** The "latest reading" properties keep their declared number meaning (`health:bodyMass` is a double); the serialization examples that used those names as links to reading objects are corrected, and "latest" is the newest `*History` entry (a follow-up is filed).
 
 **Compatibility.** Nothing that validated under health v2.9 or core v3.9 stops validating. Every new finding on a class that existed in v2.9 is at `sh:Warning`. The three new classes carry `sh:Violation` for what a record is meaningless without, because no earlier pod can contain them.
 

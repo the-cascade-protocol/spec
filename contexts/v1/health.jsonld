@@ -1,5 +1,5 @@
 {
-  "$comment": "health v2.10: four object properties are deliberately NOT mapped here: health:device, health:workoutRoute, health:workoutHistory, health:sleepSessionHistory. Their ranges are shaped classes, so the only correct mapping is the JSON-LD 1.1 type-scoped form (D-CONTEXT-1 C4), which this context has not adopted yet; the \"@type\": \"@id\" form would be a new structured-term-unscoped disagreement. Until then write them as full IRIs. See the health v2.10 changelog in ontologies/health/v1/health.ttl and root backlog 3.487.",
+  "$comment": "health v2.10: four object properties are deliberately NOT mapped here: health:device, health:workoutRoute, health:workoutHistory, health:sleepSessionHistory. Their ranges are shaped classes, so the only correct mapping is the JSON-LD 1.1 type-scoped form (D-CONTEXT-1 C4), which this context has not adopted yet; the \"@type\": \"@id\" form would be a new structured-term-unscoped disagreement. Until then write them as full IRIs. See the health v2.10 changelog in ontologies/health/v1/health.ttl (tracked separately).",
   "@context": {
     "health": "https://ns.cascadeprotocol.org/health/v1#",
     "cascade": "https://ns.cascadeprotocol.org/core/v1#",

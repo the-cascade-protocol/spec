@@ -104,7 +104,7 @@ and `vocab/evidence-v1-draft.0.2` are applied on merge.
   `workbench.shapes.ttl` (`owl:versionInfo 1.0-draft.0.5`, `dct:modified
   2026-07-15`, tag `vocab/workbench-v1-draft.0.5`) + `pod-structure.md` §5.2
   `notes/` container.
-- **What it is:** [NOTES-ANNOTATION-VOCAB] — caregiver notes, research flags,
+- **What it is:** caregiver notes, research flags,
   and follow-ups as ONE `oa:Annotation` substrate distinguished by
   `oa:motivatedBy`; required PROV-O attribution; follow-ups dual-typed
   `cal:Vtodo` with `ical:due` / `ical:status`. One minted term
@@ -1036,7 +1036,7 @@ finding on a class that existed in health v2.9 is at `sh:Warning`. See
 - **Deliberately absent from `contexts/v1/health.jsonld`:** `device`,
   `workoutRoute`, `workoutHistory`, `sleepSessionHistory`. They need the
   JSON-LD 1.1 type-scoped form (D-CONTEXT-1 C4); downstream SDKs write them as
-  full IRIs until then (root backlog 3.487). The context says so in `$comment`.
+  full IRIs until then (tracked separately). The context says so in `$comment`.
 - `core.shapes.ttl` 1.9, `health.shapes.ttl` 1.8, contexts, `pod-structure.md`
   1.6 (section 3.6), `serialization/index.md` 2.3 (section 12).
 
