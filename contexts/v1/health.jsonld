@@ -1,4 +1,5 @@
 {
+  "$comment": "health v2.10: four object properties are deliberately NOT mapped here: health:device, health:workoutRoute, health:workoutHistory, health:sleepSessionHistory. Their ranges are shaped classes, so the only correct mapping is the JSON-LD 1.1 type-scoped form (D-CONTEXT-1 C4), which this context has not adopted yet; the \"@type\": \"@id\" form would be a new structured-term-unscoped disagreement. Until then write them as full IRIs. See the health v2.10 changelog in ontologies/health/v1/health.ttl and root backlog 3.487.",
   "@context": {
     "health": "https://ns.cascadeprotocol.org/health/v1#",
     "cascade": "https://ns.cascadeprotocol.org/core/v1#",
@@ -25,6 +26,9 @@
     "DailySleepSnapshot": "health:DailySleepSnapshot",
     "MetricTrend": "health:MetricTrend",
     "SelfReport": "health:SelfReport",
+    "Workout": "health:Workout",
+    "SleepSession": "health:SleepSession",
+    "Device": "health:Device",
 
     "restingHeartRate": {
       "@id": "health:restingHeartRate",
@@ -487,6 +491,31 @@
     "activeEnergyKcal": { "@id": "health:activeEnergyKcal", "@type": "xsd:decimal" },
     "exerciseMinutes": { "@id": "health:exerciseMinutes", "@type": "xsd:integer" },
     "standHours": { "@id": "health:standHours", "@type": "xsd:integer" },
-    "durationHours": { "@id": "health:durationHours", "@type": "xsd:decimal" }
+    "durationHours": { "@id": "health:durationHours", "@type": "xsd:decimal" },
+
+    "timeZone": { "@id": "health:timeZone", "@type": "xsd:string" },
+    "utcOffset": { "@id": "health:utcOffset", "@type": "xsd:string" },
+    "deviceName": { "@id": "health:deviceName", "@type": "xsd:string" },
+    "deviceManufacturer": { "@id": "health:deviceManufacturer", "@type": "xsd:string" },
+    "deviceModel": { "@id": "health:deviceModel", "@type": "xsd:string" },
+    "hardwareVersion": { "@id": "health:hardwareVersion", "@type": "xsd:string" },
+    "softwareVersion": { "@id": "health:softwareVersion", "@type": "xsd:string" },
+    "serialNumber": { "@id": "health:serialNumber", "@type": "xsd:string" },
+    "activityType": { "@id": "health:activityType", "@type": "xsd:string" },
+    "sourceIdSpace": { "@id": "health:sourceIdSpace", "@type": "xsd:string" },
+    "durationMinutes": { "@id": "health:durationMinutes", "@type": "xsd:decimal" },
+    "distanceMeters": { "@id": "health:distanceMeters", "@type": "xsd:decimal" },
+    "averageHeartRate": { "@id": "health:averageHeartRate", "@type": "xsd:decimal" },
+    "maximumHeartRate": { "@id": "health:maximumHeartRate", "@type": "xsd:decimal" },
+    "indoor": { "@id": "health:indoor", "@type": "xsd:boolean" },
+    "algorithmVersion": { "@id": "health:algorithmVersion", "@type": "xsd:string" },
+    "sleepScore": { "@id": "health:sleepScore", "@type": "xsd:decimal" },
+    "inBedMinutes": { "@id": "health:inBedMinutes", "@type": "xsd:decimal" },
+    "awakeMinutes": { "@id": "health:awakeMinutes", "@type": "xsd:decimal" },
+    "lightSleepMinutes": { "@id": "health:lightSleepMinutes", "@type": "xsd:decimal" },
+    "deepSleepMinutes": { "@id": "health:deepSleepMinutes", "@type": "xsd:decimal" },
+    "remSleepMinutes": { "@id": "health:remSleepMinutes", "@type": "xsd:decimal" },
+    "restlessMinutes": { "@id": "health:restlessMinutes", "@type": "xsd:decimal" },
+    "asleepUnspecifiedMinutes": { "@id": "health:asleepUnspecifiedMinutes", "@type": "xsd:decimal" }
   }
 }

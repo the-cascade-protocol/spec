@@ -1,5 +1,29 @@
 # Core Vocabulary Changelog
 
+## v3.10 - 2026-09-24
+
+Two properties for wellness aggregation, neither wellness-specific.
+
+- **`cascade:statistic`** (`xsd:string`): which descriptive statistic of the
+  underlying samples a record's value is. `average`, `sum`, `minimum`,
+  `maximum`, `median`, `standardDeviation`, `variance`, `count` are IEEE 1752.1
+  [`descriptive_statistic`](https://w3id.org/ieee/ieee-1752-schema/descriptive-statistic.json)
+  camelCased; `baseline`, `lowerBound` and `upperBound` were ruled on
+  2026-09-24 from the Google Health export, where one daily row carries several
+  statistics of one window. A mean and a maximum over the same samples are two
+  records, so the statistic is part of a daily aggregate's identity.
+- **`cascade:dayZone`** (`xsd:string`): the pod owner's home IANA time zone,
+  on `<#me>` in `/profile/extended.ttl`, owner-only. The zone a day is cut in.
+  Default: `HKTimeZone` where present, else the Google profile zone, else the
+  importing machine, logged. Changed only on a permanent move; each aggregate
+  records the zone it was cut in, so a change never re-mints history.
+  `pod-structure.md` section 3.6.
+- SHACL (core.shapes.ttl v1.9): `cascade:StatisticShape` and
+  `cascade:DayZoneShape`, open-world, `sh:Warning`. The presence requirement
+  for the statistic is on the health aggregate shapes.
+- JSON-LD: `statistic` and `dayZone` in `core.jsonld` and `cascade.jsonld`.
+- Compatibility: purely additive.
+
 ## v3.9 - 2026-09-08
 
 The pod owner's name gets a declared home. No new term.

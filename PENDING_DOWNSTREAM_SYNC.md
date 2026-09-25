@@ -1007,6 +1007,66 @@ stop: it is a display name, and the real name is in the extended profile.
 
 ---
 
+## Pending batch: core v3.10 / health v2.10 (authored 2026-09-24)
+
+Wellness and fitness records. Tags `vocab/core-v3.10` and `vocab/health-v2.10`
+at merge. Additive except the deprecation of `health:sleepQuality`; every new
+finding on a class that existed in health v2.9 is at `sh:Warning`. See
+`CHANGELOG.md` for the full statement. Stacked on D-WELLNESS-1 (spec#65).
+
+**What was authored:**
+
+- `core` 3.9 to 3.10: `cascade:statistic`, `cascade:dayZone`.
+- `health` 2.9 to 2.10: classes `health:Device`, `health:Workout`,
+  `health:SleepSession`; properties `health:device`, `health:deviceName`,
+  `health:deviceManufacturer`, `health:deviceModel`, `health:hardwareVersion`,
+  `health:softwareVersion`, `health:serialNumber`, `health:timeZone`,
+  `health:utcOffset`, `health:workoutHistory`, `health:activityType`,
+  `health:workoutRoute`, `health:durationMinutes`, `health:distanceMeters`,
+  `health:averageHeartRate`, `health:maximumHeartRate`, `health:indoor`,
+  `health:sleepSessionHistory`, `health:algorithmVersion`, `health:sleepScore`,
+  `health:sourceIdSpace` (closed set healthkit / google-health / fitbit),
+  and seven stage totals (`inBed`, `awake`, `lightSleep`, `deepSleep`,
+  `remSleep`, `restless`, `asleepUnspecified`, each `...Minutes`). Widened:
+  `health:periodStart` / `health:periodEnd` (restated, still no domain),
+  `health:activeEnergyKcal` and `health:sourceRecordId` (domain unions).
+  Deprecated: `health:sleepQuality`, `health:SleepQuality` and its four
+  individuals. SOSA/OWL-Time alignment axioms (no SOSA property on
+  `health:device`).
+- **Deliberately absent from `contexts/v1/health.jsonld`:** `device`,
+  `workoutRoute`, `workoutHistory`, `sleepSessionHistory`. They need the
+  JSON-LD 1.1 type-scoped form (D-CONTEXT-1 C4); downstream SDKs write them as
+  full IRIs until then (root backlog 3.487). The context says so in `$comment`.
+- `core.shapes.ttl` 1.9, `health.shapes.ttl` 1.8, contexts, `pod-structure.md`
+  1.6 (section 3.6), `serialization/index.md` 2.3 (section 12).
+
+**Synced NOW (this train):**
+
+- [x] `spec/` authored; `VOCAB_VERSIONS` `core=3.10`, `health=2.10`.
+- [x] `conformance` fixtures authored on a branch (not yet merged or pinned).
+
+**Steps 2 to 7, pending:**
+
+- [ ] `cascadeprotocol.org`: `scripts/sync-from-spec.sh` (carries the contexts,
+      `pod-structure.md` and `serialization/index.md`), then the core and health
+      HTML pages and `cascade-protocol-schemas.md`.
+- [ ] `conformance`: merge the fixture branch, re-pin `scripts/SPEC_PIN` to the
+      merge commit, re-measure `KNOWN_FAILURES.json`, tag.
+- [ ] `cascade-cli`: `scripts/sync-shapes-from-spec.sh`, `VOCAB_VERSIONS`; the
+      wellness aggregator round is built against these terms.
+- [ ] `sdk-typescript`, `sdk-python`: model files for the three classes,
+      predicates and contexts; ids as strings end to end.
+- [ ] `cascade-agent`: query patterns for sessions, devices, the interval and
+      the statistic; `health:sleepQuality` is deprecated.
+
+**MIGRATION.** Nothing stored changes meaning. Existing daily aggregates gain
+Warnings for a missing interval, statistic and cut zone; a pod that writes
+`health:sleepQuality` gains one Warning per record. A reader that treated
+`health:bodyMass` and its siblings as links to reading objects should read the
+newest `*History` entry instead.
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
