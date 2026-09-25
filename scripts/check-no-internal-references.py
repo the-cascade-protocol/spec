@@ -81,9 +81,11 @@ _PLANNING_WORD = "plan" + "ning"
 _WORKBENCH_REPO = "cascade" + "-" + "work" + "bench"
 _DEV_ROOT_DOCS = "Dev" + "-root" + "-docs"
 
+WS = r"\s+"  # tolerates a prose line-wrap between "root" and its number
+
 PATTERNS = {
-    "root_backlog": rf"{_ROOT} {_BACKLOG} {NUM}",
-    "bare_root_num": rf"\b{_ROOT} {NUM}[a-z]?\b",
+    "root_backlog": rf"{_ROOT}{WS}{_BACKLOG}{WS}{NUM}",
+    "bare_root_num": rf"\b{_ROOT}{WS}{NUM}[a-z]?\b",
     "docs_planning_path": rf"{_DOCS}/{_PLANNING_WORD}",
     "workbench_repo_name": re.escape(_WORKBENCH_REPO),
     "bracket_slug": r"\[[A-Z]{2,}(?:-[A-Z]{2,})+\]",
@@ -122,10 +124,16 @@ def scan(path):
         text = path.read_text(encoding="utf-8")
     except (UnicodeDecodeError, OSError):
         return hits  # binary or unreadable; nothing to scan as text
-    for lineno, line in enumerate(text.splitlines(), start=1):
-        for m in COMBINED.finditer(line):
-            kind = m.lastgroup
-            hits.append((path, lineno, kind, m.group().strip()))
+    # Matched against the WHOLE file, not line by line: prose wraps a "root
+    # backlog N.N" citation across a line break just as readily as it wraps
+    # any other phrase (this caught a real instance, "root\n  3.501", in
+    # decisions/2026-09-24-canonical-layer-location.md, that a per-line scan
+    # missed). The line number is recovered from the match's start offset.
+    for m in COMBINED.finditer(text):
+        kind = m.lastgroup
+        lineno = text.count("\n", 0, m.start()) + 1
+        matched = " ".join(m.group().split())  # collapse any wrap for display
+        hits.append((path, lineno, kind, matched))
     return hits
 
 

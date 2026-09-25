@@ -73,6 +73,19 @@ else
   fail "a bare backlog id with no noun is caught" "$OUT"
 fi
 
+# ── 3b. Negative control: the same, wrapped across a line break ─────────────
+# A real instance, missed by an earlier per-line version of this check:
+# decisions/2026-09-24-canonical-layer-location.md wrapped "root" onto one
+# line and its number onto the next, ordinary Markdown prose reflow.
+mkdir -p "$WORK/dirty2b"
+printf '%s\n' "a citation (root" "3.501) that prose-wrapped across a line" > "$WORK/dirty2b/a.md"
+OUT="$("$PYTHON" "$CHECK" "$WORK/dirty2b" 2>&1)"
+if [ $? -ne 0 ] && echo "$OUT" | grep -q "bare_root_num"; then
+  pass "a bare backlog id wrapped across a line break is still caught"
+else
+  fail "a bare backlog id wrapped across a line break is still caught" "$OUT"
+fi
+
 # ── 4. Negative control: an app-internal backlog slug in brackets ───────────
 mkdir -p "$WORK/dirty3"
 printf '%s\n' "filed against the app while scoping [SOME-INTERNAL""-SLUG]" > "$WORK/dirty3/a.md"
