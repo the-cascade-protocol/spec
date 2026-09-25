@@ -75,11 +75,11 @@ the cache lives and what a runtime may regenerate. Two consequences of the rulin
 - **A model's extraction is a machine judgement, so it is a layer-1 record, not a canonical
   one.** Ruling 2: every judgement, human or machine, is an append-only layer-1 record naming
   source records and values, with its author, instrument, time and (for machine judgements) the
-  build's input versions. The clinical-notes work (Workbench strategy note of 2026-09-24; root
-  3.501) will produce assertions extracted from note text by a model; each is written as a
+  build's input versions. The clinical-notes work (Workbench strategy note of 2026-09-24;
+  tracked separately) will produce assertions extracted from note text by a model; each is written as a
   record of its class in the ordinary layer-1 bucket (`clinical/medications.ttl` for an extracted
-  medication), with `cascade:AIExtracted` provenance, `prov:used` the document it read (root 4.44
-  adds the span), and the model, prompt and version as its instrument. That is what
+  medication), with `cascade:AIExtracted` provenance, `prov:used` the document it read (a
+  follow-up adds the span), and the model, prompt and version as its instrument. That is what
   `buildAIExtractedTurtle` in the cli already does. Nothing model-produced lives under
   `canonical/`; the published queries may consume such records as inputs, like any other layer-1
   record, and readers weigh them by their provenance class. The same holds for a classification
