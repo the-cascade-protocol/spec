@@ -489,10 +489,12 @@ content was printed or stored.
    narrative under the C-CDA canonicalisation, with its section code and the enclosing
    document's `ClinicalDocument/setId` as context, falling back to the document's `id` only
    when there is no `setId`. An import label never participates. The narrative
-   canonicalisation's exclusion list gains the narrative-internal element ids (`@ID` on
-   `table`, `tr`, `td`, `th`, `content`, `paragraph` and `footnote`), footnote numbering and
-   `styleCode`. A re-download of an unchanged narrative therefore names the same record, and
-   a narrative whose text changed between versions is a new record, added beside the old one,
+   canonicalisation's exclusion list gains `@ID` and `@IDREF` on every narrative element,
+   `@styleCode`, and footnotes (the `footnote` elements and the references to them), since
+   footnote text was measured to change between downloads of one document (83 pairs). The
+   exclusions apply to the name only: the full narrative text, footnotes included, is still
+   stored. A re-download of an unchanged narrative therefore names the same record, and a
+   narrative whose text changed between versions is a new record, added beside the old one,
    never written over it. Measured: 0 of 385 narratives kept their name while the per-download
    document id was the context.
 3. **When a source identifier is not unique within its own document, the disambiguator
@@ -501,9 +503,13 @@ content was printed or stored.
    act restated and share one name. Each differing claimant is named
    `{class}:{identifier}#{digest}`, and the digest covers stable clinical fields (the code,
    the effective time, the value and fields like them), never narrative reference pointers
-   (`*/reference/@value`) and never author or organisation addresses. Measured: 22 of 344
-   such records were renamed between downloads under a disambiguator that hashed the whole
-   element.
+   (`*/reference/@value`) and never author or organisation addresses. Status is one of the
+   stable clinical fields and is included (`statusCode`, and the value of a nested status
+   observation): two statements sharing an identifier and differing only in status, one
+   active and one resolved, are different claims and must not merge. A status change between
+   downloads of such a record therefore yields a new name, reconciled in layer 2. Measured: 22
+   of 344 such records were renamed between downloads under a disambiguator that hashed the
+   whole element.
 4. **Existing names are never renamed.** Records named under the earlier behaviour keep their
    names. Names under these rulings apply to imports from the implementing release on. The
    first import after that release adds one more copy of each affected record (every section
@@ -513,31 +519,24 @@ content was printed or stored.
 5. **A split never changes a layer 1 name.** The reconciler's identity-collision split, a
    feared source of layer 1 renames, did not occur on the measured data. The rule is stated
    regardless: a split must never change the name of a record already written to layer 1.
-   The reference implementation does not meet this yet: its split ranks the colliding records
-   by content fingerprint without regard to which one was already written, so a record already
-   in the pod can be the one moved. That is a known limit, closed by the implementation of
-   these rulings.
 
-### What the reference implementation does today
+### Implementations released before this ruling, and one open question
 
-Tier 1, including the id-reuse case and the rule that content-identical claimants share a
-name, is implemented as ruling 1 and the first half of ruling 3 state. Four things are not
-yet, and until they are, a pod written by it holds names these rulings would not mint (which
-ruling 4 keeps valid):
+Implementations released before this ruling may have named section narratives from the
+per-download document id and an import label, hashed the whole element in the id-reuse
+disambiguator, and let the reconciler's identity-collision split move a record already in the
+pod. Names they wrote stay valid under ruling 4; imports from an implementing release follow
+rulings 2, 3 and 5.
 
-- a section narrative is named from its section code, the per-download document id and the
-  import's source-system label, with no digest of the narrative, where ruling 2 names it from
-  the digest and the document set and excludes the label;
-- the id-reuse disambiguator hashes the whole element, where ruling 3 hashes stable clinical
-  fields only;
-- a record without a usable source identifier is named from a curated set of fields per
-  record class before the raw-element digest is reached, and that digest is of the parsed
-  element serialised as JSON with sorted keys rather than of C14N 2.0 output, where the
-  identity section and the 2026-09-05 amendment name the record from a digest of the raw
-  element under C14N 2.0 with trimmed text nodes;
-- the identity-collision split, as ruling 5 records.
+One alignment question stays open, pending a ruling: how a record without a usable source
+identifier is named. The identity section and the 2026-09-05 amendment name it from a digest
+of the raw source element under C14N 2.0 with trimmed text nodes. The reference
+implementation names it from a curated set of fields per record class, reaching a raw-element
+digest only when those are empty, and that digest is of the parsed element serialised as JSON
+with sorted keys. Either the text or the implementation moves to meet the other; which one is
+not decided here.
 
 Conformance gains vectors for each ruling (a re-download with a new document id and the same
-`setId`; a narrative differing only in excluded markup; an id reused with differing content,
-where only a narrative reference pointer or an address changes between downloads) when the
-implementation lands.
+`setId`; a narrative differing only in excluded markup or footnotes; an id reused with
+differing content, where only a narrative reference pointer or an address changes between
+downloads; the same, differing only in status) when the implementation lands.
