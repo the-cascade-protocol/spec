@@ -1,6 +1,6 @@
 # D-CANONICAL-1: Two layers: a source of record that only adds, and a canonical layer that only merges
 
-**Status:** Proposed; direction ratified by Jed Reinitz on 2026-09-05, rulebook open for review; amended 2026-09-05 with the identity and IPS measurements, and 2026-09-09 with the rulings from the spec#38 review (both below)
+**Status:** Ratified by Jed Reinitz on 2026-09-26, every rulebook item ruled; direction ratified 2026-09-05; amended 2026-09-05 with the identity and IPS measurements, 2026-09-09 with the rulings from the spec#38 review, and 2026-09-26 with the rulings on rulebook items 10 and 11 and on item 9, the layer 1 naming rule (all below)
 **Date:** 2026-09-05
 **Proposed by:** Jed Reinitz
 **Prompted by:** the-cascade-protocol/spec#38 (identity is a derived value used as the record's
@@ -48,7 +48,7 @@ spends its effort on the patient, not on reconciliation. The price is that this 
 must be strong enough to carry that weight, which is why the rulebook below is part of the
 decision and not left to implementations.
 
-## The decision (proposed)
+## The decision
 
 A pod holds two layers.
 
@@ -95,7 +95,7 @@ omits a source record has failed at the one thing layer 1 exists to guarantee.
   than in each implementation. The hash of extracted meaning survives as a reconciler
   heuristic and as a rebuildable index. It is no longer a name.
 
-## The rulebook the canonical layer needs (open, to be settled before ratification)
+## The rulebook the canonical layer needs (each item ruled)
 
 1. **Creation, merge, split, retire.** When a canonical record is created from a new source;
    when two canonical records are found to be one; when one is found to be two; how a retired
@@ -145,6 +145,7 @@ omits a source record has failed at the one thing layer 1 exists to guarantee.
 9. **The layer 1 naming rule**, stated per input format, as decisions the amendment below
    grounds: the ordered tiers, the canonicalisation, the exclusion list, the document context,
    and what happens when a source identifier is not unique within its own document.
+   Ruled 2026-09-26 (amendment on item 9, at the end).
 10. **Section-level absence.** IPS states "no known allergies" as a property of a section,
     while `cascade:dataAbsentReason` is a property of an element. The canonical layer needs an
     explicit assertion for "none known, checked" per class, made by a source or a person,
@@ -427,3 +428,116 @@ Proposed. The rulings are recorded here; the item text above is unchanged apart 
    window closes. Properties still declared with one of the four as `rdfs:domain` are
    dropped from that domain or retired before removal, as clinical v1.16 and v1.18 did for
    others. Readers accept both spellings until the window closes.
+
+## Amendment 2026-09-26: rulebook item 9 ruled, and the decision ratified
+
+The 2026-09-05 amendment asked for its C-CDA naming decisions to be re-measured on a real
+corpus before they became normative text. That measurement has now been run, and the
+maintainer ruled item 9 on 2026-09-26. With it every rulebook item is ruled (items 1, 3, 4, 5
+and 8 as amended on 2026-09-09, items 2, 6 and 7 as written, items 10 and 11 by the amendment
+above, item 9 here), and the decision is ratified. The rulings are recorded here; the item
+text above is unchanged apart from a pointer.
+
+### The measurement
+
+Inputs: two C-CDA CCD exports from each of two US health systems, downloaded weeks to months
+apart by the record's owner, run through the reference implementation (`cascade-cli` 0.23.0)
+with the import label held equal so that it could not be a factor. Counts only; no record
+content was printed or stored.
+
+- **Same system, seven weeks apart.** 1,016 of 1,424 records kept their name (71 percent).
+  Every record whose source identifier was unique within its document kept it: lab results
+  580 of 580, vital signs 116 of 116, immunizations 25 of 25, conditions 5 of 5, and the
+  patient profile.
+- **Section narratives: 0 of 385 kept their name.** Every download carries new document
+  identifiers (0 shared), while 25 of 26 documents share a `setId` whose `versionNumber` is
+  incremented on each download. The narrative markup also moves between downloads: footnote
+  text, and the ids on table rows and cells.
+- **Source identifiers reused within one document: 344 records carried one, and 22 of them
+  were renamed.** What the disambiguator hashed included narrative reference pointers
+  (`text/reference/@value`, `originalText/reference/@value`), nested encounter detail and an
+  author organisation's address, all of which move between downloads.
+- **Same system, three months apart.** The same pattern at smaller scale: 0 of 51 narratives
+  kept their name, and some records named through the disambiguator (encounters and
+  medications) were renamed, while labs, vitals, immunizations and allergies were stable.
+- **Across the two systems.** Zero shared record identifiers in every cross pair, including
+  immunizations present in both. Two systems' records of one real event are separate source
+  records by construction, and only the canonical layer's key-field merge brings them
+  together.
+- **The reconciler's identity-collision split** did not fire: simulating a pod import of the
+  later download over the earlier one, all 1,352 names from the first import survived, with
+  zero splits.
+
+### The rulings
+
+1. **Tier 1 is the source's own identifier, as the HL7 instance identifier, plus the record
+   class.** The identifier is `root:extension`, or the root alone when there is no extension;
+   when an element carries several `<id>` elements, the first in document order with a usable
+   root or extension is used. The name is minted from `{class}:{identifier}`, where the class
+   is the record's identity type (every importer mints medications under one shared type, so
+   a C-CDA and a FHIR record of one prescription agree). The root OID identifies the
+   assigning authority, and that is how the source system enters the name. This reconciles the
+   identity section's "the source system (`cascade:sourceIdentity`), the record class and that
+   identifier": for C-CDA, source identity is carried by the identifier's root, and
+   `cascade:sourceIdentity` is not an input to the name. Measured: every record with a unique
+   source identifier kept its name across downloads. The consequence is intended: a record
+   one organisation forwards with the original organisation's identifiers keeps the same
+   name, and a record whose identifiers were re-issued is a second source record, merged in
+   layer 2.
+2. **The document context for a content-named record is the document set.** A section
+   narrative has no identifier of its own, so it is named from a digest of the section's
+   narrative under the C-CDA canonicalisation, with its section code and the enclosing
+   document's `ClinicalDocument/setId` as context, falling back to the document's `id` only
+   when there is no `setId`. An import label never participates. The narrative
+   canonicalisation's exclusion list gains the narrative-internal element ids (`@ID` on
+   `table`, `tr`, `td`, `th`, `content`, `paragraph` and `footnote`), footnote numbering and
+   `styleCode`. A re-download of an unchanged narrative therefore names the same record, and
+   a narrative whose text changed between versions is a new record, added beside the old one,
+   never written over it. Measured: 0 of 385 narratives kept their name while the per-download
+   document id was the context.
+3. **When a source identifier is not unique within its own document, the disambiguator
+   hashes stable clinical fields only.** The case is an identifier claimed by two or more
+   elements of one document whose content differs; claimants with identical content are one
+   act restated and share one name. Each differing claimant is named
+   `{class}:{identifier}#{digest}`, and the digest covers stable clinical fields (the code,
+   the effective time, the value and fields like them), never narrative reference pointers
+   (`*/reference/@value`) and never author or organisation addresses. Measured: 22 of 344
+   such records were renamed between downloads under a disambiguator that hashed the whole
+   element.
+4. **Existing names are never renamed.** Records named under the earlier behaviour keep their
+   names. Names under these rulings apply to imports from the implementing release on. The
+   first import after that release adds one more copy of each affected record (every section
+   narrative, and each record whose disambiguator changes), and the copies are reconciled by
+   a machine-authored sameness judgement, as ruling 2 of the 2026-09-09 amendment and
+   rulebook item 5 provide, never by renaming or deleting either copy.
+5. **A split never changes a layer 1 name.** The reconciler's identity-collision split, a
+   feared source of layer 1 renames, did not occur on the measured data. The rule is stated
+   regardless: a split must never change the name of a record already written to layer 1.
+   The reference implementation does not meet this yet: its split ranks the colliding records
+   by content fingerprint without regard to which one was already written, so a record already
+   in the pod can be the one moved. That is a known limit, closed by the implementation of
+   these rulings.
+
+### What the reference implementation does today
+
+Tier 1, including the id-reuse case and the rule that content-identical claimants share a
+name, is implemented as ruling 1 and the first half of ruling 3 state. Four things are not
+yet, and until they are, a pod written by it holds names these rulings would not mint (which
+ruling 4 keeps valid):
+
+- a section narrative is named from its section code, the per-download document id and the
+  import's source-system label, with no digest of the narrative, where ruling 2 names it from
+  the digest and the document set and excludes the label;
+- the id-reuse disambiguator hashes the whole element, where ruling 3 hashes stable clinical
+  fields only;
+- a record without a usable source identifier is named from a curated set of fields per
+  record class before the raw-element digest is reached, and that digest is of the parsed
+  element serialised as JSON with sorted keys rather than of C14N 2.0 output, where the
+  identity section and the 2026-09-05 amendment name the record from a digest of the raw
+  element under C14N 2.0 with trimmed text nodes;
+- the identity-collision split, as ruling 5 records.
+
+Conformance gains vectors for each ruling (a re-download with a new document id and the same
+`setId`; a narrative differing only in excluded markup; an id reused with differing content,
+where only a narrative reference pointer or an address changes between downloads) when the
+implementation lands.
