@@ -6,6 +6,22 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-26: the deferred wellness metrics, health v2.12
+
+`health` goes 2.11 to 2.12 and `clinical` 1.20 to 1.21; `health.shapes.ttl` goes 1.9 to 1.10; `contexts/v1/health.jsonld` and the merged `contexts/v1/cascade.jsonld` gain `isMainSleep` and `basalEnergyKcal`; `serialization/index.md` goes 2.3 to 2.4 (Section 12). New per-vocabulary changelog [`ontologies/health/CHANGELOG.md`](ontologies/health/CHANGELOG.md). The four metrics the Apple Health importer deferred, each checked against the ratified standards (IEEE 1752.1, FHIR R4 vital signs, LOINC) and the platforms' published models before it is written.
+
+**Sleep.** New `health:isMainSleep` (IEEE 1752.1 `is_main_sleep`), source-supplied only. `health:SleepSession` states the rules: a night is dated by the day of waking in the session's recorded zone, else the pod's `cascade:dayZone`; naps are separate sessions; a source's own sessions are never regrouped; Apple stage segments are grouped at a one-hour gap (Fitbit's published rule, the only one found) and retained as the session's samples. The grouping rule and version are recorded as `cascade:version` on the session's generating activity, the form the computed daily aggregates already use, rather than on `health:algorithmVersion` (the source's own algorithm) or `sosa:usedProcedure` (how an observation is made).
+
+**Blood pressure.** No new term: `health:BloodPressureReading` already holds one paired reading per record (FHIR panel 85354-9, components 8480-6 and 8462-4). The class now says so, and says an average is a view, coded LOINC 96607-7 if ever stored. `health:BloodPressureReadingShape` reports a node carrying one component without the other.
+
+**VO2 max.** `health:vo2Max` loses LOINC 60842-2 (oxygen consumption in mL/min, not VO2 max per kilogram), with no substitute. Estimated versus measured is a method: `clinical:measurementMethod` (FHIR `Observation.method`) is reused, clinical v1.21 drops its `rdfs:domain clinical:VitalSign`, and `health:MeasurementMethodShape` binds it on wellness readings to the source method values of HealthKit, Health Connect and Google.
+
+**Basal energy.** New `health:basalEnergyKcal` on `health:DailyActivitySnapshot`, because no LOINC code separates basal from active energy over an interval. `health:activeEnergyBurnedKcal`'s 41981-2 annotation is corrected to say the code means calories burned of any kind.
+
+**Also.** `health:sourceIdSpace`'s domain widens to the three daily aggregate classes, which the importer writes it on; its closed value set is unchanged.
+
+**Compatibility.** Additive. Nothing that validated under health v2.11 or clinical v1.20 stops validating; every new finding is at `sh:Warning`. The two shapes that would have made an existing history term's range a newly shaped class target a predicate instead, so the context-agreement baseline does not grow.
+
 ## 2026-09-26: the pod identifier, core v3.11
 
 `core` goes 3.10 to 3.11, `core.shapes.ttl` 1.9 to 1.10, and `pod-structure.md` 1.7 to 1.8; `contexts/v1/core.jsonld` and the merged `contexts/v1/cascade.jsonld` gain `podIdentifier`. Records D-POD-ID-1 (`decisions/2026-09-26-pod-identifier.md`), the outcome agreed on spec#63: one random `urn:uuid` per pod, minted at creation, kept owner-only in `/profile/extended.ttl`, never exported, and used as the naming subject wherever a naming rule includes a pod subject. Settled now because the wellness importer is the first code to name records from a pod subject, and names are never re-minted.

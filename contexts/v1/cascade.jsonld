@@ -595,6 +595,14 @@
       "@id": "health:activeEnergyBurnedKcal",
       "@type": "xsd:decimal"
     },
+    "basalEnergyKcal": {
+      "@id": "health:basalEnergyKcal",
+      "@type": "xsd:decimal"
+    },
+    "isMainSleep": {
+      "@id": "health:isMainSleep",
+      "@type": "xsd:boolean"
+    },
     "exerciseMinutesWeekly": {
       "@id": "health:exerciseMinutesWeekly",
       "@type": "xsd:integer"

@@ -1,10 +1,12 @@
 # Cascade Protocol Serialization Specification
 
-**Version:** 2.3
-**Date:** 2026-09-24
+**Version:** 2.4
+**Date:** 2026-09-26
 **Status:** Descriptive with normative examples
 **Organization:** Cascade Agentic Labs LLC
-**Vocabulary versions:** core v3.10, health v2.10 (`health.shapes.ttl` v1.8), clinical v1.19, coverage v1.6
+**Vocabulary versions:** core v3.11, health v2.12 (`health.shapes.ttl` v1.10), clinical v1.21, coverage v1.6
+
+> **v2.4 (2026-09-26).** Section 12 is brought to health v2.12. Blood pressure is stated as one paired reading per record, with averages as views (Section 12.4, with the flat spelling shown beside the FHIR panel). Daily activity gains `health:basalEnergyKcal` and every daily aggregate example states `health:sourceIdSpace` (Section 12.5). Sleep sessions state how a night is dated, that naps are separate and that a source's own sessions are never regrouped, and show an Apple session assembled by the one-hour grouping rule, recorded as its generating activity's `cascade:version`, and a source-flagged nap with `health:isMainSleep` (Section 12.6.3). VO2 max readings carry `clinical:measurementMethod`, and `health:vo2Max` no longer carries LOINC 60842-2 (Section 12.8.3). The 12.10 shape tables gain the shapes of `health.shapes.ttl` v1.10.
 
 > **v2.3 (2026-09-24).** Section 12 is brought to health v2.10 and core v3.10. Every daily aggregate example now states its UTC interval (`health:periodStart`, `health:periodEnd`), the statistic its value is (`cascade:statistic`), the zone its day was cut in (`health:timeZone`) and the device that produced it (`health:device`). New worked examples: a `health:Device` (Section 12.12), a `health:Workout` with a route held as a `cascade:Attachment` (Section 12.13), and a `health:SleepSession` with stage totals and a source-supplied score (Section 12.6.3). Section 12.5 states where each activity value comes from (Apple's `ActivitySummary` versus sample aggregation). The "latest reading" convenience properties are shown with their declared number meaning (`health:bodyMass 91.2`), the object-valued use of those names is removed from every example, and "latest" is defined as the newest `*History` entry (Section 12.2; a follow-up is filed). `health:sleepQuality` is deprecated and no longer appears in examples.
 
@@ -1942,6 +1944,10 @@ Heart rate data is stored as `health:HeartRateData` with separate history lists 
 
 Device blood pressure data uses `health:BloodPressureData` with the `health:bloodPressureHistory` list. Each reading is a `fhir:Observation` with two `fhir:component` entries for systolic and diastolic values.
 
+**One paired reading per record (health v2.12).** A record is one reading: a systolic and a diastolic value measured together, at the reading's exact time, by one device, as FHIR's vital signs blood pressure profile (panel LOINC 85354-9, components 8480-6 and 8462-4, https://hl7.org/fhir/R4/bp.html), Open mHealth, HealthKit's blood pressure correlation and Health Connect's `BloodPressureRecord` all model it. A reading is never bucketed by day. The same reading can be written flat, with `health:systolic` and `health:diastolic` on the record (12.4.2); `health:BloodPressureReadingShape` then reports, at `sh:Warning`, a node that carries one without the other or more than one of either. From an Apple Health export a reading is built from the `<Correlation>`, never also from the systolic and diastolic records the export repeats at top level.
+
+**An average is a view, not a reading.** A clinical home average (a 7-day home protocol of morning and evening readings, for example) depends on its protocol: which days count, whether the first day is dropped, whether morning and evening are averaged separately. It is computed over the readings, stating its protocol (`health:BPStatistics`), and never written as a reading. A mean that is stored or exported is coded LOINC 96607-7 (blood pressure panel, mean systolic and mean diastolic), never 85354-9.
+
 #### 12.4.1 Turtle Example -- Blood Pressure
 
 ```turtle
@@ -1979,6 +1985,25 @@ Device blood pressure data uses `health:BloodPressureData` with the `health:bloo
     prov:wasGeneratedBy [ a prov:Activity ; prov:label "Omron Evolv" ] .
 ```
 
+#### 12.4.2 Turtle Example -- Blood Pressure, Flat
+
+```turtle
+@prefix cascade: <https://ns.cascadeprotocol.org/core/v1#> .
+@prefix health:  <https://ns.cascadeprotocol.org/health/v1#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+
+# The same kind of reading written flat: one systolic and one diastolic value on
+# one record, at the reading's exact time. An evening reading the same day is a
+# second record, never a second value here.
+<urn:uuid:9e2d4f10-0000-5000-8000-000000000031> a health:BloodPressureReading ;
+    health:systolic "128"^^xsd:double ;
+    health:diastolic "79"^^xsd:double ;
+    health:date "2026-01-20T19:45:00Z"^^xsd:dateTime ;
+    health:device <urn:uuid:4d2e8f60-0000-5000-8000-000000000072> ;
+    prov:wasGeneratedBy [ a prov:Activity ; prov:label "Omron Evolv" ] .
+```
+
 ### 12.5 Activity
 
 Activity data uses `health:ActivityData` with the `health:dailyActivityHistory` list. Each snapshot captures steps, active energy, exercise minutes, and stand hours. Workouts live on the same container, in `health:workoutHistory` (Section 12.13).
@@ -1994,9 +2019,11 @@ Activity data uses `health:ActivityData` with the `health:dailyActivityHistory` 
 | Statistic | `cascade:statistic` | `xsd:string` | `"sum"` for every value on a snapshot (core v3.10) |
 | Steps | `health:steps` | `xsd:integer` | Total steps for the day, on a per-device snapshot |
 | Active Energy | `health:activeEnergyKcal` | `xsd:decimal` | Active calories burned (kcal), on the ActivitySummary snapshot only |
+| Basal Energy | `health:basalEnergyKcal` | `xsd:decimal` | Basal (resting) energy burned over the day (kcal), on a per-device snapshot, summed from that device's basal energy samples (health v2.12). Energy, never a basal metabolic rate; no LOINC code separates it from active energy, so the property says which |
 | Exercise Minutes | `health:exerciseMinutes` | `xsd:integer` | Minutes of exercise, on the ActivitySummary snapshot only |
 | Stand Hours | `health:standHours` | `xsd:integer` | Hours with standing activity, on the ActivitySummary snapshot only |
 | Device | `health:device` | (URI) | The device, on a per-device snapshot; absent on the ActivitySummary snapshot |
+| Id space | `health:sourceIdSpace` | `xsd:string` | The id space of the source (`healthkit`, `google-health`, `fitbit`), written on every daily aggregate since the name seed carries it (health v2.12) |
 | Provenance | `prov:wasGeneratedBy` | (Blank node) | The source: a device, or the ActivitySummary |
 
 #### 12.5.2 Turtle Example -- Activity
@@ -2007,13 +2034,15 @@ Activity data uses `health:ActivityData` with the `health:dailyActivityHistory` 
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
-# One day, 2026-01-20, from two sources, so two records (one per source and day).
-# The ActivitySummary is a source in its own right and carries the ring triple; the
-# watch's snapshot carries only the steps aggregated from its own step samples.
+# One day, 2026-01-20, from two sources: the ActivitySummary, a source in its own
+# right that carries the ring triple, and the watch. The watch's values are
+# aggregated from its own samples, one record per metric: its steps, and its basal
+# energy (health v2.12), which ActivitySummary does not carry.
 <#activity> a health:ActivityData ;
     health:dailyActivityHistory (
         <urn:uuid:3a5c8d40-0000-5000-8000-000000000040>
         <urn:uuid:3a5c8d40-0000-5000-8000-000000000041>
+        <urn:uuid:3a5c8d40-0000-5000-8000-000000000042>
     ) .
 
 <urn:uuid:3a5c8d40-0000-5000-8000-000000000040> a health:DailyActivitySnapshot ;
@@ -2025,6 +2054,7 @@ Activity data uses `health:ActivityData` with the `health:dailyActivityHistory` 
     health:activeEnergyKcal "312"^^xsd:decimal ;
     health:exerciseMinutes "22"^^xsd:integer ;
     health:standHours "10"^^xsd:integer ;
+    health:sourceIdSpace "healthkit" ;
     prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Health ActivitySummary" ] .
 
 <urn:uuid:3a5c8d40-0000-5000-8000-000000000041> a health:DailyActivitySnapshot ;
@@ -2034,6 +2064,18 @@ Activity data uses `health:ActivityData` with the `health:dailyActivityHistory` 
     health:timeZone "America/Los_Angeles" ;
     cascade:statistic "sum" ;
     health:steps "7842"^^xsd:integer ;
+    health:sourceIdSpace "healthkit" ;
+    health:device <urn:uuid:4d2e8f60-0000-5000-8000-000000000070> ;
+    prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] .
+
+<urn:uuid:3a5c8d40-0000-5000-8000-000000000042> a health:DailyActivitySnapshot ;
+    cascade:date "2026-01-20T08:00:00Z"^^xsd:dateTime ;
+    health:periodStart "2026-01-20T08:00:00Z"^^xsd:dateTime ;
+    health:periodEnd "2026-01-21T08:00:00Z"^^xsd:dateTime ;
+    health:timeZone "America/Los_Angeles" ;
+    cascade:statistic "sum" ;
+    health:basalEnergyKcal "1684.2"^^xsd:decimal ;
+    health:sourceIdSpace "healthkit" ;
     health:device <urn:uuid:4d2e8f60-0000-5000-8000-000000000070> ;
     prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] .
 ```
@@ -2114,6 +2156,11 @@ A `health:SleepSession` is one sleep episode as one source recorded it: the inte
 | Zone | `health:timeZone` or `health:utcOffset` | `xsd:string` | Apple `HKTimeZone` (a name); Google `utc_offset` (an offset only) | |
 | Source id | `health:sourceRecordId` | `xsd:string` | The source's id verbatim, no prefix; always a string | |
 | Id space | `health:sourceIdSpace` | `xsd:string` | `healthkit`, `google-health` or `fitbit` (a closed set per release) | |
+| Main sleep | `health:isMainSleep` | `xsd:boolean` | Fitbit `isMainSleep`; WHOOP `nap`, negated. Only where the source supplies it (health v2.12) | IEEE 1752.1 `is_main_sleep` |
+
+**How a night is dated, and what a session is (health v2.12).** A session belongs to the local date on which it ends, the day of waking (Fitbit `dateOfSleep`, Garmin `calendarDate` and Oura's sleep day agree), read in the session's recorded zone: `health:timeZone` where the source names one, else `health:utcOffset`, else the pod's `cascade:dayZone`. Naps are separate sessions, never merged into the night, and `health:isMainSleep` is written only where the source says which is which. A session a source already cut (Google Health, Fitbit, Health Connect) is written as the source cut it and is never regrouped.
+
+**Apple records no session, only stage segments,** so an Apple session is assembled by a published rule: segments from one source belong to one session until a gap of one hour or more, a run of `awake` lasting one hour or more counting as such a gap (Fitbit's published threshold, the only one found). Stage totals sum the segments in the session, excluding in-bed, which overlaps them. The session is `prov:wasGeneratedBy` one activity whose `cascade:version` names the rule and its version (`"{rule}/{version}"`, the form the computed daily aggregates carry), and it is `prov:wasDerivedFrom` its stage segments, which are retained in the pod as its samples and are not modelled as triples. It carries no `health:isMainSleep`: Apple supplies none, and the longest session of a date is a derived view. `health:algorithmVersion` stays the source's own algorithm, verbatim.
 
 **Two sessions for one night are two records.** The Google Health format keeps a `sleep_session_v1` and a `sleep_session_v2` record for most nights (101 of 121 measured), each with its own id, stages and score. Both are what the source said; `health:algorithmVersion` tells them apart, and picking one is a reader's or layer 2's rule. A Fitbit `+00:00` offset is a placeholder and is not written.
 
@@ -2124,7 +2171,10 @@ A `health:SleepSession` is one sleep episode as one source recorded it: the inte
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
 # One night from the Apple Watch, staged by Apple's algorithm, dated by the day it
-# ends in its own HKTimeZone. No score: Apple supplies none.
+# ends in its own HKTimeZone. No score: Apple supplies none. Apple records only
+# stage segments, so the session was assembled by the one-hour grouping rule: the
+# generating activity names the rule and version, and the retained segments are
+# what it is derived from. No health:isMainSleep: Apple supplies no such flag.
 <urn:uuid:6b8f0c70-0000-5000-8000-000000000060> a health:SleepSession ;
     health:periodStart "2026-01-20T06:48:00Z"^^xsd:dateTime ;
     health:periodEnd "2026-01-20T14:30:00Z"^^xsd:dateTime ;
@@ -2134,9 +2184,13 @@ A `health:SleepSession` is one sleep episode as one source recorded it: the inte
     health:lightSleepMinutes "238"^^xsd:decimal ;
     health:deepSleepMinutes "82"^^xsd:decimal ;
     health:remSleepMinutes "112"^^xsd:decimal ;
+    health:sourceIdSpace "healthkit" ;
     health:device <urn:uuid:4d2e8f60-0000-5000-8000-000000000070> ;
     cascade:dataProvenance cascade:DeviceGenerated ;
-    prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch" ] .
+    prov:wasDerivedFrom <urn:uuid:6b8f0c70-0000-5000-8000-000000000069> ;   # the retained stage segments
+    prov:wasGeneratedBy [ a prov:Activity ;
+        prov:label "Apple Health sleep session grouping (one-hour gap)" ;
+        cascade:version "apple-health-sleep-session/1" ] .
 
 # The same kind of night from a Fitbit, in the Google Health format: named from the
 # source's sleep_id (D-CANONICAL-1 tier 1, kept as a string), with an offset but no
@@ -2153,6 +2207,22 @@ A `health:SleepSession` is one sleep episode as one source recorded it: the inte
     health:deepSleepMinutes "66"^^xsd:decimal ;
     health:remSleepMinutes "89.5"^^xsd:decimal ;
     health:sleepScore "81"^^xsd:decimal ;
+    health:device <urn:uuid:4d2e8f60-0000-5000-8000-000000000071> ;
+    cascade:dataProvenance cascade:DeviceGenerated .
+
+# An afternoon nap from the legacy Fitbit export: its own session, named from the
+# source's logId, which the source flags as not the main sleep. Dated by the day it
+# ends, like any session; never merged into the night before.
+<urn:uuid:6b8f0c70-0000-5000-8000-000000000062> a health:SleepSession ;
+    health:sourceRecordId "38112764012" ;
+    health:sourceIdSpace "fitbit" ;
+    health:periodStart "2026-07-02T21:05:00Z"^^xsd:dateTime ;
+    health:periodEnd "2026-07-02T21:52:00Z"^^xsd:dateTime ;
+    health:utcOffset "-07:00" ;
+    health:isMainSleep false ;
+    health:asleepUnspecifiedMinutes "41"^^xsd:decimal ;
+    health:restlessMinutes "4"^^xsd:decimal ;
+    health:awakeMinutes "2"^^xsd:decimal ;
     health:device <urn:uuid:4d2e8f60-0000-5000-8000-000000000071> ;
     cascade:dataProvenance cascade:DeviceGenerated .
 ```
@@ -2252,6 +2322,42 @@ VO2 Max data uses a `health:VO2MaxStatistics` container within the body measurem
         health:vo2MaxValue "36.8"^^xsd:double ;
         health:vo2TrendDirection "stable"
     ] .
+```
+
+#### 12.8.3 VO2 Max Readings and Their Method (health v2.12)
+
+Each VO2 max estimate is its own reading: an entry of `health:vo2MaxHistory` (`health:VitalSignReading`) at its instant, or, for a source's daily series, a `health:DailyVitalReading`. How the value was obtained is a method, not a code, carried by `clinical:measurementMethod` (FHIR `Observation.method`; reused rather than given a `health:` spelling, and its domain dropped in clinical v1.21). The value is the source's own method, verbatim, under a source namespace, from the closed set `health:MeasurementMethodShape` binds at `sh:Warning`:
+
+| Value | Source | Measured or estimated |
+|---|---|---|
+| `healthkit:maxExercise` | HealthKit `HKVO2MaxTestType` | Measured |
+| `healthkit:predictionSubMaxExercise`, `healthkit:predictionNonExercise`, `healthkit:predictionStepTest` | HealthKit `HKVO2MaxTestType` | Estimated |
+| `health-connect:metabolic_cart` | Health Connect `Vo2MaxRecord` | Measured |
+| `health-connect:heart_rate_ratio`, `health-connect:cooper_test`, `health-connect:multistage_fitness_test`, `health-connect:rockport_fitness_test` | Health Connect `Vo2MaxRecord` | Estimated |
+| `health-connect:other` | Health Connect `Vo2MaxRecord` | Not stated |
+| `google-health:daily_vo2_max`, `google-health:demographic_vo2max` | Google Health export, two daily series | Estimated |
+
+Google's two series are two methods, so they are two records per day, never merged. A reading with no method says nothing about how it was obtained and is not assumed measured. A Fitbit cardio fitness range is two records (`cascade:statistic` `lowerBound` and `upperBound`), never a midpoint. `health:vo2Max` no longer carries LOINC 60842-2, which is oxygen consumption in mL/min, not VO2 max per kilogram; no code is substituted.
+
+```turtle
+@prefix cascade:  <https://ns.cascadeprotocol.org/core/v1#> .
+@prefix health:   <https://ns.cascadeprotocol.org/health/v1#> .
+@prefix clinical: <https://ns.cascadeprotocol.org/clinical/v1#> .
+@prefix fhir:     <http://hl7.org/fhir/> .
+@prefix sct:      <http://snomed.info/sct/> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov:     <http://www.w3.org/ns/prov#> .
+
+# One Apple Watch estimate after an outdoor walk, at its own instant, with the
+# method HealthKit recorded (a submaximal prediction, so an estimate).
+<urn:uuid:7c3a9e20-0000-5000-8000-000000000090> a health:VitalSignReading ;
+    fhir:code sct:251880009 ;                       # Aerobic capacity
+    health:value "41.7"^^xsd:double ;
+    health:unit "mL/kg/min" ;
+    health:date "2026-02-10T01:12:00Z"^^xsd:dateTime ;
+    clinical:measurementMethod "healthkit:predictionSubMaxExercise" ;
+    health:device <urn:uuid:4d2e8f60-0000-5000-8000-000000000070> ;
+    prov:wasGeneratedBy [ a prov:Activity ; cascade:sourceType "healthKit" ; prov:label "Apple Watch Series 9" ] .
 ```
 
 ### 12.9 Body Measurements
@@ -2368,6 +2474,7 @@ The `health.shapes.ttl` file provides shapes for wellness statistical summaries:
 | `cascade:statistic` | `sh:minCount 1` (value set checked by `cascade:StatisticShape`, core) | Warning |
 | `health:timeZone` | `sh:maxCount 1`, IANA zone name pattern | Warning |
 | `health:device` | `sh:nodeKind sh:IRI` | Warning |
+| `health:sourceIdSpace` | `sh:maxCount 1`, `sh:in ("healthkit" "google-health" "fitbit")` (shapes v1.10) | Warning |
 
 A daily aggregate written before health v2.10 carries none of these, so it gains Warnings and loses nothing.
 
@@ -2409,6 +2516,17 @@ A daily aggregate written before health v2.10 carries none of these, so it gains
 | `health:deviceName` | `sh:minCount 1`, `sh:maxCount 1`, `xsd:string`, non-empty | Violation |
 | `health:deviceModel`, `health:hardwareVersion`, `health:serialNumber` | `sh:maxCount 1`, `xsd:string` | Violation |
 | `health:deviceManufacturer`, `health:softwareVersion` | `xsd:string`, repeatable | Violation |
+
+**Shapes v1.10 (health v2.12)**, every constraint at Warning:
+
+| Shape | Reaches | Property | Constraint |
+|---|---|---|---|
+| `health:SleepSessionSoftShape` | `health:SleepSession` | `health:isMainSleep` | `sh:maxCount 1`, `xsd:boolean` |
+| `health:DailyActivitySoftShape` | `health:DailyActivitySnapshot` | `health:basalEnergyKcal` | `sh:maxCount 1`, `xsd:decimal`, `>= 0` |
+| `health:BloodPressureReadingShape` | subjects of `health:systolic` or `health:diastolic` | `health:systolic`, `health:diastolic` | each `sh:minCount 1`, `sh:maxCount 1`, `xsd:double`: one paired reading per record |
+| `health:MeasurementMethodShape` | subjects of `clinical:measurementMethod` that are not a `clinical:VitalSign` | `clinical:measurementMethod` | `sh:maxCount 1`, `sh:in` the twelve values of Section 12.8.3 |
+
+The last two target a predicate rather than a class, so they reach exactly the nodes that carry the fact, and a clinical vital sign's free-text method is not constrained.
 
 **`health:SleepQualitySpellingShape`** (shapes v1.8): any use of the deprecated `health:sleepQuality` is reported at Warning. The Violation-severity value constraint on `health:DailySleepSnapshotShape` is unchanged.
 
@@ -2990,3 +3108,4 @@ The following data types are not yet covered and will be addressed in subsequent
 | 2.1 | 2026-08-03 | Published on cascadeprotocol.org only (site commit `2f953d9`) and never merged into `spec/`, so the two copies diverged in both directions. Migrated medications to `clinical:Medication` / `clinical:drugName`; replaced the `clinical:*Shape` tables for conditions, allergies, lab results and immunizations with the `health:*RecordShape` tables of `health.shapes.ttl` v1.2; added the family history shape table, the coverage deprecation note, and two Section 12 notes (blood-pressure readings untyped; container and daily snapshot shapes). |
 | 2.2 | 2026-09-23 | Union of 2.0 (as since amended in `spec/`, including the Section 1.7 entailment note) and 2.1. The 2.1 changes outside Section 12 are ported with every constraint table re-checked against `health.shapes.ttl` v1.7, `clinical.shapes.ttl` (clinical v1.19) and `coverage.shapes.ttl` (coverage v1.6) and corrected where the shapes moved after August; medication dates move to `clinical:startDate` / `clinical:endDate`. The two 2.1 Section 12 notes are deferred until the pending Section 12 revision for wellness reading identity lands, and need re-checking against the shapes before they are ported: `health:DailyVitalReadingShape` requires a timestamp as either `cascade:date` or `health:date`, not `cascade:date` alone as 2.1 stated. From 2.2 the site copy is synced byte-for-byte from `spec/`. |
 | 2.3 | 2026-09-24 | Section 12 brought to health v2.10 and core v3.10: the UTC interval, `cascade:statistic`, the cut zone and the device link on every daily aggregate example; new worked examples for `health:Device` (12.12), `health:Workout` with a route attachment (12.13) and `health:SleepSession` with stage totals and a source-supplied score (12.6.3); the `ActivitySummary` provenance note in 12.5; the "latest reading" properties shown as the scalars `health.ttl` declares, the object-valued use of those names removed, and "latest" defined as the newest `*History` entry (12.2); `health:sleepQuality` deprecated and removed from the examples; the undeclared `health:height` and `health:computedBMI` in 12.9 corrected to `health:bodyHeight` and `health:bodyMassIndex`; the 12.10 shape tables extended with the six shapes of `health.shapes.ttl` v1.8. The two 2.1 Section 12 notes remain unported. |
+| 2.4 | 2026-09-26 | Section 12 brought to health v2.12 and clinical v1.21: blood pressure as one paired reading per record, averages as views coded 96607-7, and a flat example (12.4, 12.4.2); `health:basalEnergyKcal` and `health:sourceIdSpace` on the daily activity example (12.5); sleep-session dating, naps, never regrouping a source's sessions, the Apple one-hour grouping rule recorded as `cascade:version` on the generating activity, retained stage segments, and `health:isMainSleep` (12.6.3); VO2 max readings with `clinical:measurementMethod` and the removal of LOINC 60842-2 (12.8.3); the 12.10 tables extended with the shapes of `health.shapes.ttl` v1.10. |
