@@ -1067,6 +1067,43 @@ newest `*History` entry instead.
 
 ---
 
+## Pending batch: health v2.12 / clinical v1.21 (authored 2026-09-26)
+
+The deferred wellness metrics. Tags `vocab/health-v2.12` and
+`vocab/clinical-v1.21` at merge. Additive; every new finding is at
+`sh:Warning`. See `CHANGELOG.md` and `ontologies/health/CHANGELOG.md`.
+
+**What was authored:**
+
+- `health` 2.11 to 2.12: `health:isMainSleep`, `health:basalEnergyKcal`;
+  `health:sourceIdSpace` domain widened to the daily aggregates; LOINC
+  60842-2 removed from `health:vo2Max`; the 41981-2 annotation on
+  `health:activeEnergyBurnedKcal` corrected; session, blood pressure and VO2
+  max rules stated in comments.
+- `clinical` 1.20 to 1.21: `clinical:measurementMethod` loses its
+  `rdfs:domain`.
+- `health.shapes.ttl` 1.10: four new Warning shapes and one new property
+  shape; contexts gain `isMainSleep` and `basalEnergyKcal`;
+  `serialization/index.md` 2.4.
+
+**Steps 2 to 7, pending:**
+
+- [ ] `cascadeprotocol.org`: `scripts/sync-from-spec.sh`, then the health and
+      clinical HTML pages and `cascade-protocol-schemas.md`.
+- [ ] `conformance`: fixtures for the four new shapes (paired and unpaired
+      blood pressure, a method value in and out of the set, a clinical vital
+      sign's free-text method passing), tag.
+- [ ] `cascade-cli`: `scripts/sync-shapes-from-spec.sh`, `VOCAB_VERSIONS`.
+- [ ] `sdk-typescript`, `sdk-python`: the two new predicates.
+- [ ] `cascade-agent`: query patterns for sleep sessions (main sleep, naps),
+      basal energy, and VO2 max method.
+
+**MIGRATION.** Nothing stored changes meaning. A reader that relied on
+`health:vo2Max`'s LOINC annotation, or read 41981-2 as "active", should read
+the property instead.
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred

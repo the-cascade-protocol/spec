@@ -3,8 +3,8 @@
 # as they implement support for each vocabulary version.
 # Format: {vocab}={major}.{minor}
 core=3.11
-health=2.11
-clinical=1.20
+health=2.12
+clinical=1.21
 coverage=1.6
 checkup=3.3
 pots=1.4
