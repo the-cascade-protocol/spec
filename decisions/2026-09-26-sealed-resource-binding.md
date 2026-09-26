@@ -1,8 +1,8 @@
 # D-SEAL-1: Bind each sealed resource to its path, and say what rollback protection a Pod can have
 
-**Status:** Proposed. Not normative. Nothing here changes the format in [`pod-encryption.md`](../pod-encryption.md) until a maintainer rules on the options below and a revision of that document adopts them.
+**Status:** Ratified by Jed Reinitz on 2026-09-26: option 1 adopted, option 2 accepted in principle, option 3 not planned (see the ruling at the end). Not yet normative: nothing here changes the format in [`pod-encryption.md`](../pod-encryption.md) until a revision of that document adopts it.
 **Date:** 2026-09-26
-**Decision needed from:** the specification maintainer (Jed Reinitz)
+**Ruled by:** the specification maintainer (Jed Reinitz), 2026-09-26
 **Prompted by:** a security review of both implementations of the Pod encryption format, which showed that a sealed file copied over another sealed file, or replaced by an older sealed copy of itself, is accepted as authentic by every reader. [`pod-encryption.md`](../pod-encryption.md) section 9.4 states the limitation; this document is the design it points to.
 
 ---
@@ -150,3 +150,19 @@ This is a property of an application, not of the Pod format. The specification c
 - Is a format upgrade that keeps the same secret (A3) acceptable, or must the upgrade wait for the person's next key change?
 - Should the header itself be bound too? Today anyone can edit labels or remove wraps; neither yields a key, but both change what a person is shown. A digest of the header inside the B1 index would detect it; nothing in option 1 does.
 - The ASCII rule for writer-generated names (A1): specify it with option 1, or separately?
+
+---
+
+## Ruling 2026-09-26
+
+Ruled by the specification maintainer, Jed Reinitz.
+
+1. **Option 1 is adopted.** Part A as written: the A1 binding, header version `1.2` with `"resourceFormat": 2` (A2), migration through the re-key (A3), and every implementation changing in the same release with `1.2` fixtures and negative vectors (A4). It becomes normative when a revision of [`pod-encryption.md`](../pod-encryption.md) adopts it.
+2. **Option 2 is accepted in principle.** Part B, the authenticated index, is designed with the multi-writer and second-keyholder work, not now.
+3. **Option 3 is not planned.** The preference is that no Pod state is kept outside the Pod. The specification may describe Part C as optional application behavior with the limits stated there, and must never describe a Pod as rollback-proof. The statement that no format can detect a consistent earlier copy of a whole Pod from the folder alone stays in every revision.
+
+The open questions:
+
+- **A format upgrade that keeps the same secret is allowed**, as A3 describes: implementations SHOULD upgrade when the person next changes the key and MAY offer the upgrade as its own action, and the revision states that such an upgrade is not a revocation.
+- **Binding the header is deferred to Part B**, where a digest of the header in the index detects edits to labels and wraps. Option 1 does not bind the header.
+- **The ASCII rule for writer-generated names is specified with option 1.** Every name a writer generates inside a Pod MUST be ASCII; the revision defines the exact character set. Names that come from outside the Pod (for example an attachment's original file name) are stored as given, and the transport caveat in A1 applies to them.

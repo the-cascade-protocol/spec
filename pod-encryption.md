@@ -437,7 +437,7 @@ Sealed resources use no associated data, so authentication proves only that a fi
 
 and every conforming reader accepts the result as authentic. Nothing in the current format detects either. The header is not authenticated either, but an edit to it cannot yield a different data key without a secret that opens a wrap: it is refused, or fails to open, or opens the same key.
 
-This is a known limitation of this version of the format. A proposal to bind each sealed resource to its path and format version, and an analysis of which kinds of rollback can and cannot be detected without state kept outside the Pod, is in [`decisions/2026-09-26-sealed-resource-binding.md`](decisions/2026-09-26-sealed-resource-binding.md). Until a revision of this specification adopts one, applications SHOULD NOT present an encrypted Pod's contents as tamper-evident against someone who can write to its folder.
+This is a known limitation of this version of the format. The ratified design that binds each sealed resource to its path and format version, with an analysis of which kinds of rollback can and cannot be detected without state kept outside the Pod, is in [`decisions/2026-09-26-sealed-resource-binding.md`](decisions/2026-09-26-sealed-resource-binding.md). Until a revision of this specification adopts it, applications SHOULD NOT present an encrypted Pod's contents as tamper-evident against someone who can write to its folder.
 
 ### 9.5 Header limits
 
