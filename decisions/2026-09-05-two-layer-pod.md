@@ -148,12 +148,13 @@ omits a source record has failed at the one thing layer 1 exists to guarantee.
 10. **Section-level absence.** IPS states "no known allergies" as a property of a section,
     while `cascade:dataAbsentReason` is a property of an element. The canonical layer needs an
     explicit assertion for "none known, checked" per class, made by a source or a person,
-    never inferred from the absence of records.
+    never inferred from the absence of records. Ruled 2026-09-26 (amendment of that date).
 11. **The clinical/health class split.** `clinical:Condition`, `clinical:Allergy`,
     `clinical:LabResult` and `clinical:Immunization` are declared with shapes, while every pod
     serialises the `health:` record classes, so the `clinical:` four validate nothing today.
     Decide whether they become the layer 2 classes (strict shapes, untouched layer 1 data) or
     are deprecated; either is defensible, and it must be a decision rather than an accident.
+    Ruled 2026-09-26: deprecated (amendment of that date).
 
 ## The canonical export: the International Patient Summary
 
@@ -337,3 +338,71 @@ before any materialised layer 2, since the canonical view exists as soon as the 
 materialisation is worth building when the performance case needs proving; the first
 conformance vectors for layer 2 are written against the queries, not against an
 implementation's output.
+
+## Amendment 2026-09-26: rulebook items 10 and 11 ruled
+
+The maintainer ruled rulebook items 10 and 11 on 2026-09-26. Item 9 stays open until the
+C-CDA re-measurement the 2026-09-05 amendment calls for has been run, so this document stays
+Proposed. The rulings are recorded here; the item text above is unchanged apart from a pointer.
+
+### Item 10: section-level absence
+
+1. **"None known, checked" is an explicit record.** It is a record of the class the IPS section
+   holds (an allergy, a medication, a problem, a procedure, an immunization, a device) whose
+   code comes from HL7's IPS absent-or-unknown code system,
+   `http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips`. A source or a person authors
+   it, with the provenance every record carries. It is never inferred from missing records: a
+   pod with no allergy records says nothing about allergies.
+2. **No new Cascade vocabulary for the assertion.** The assertion is a code value on a record
+   class that already exists. Element-level absence stays on `cascade:dataAbsentReason`.
+3. **The codes**, verified against the code system as published (version 1.1.0). Per section,
+   a "none known" code and a "no information" code: `no-known-allergies` (narrower:
+   `no-known-medication-allergies`, `no-known-environmental-allergies`,
+   `no-known-food-allergies`) and `no-allergy-info`; `no-known-medications` and
+   `no-medication-info`; `no-known-problems` and `no-problem-info`; `no-known-procedures` and
+   `no-procedure-info`; `no-known-immunizations` and `no-immunization-info`;
+   `no-known-devices` and `no-device-info`. Only a `no-known-*` code states "none known,
+   checked"; a `no-*-info` code states that nothing is known either way.
+4. **Why the HL7 codes, and what IPS 2.0.1 says.** This code system was published with IPS
+   1.1.0 (STU 1). IPS 2.0.1 (STU 2, the version the mapping above used) removed it and now
+   recommends SNOMED CT concepts in each profile's primary code value set instead (for
+   allergies, 716186003 and its descendants). Cascade uses the HL7 codes because SNOMED CT is
+   licensed per country, and a pod must be able to state the assertion wherever it is used.
+   The IPS 2.0.1 bindings on `AllergyIntolerance.code`, `MedicationStatement.medication[x]`,
+   `Condition.code`, `Procedure.code` and `Immunization.vaccineCode` are preferred, not
+   required, so an entry coded from the HL7 system remains valid in an IPS 2.0.1 export. A
+   required section (allergies, problems, medications) with neither records nor an absence
+   record is exported with the `Composition.section.emptyReason` IPS requires (`ips-comp-1`),
+   and never as `nilknown`, since that would be the inference point 1 forbids.
+5. **Display.** An application that shows an absence record always shows who asserted it and
+   when. "No known allergies", stated years ago or by a source that never asked, misleads if
+   it reads as current.
+6. **What follows, in a later vocabulary release.** Each class that can carry the assertion
+   gets a shape (the code drawn from this code system, author and time required, since the
+   display depends on them) and a valid and an invalid conformance fixture. Which property
+   carries the code is settled with each shape: `health:AllergyRecord` has
+   `health:allergenCode`, while several classes have only system-specific code properties
+   (for example `clinical:rxNormCode`); a class with no property able to carry a code from
+   another system is a vocabulary gap, closed in that release, not a reason for an absence
+   term.
+
+### Item 11: the clinical/health class split
+
+1. **One class per real thing serves both layers.** A canonical record uses the same class as
+   the layer 1 records it merges. Layer membership is told apart by provenance, not by class: a
+   canonical record carries `prov:wasDerivedFrom` each of its sources and a
+   `prov:wasGeneratedBy` naming the build that emitted it, stamped with the build's input
+   versions (ruling 6 of the 2026-09-09 amendment).
+2. **Strict layer 2 shapes select records by that marker, not by class.** A layer 1 record of
+   the same class stays under the open shapes it validates against today.
+3. **`clinical:Condition`, `clinical:Allergy`, `clinical:LabResult` and `clinical:Immunization`
+   are deprecated, not made into layer 2 classes.** Each already carries `owl:deprecated true`
+   and `rdfs:seeAlso` its `health:` equivalent, since clinical v1.13, so no ontology change is
+   needed to record the ruling. What it adds is the standard migration window, which clinical
+   has not yet opened for these four: a warning shape that fires wherever one of them is
+   typed, with the four classes and their shapes removed in a later clinical version once the
+   warning is observably absent from conforming output. One emitter remains, the reference
+   implementation's `pod extract` command; it moves to the `health:` classes before the
+   window closes. Properties still declared with one of the four as `rdfs:domain` are
+   dropped from that domain or retired before removal, as clinical v1.16 and v1.18 did for
+   others. Readers accept both spellings until the window closes.
