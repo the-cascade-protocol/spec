@@ -1,8 +1,8 @@
 # Cascade Protocol Pod Structure Specification
 
 **Status:** Draft
-**Version:** 1.6
-**Date:** 2026-09-24
+**Version:** 1.7
+**Date:** 2026-09-26
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
 **Vocabulary versions:** core v3.10, health v2.10, clinical v1.19, coverage v1.6
@@ -36,7 +36,7 @@
 
 A Cascade Protocol **Pod** is a portable, self-describing directory of personal health data serialized as RDF/Turtle files. The Pod structure is designed so that health data can be:
 
-- Stored locally on-device with encryption at rest
+- Stored locally on-device with encryption at rest (format: [Pod Encryption](https://github.com/the-cascade-protocol/spec/blob/main/pod-encryption.md))
 - Exported as a directory or ZIP archive for sharing
 - Uploaded to a Solid Pod server for decentralized storage and access control
 - Read by any compliant tool without prior knowledge of the producing application
@@ -514,7 +514,7 @@ Naming the ciphertext instead was considered and rejected. Authenticated encrypt
 
 Two questions are named here so that their absence is a decision and not an oversight:
 
-- **Encryption at rest.** Attachment files MUST receive the same at-rest protection the implementation applies to the Pod's record files. How this interacts with the file's name is not implementation-defined and is settled under "Digest and encryption" above. Attachments hold the densest sensitive content in a Pod (rendered reports, clinical note documents), so an implementation that protects `.ttl` files and leaves `attachments/` in the clear does not conform. The protection mechanism itself remains implementation-defined, so nothing here has to be revised when one is ratified.
+- **Encryption at rest.** Attachment files MUST receive the same at-rest protection the implementation applies to the Pod's record files. How this interacts with the file's name is not implementation-defined and is settled under "Digest and encryption" above. Attachments hold the densest sensitive content in a Pod (rendered reports, clinical note documents), so an implementation that protects `.ttl` files and leaves `attachments/` in the clear does not conform. The mechanism is specified in [Pod Encryption](https://github.com/the-cascade-protocol/spec/blob/main/pod-encryption.md): every file in `attachments/` is a sealed resource like any other Pod file, and none of the plaintext exceptions listed there covers it.
 - **Sync.** How an `attachments/` directory participates in Pod synchronization is unspecified. Content addressing makes the naive answer safe in one direction (a file's content never changes under its name), which is why deferring the rest is tolerable.
 
 
@@ -922,6 +922,14 @@ The Pod structure itself is versioned implicitly through the `cascade:schemaVers
 The current schema version is `"1.3"`.
 
 Future versions of this specification will maintain backward compatibility: new directories and file types MAY be added, but existing paths and formats MUST NOT change their semantics.
+
+### 10.6 Encryption at Rest
+
+A Pod MAY be encrypted at rest. An encrypted Pod MUST use the format specified in [Pod Encryption](https://github.com/the-cascade-protocol/spec/blob/main/pod-encryption.md), which defines the sealed file layout, the plaintext header at `settings/encryption.json`, the reader limits, and how a Pod's key is changed.
+
+A Pod is encrypted if and only if something is present at `settings/encryption.json`. Every other file in an encrypted Pod is sealed except the few that document lists as plaintext by design (the header itself, `README.md`, and `provenance/egress-log.jsonl`). File and directory names are never encrypted, so everything in this specification about paths, discovery and naming applies unchanged; a reader discovers data through the type indexes after decrypting them.
+
+A reader that does not implement Pod Encryption MUST NOT parse the files of an encrypted Pod as Turtle, and MUST report the Pod as encrypted rather than as a Pod with no data.
 
 ---
 
