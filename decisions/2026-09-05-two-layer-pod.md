@@ -293,6 +293,39 @@ decision's open engine question), and the cases, if any, in which a recipient ou
 genuinely needs identifier continuity across exports beyond what source identifiers give.
 Each such case is decided per use case before anything is minted, never by default.
 
+## Amendment 2026-09-25: storing layer 2 is optional, and a cache holds no judgement
+
+Proposed in conversation between the maintainers on 2026-09-25: do not optimise up front;
+materialise a derived view when a practical need appears (performance, disk, a platform with no
+query engine). This amends one sentence of ruling 6 and nothing else. Layer 2 is still defined
+by the published queries over the four versioned inputs, and conformance still tests the
+triples those queries emit.
+
+1. **Storing layer 2 is optional.** Ruling 6's "storing layer 2 in the pod stands" becomes "a
+   pod may store layer 2". A reader may run the published queries whenever it reads instead.
+2. **A shared cache in the pod is materialised when it pays.** The tests are cost (a derivation
+   too slow to repeat on every read), readers that cannot run the queries, and views several
+   readers must see identically. Wearable daily views meet the first test already: millions of
+   samples summarised per source and period. Where a shared cache exists, it is RDF, it sits in
+   the pod's named rebuildable set, it carries the build stamp of ruling 6, and deleting and
+   rebuilding it gives the same triples.
+3. **An application may keep a private cache in any format** (a database, an index, memory),
+   outside the pod. It must give the answer the published queries give, it must be keyed by the
+   rule and input versions it was built from so staleness is detectable, and it is disposable.
+4. **No cache, shared or private, ever holds a judgement.** Anything a person decides, and any
+   machine judgement an application tells a person, is a layer-1 record (ruling 2). A decision
+   that exists only in an application's cache does not travel with the pod, which is the
+   failure this document exists to prevent.
+5. **Derived names do not depend on storage.** A derived record's name is computed from its
+   inputs, so a reader that runs the queries at read time mints the same name a stored cache
+   holds, and a citation resolves either way.
+6. **Agreement without a stored view.** Two readers on different versions of the published
+   queries can show different views of one pod. Each reader records the rule-set version it
+   evaluated, so a difference is visible and explainable.
+
+Raw measurement series are not layer 2 and are not affected: the samples behind wearable views
+are layer-1 facts, kept in whatever compact form their location decision settles.
+
 ## What this revises
 
 The 2026-08-18 Workbench ruling for condition summaries said: the pod stays raw, the derivation
