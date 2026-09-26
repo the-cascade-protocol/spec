@@ -6,6 +6,10 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-26: the pod identifier, core v3.11
+
+`core` goes 3.10 to 3.11, `core.shapes.ttl` 1.9 to 1.10, and `pod-structure.md` 1.7 to 1.8; `contexts/v1/core.jsonld` and the merged `contexts/v1/cascade.jsonld` gain `podIdentifier`. Records D-POD-ID-1 (`decisions/2026-09-26-pod-identifier.md`), the outcome agreed on spec#63: one random `urn:uuid` per pod, minted at creation, kept owner-only in `/profile/extended.ttl`, never exported, and used as the naming subject wherever a naming rule includes a pod subject. Settled now because the wellness importer is the first code to name records from a pod subject, and names are never re-minted.
+
 ## 2026-09-26: Pod encryption format, as specification text
 
 New document [`pod-encryption.md`](pod-encryption.md) (version 1.0, Draft). `pod-structure.md` goes 1.6 to 1.7. No vocabulary, shape or context change.

@@ -1,11 +1,11 @@
 # Cascade Protocol Pod Structure Specification
 
 **Status:** Draft
-**Version:** 1.7
+**Version:** 1.8
 **Date:** 2026-09-26
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
-**Vocabulary versions:** core v3.10, health v2.10, clinical v1.19, coverage v1.6
+**Vocabulary versions:** core v3.11, health v2.11, clinical v1.20, coverage v1.6
 
 > **v1.1 correction.** Every `solid:forClass` registration and every file/class table in this document has been checked against the published ontologies and against the [reference patient pod](/reference-patient-pod/README.md). Fourteen class names were corrected: they named classes that no Cascade ontology defines and no implementation writes, inside registration examples an implementer would copy. Two remaining names (`clinical:ScreeningResult`, `clinical:DiagnosticResult`) have no ratified equivalent and are marked rather than invented.
 
@@ -316,6 +316,7 @@ The extended profile holds PHI that must not appear in the publicly-readable `ca
     foaf:name "Alex Rivera" ;
     cascade:dateOfBirth "1990-01-01"^^xsd:date ;
     cascade:dayZone "America/Los_Angeles" ;
+    cascade:podIdentifier "urn:uuid:3f9d2b64-8c1e-4b7a-9f02-6d5e1a7c4b18"^^xsd:anyURI ;
     cascade:biologicalSex "M" ;
     vcard:hasTelephone "+1-555-000-0000" ;
     vcard:hasEmail "user@example.com" ;
@@ -350,6 +351,19 @@ All three are PHI and therefore stay here: they MUST NOT be moved to `card.ttl`,
 - **History is never re-minted.** Each aggregate records the zone it was cut in (`health:timeZone`) beside the UTC interval it covers (`health:periodStart`, `health:periodEnd`). A change to `cascade:dayZone` therefore applies to new aggregation only; an aggregate cut in the old zone keeps its interval, its zone and its identity.
 
 `cascade:DayZoneShape` in `core.shapes.ttl` checks the value form at `sh:Warning`: a single IANA name, never a numeric offset such as `-07:00`.
+
+**The pod identifier (core v3.11, D-POD-ID-1):**
+
+| Predicate | Object | Notes |
+|-----------|--------|-------|
+| `cascade:podIdentifier` | Literal (`xsd:anyURI`) | REQUIRED before any record is named from a pod subject. A random version 4 UUID in `urn:uuid:` form, lowercase. Exactly one. Owner-only: it MUST NOT be written to `card.ttl` and is not exported by default |
+
+- **Minted once.** `pod init` mints it. A Pod created before core v3.11 gets one the first time a command needs it, written before anything is named from it. It never changes and is never derived: it is read back.
+- **The naming subject.** Wherever a naming rule includes a pod subject (the wellness seeds of D-WELLNESS-1), this value as written is the input. Seeds are hashed, so a name does not reveal it.
+- **Rebuild versus restore.** A Pod rebuilt from the same exports is a new Pod with a new identifier, so records named from it get new names; a restore from backup keeps both. An application should say so when a person chooses between the two.
+- **Not a folder handle.** An application that needs to recognise a Pod folder while the Pod is locked keeps its own value for that; it does not copy this one.
+
+`cascade:PodIdentifierShape` in `core.shapes.ttl` allows at most one value (`sh:Violation`) and checks the form (`sh:Warning`).
 
 Note: the `profile/health.ttl` file (written by the Cascade Swift SDK) serves a similar purpose but contains a richer Cascade-specific health profile (emergency contacts, pharmacy, advance directives, computed demographics). Both files MAY coexist, each linked from `card.ttl` via separate `rdfs:seeAlso` triples.
 

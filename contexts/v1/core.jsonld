@@ -405,6 +405,7 @@
     "coreLoincCode": { "@id": "cascade:loincCode", "@type": "@id" },
     "statistic": { "@id": "cascade:statistic", "@type": "xsd:string" },
     "dayZone": { "@id": "cascade:dayZone", "@type": "xsd:string" },
+    "podIdentifier": { "@id": "cascade:podIdentifier", "@type": "xsd:anyURI" },
 
     "Attachment": "cascade:Attachment",
     "hasAttachment": { "@id": "cascade:hasAttachment", "@type": "@id", "@container": "@set" },

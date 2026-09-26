@@ -1,5 +1,23 @@
 # Core Vocabulary Changelog
 
+## v3.11 - 2026-09-26
+
+One property: the pod's identifier (D-POD-ID-1, recording spec#63's outcome).
+
+- **`cascade:podIdentifier`** (`xsd:anyURI`): a random version 4 UUID in
+  `urn:uuid:` form, lowercase, minted once when the pod is created and never
+  recomputed. It lives on `<#me>` in the owner-only `/profile/extended.ttl`,
+  never on `card.ttl`, and is never exported by default. It is the naming
+  subject for any rule that includes a pod subject (D-WELLNESS-1 Q1), so two
+  pods never mint the same name for the same watch, day or summary.
+- **`cascade:PodIdentifierShape`** (core shapes 1.10): at most one value
+  (Violation) and the lowercase version 4 form (Warning). Open-world.
+- The commented provenance example no longer shows an
+  `https://id.cascadeprotocol.org/users/` agent, since no such identifier is
+  minted.
+
+Compatibility: additive. Nothing that validated under v3.10 stops validating.
+
 ## v3.10 - 2026-09-24
 
 Two properties for wellness aggregation, neither wellness-specific.
