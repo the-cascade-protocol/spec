@@ -108,3 +108,5 @@ All Cascade Protocol data uses these canonical prefixes:
 ## License
 
 This specification is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+SNOMED CT concept identifiers and terms are from the SNOMED CT International Edition, included under the [SNOMED CT Global Patient Set](https://www.snomed.org/gps), [Creative Commons Attribution-NoDerivatives 4.0](https://creativecommons.org/licenses/by-nd/4.0/), from SNOMED International.

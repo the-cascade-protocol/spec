@@ -148,12 +148,13 @@ omits a source record has failed at the one thing layer 1 exists to guarantee.
 10. **Section-level absence.** IPS states "no known allergies" as a property of a section,
     while `cascade:dataAbsentReason` is a property of an element. The canonical layer needs an
     explicit assertion for "none known, checked" per class, made by a source or a person,
-    never inferred from the absence of records.
+    never inferred from the absence of records. Ruled 2026-09-26 (amendment of that date).
 11. **The clinical/health class split.** `clinical:Condition`, `clinical:Allergy`,
     `clinical:LabResult` and `clinical:Immunization` are declared with shapes, while every pod
     serialises the `health:` record classes, so the `clinical:` four validate nothing today.
     Decide whether they become the layer 2 classes (strict shapes, untouched layer 1 data) or
     are deprecated; either is defensible, and it must be a decision rather than an accident.
+    Ruled 2026-09-26: deprecated (amendment of that date).
 
 ## The canonical export: the International Patient Summary
 
@@ -337,3 +338,92 @@ before any materialised layer 2, since the canonical view exists as soon as the 
 materialisation is worth building when the performance case needs proving; the first
 conformance vectors for layer 2 are written against the queries, not against an
 implementation's output.
+
+## Amendment 2026-09-26: rulebook items 10 and 11 ruled
+
+The maintainer ruled rulebook items 10 and 11 on 2026-09-26. Item 9 stays open until the
+C-CDA re-measurement the 2026-09-05 amendment calls for has been run, so this document stays
+Proposed. The rulings are recorded here; the item text above is unchanged apart from a pointer.
+
+### Item 10: section-level absence
+
+1. **"None known, checked" is an explicit record.** It is a record of the class the IPS section
+   holds (an allergy, a medication, a problem, a procedure, an immunization, a device) coded
+   with an absence concept. A source or a person authors it, with the provenance every record
+   carries. It is never inferred from missing records: a pod with no allergy records says
+   nothing about allergies.
+2. **No new Cascade vocabulary for the assertion.** The assertion is a code value on a record
+   class that already exists. Element-level absence stays on `cascade:dataAbsentReason`.
+3. **Written as SNOMED CT, following IPS 2.0.1.** IPS 2.0.1 (STU 2, "Empty Sections and
+   Missing Data", and each section's value set) removed the HL7 code system earlier versions
+   used and recommends SNOMED CT concepts, each included in the section's primary code value
+   set, plus one concept for an explicit "no information available" statement. A producer
+   writes these, and an IPS export carries them:
+
+   | Section | None known | No information available |
+   |---|---|---|
+   | Allergies | 716186003 No known allergy (narrower: 409137002 No known drug allergy, 428607008 No known environmental allergy, 429625007 No known food allergy) | 1287211007 No information available |
+   | Medications | 787481004 No known medications | 1287211007 |
+   | Problems | 160245001 No current problems or disability | 1287211007 |
+   | Procedures | 787480003 No known procedures | 1287211007 |
+   | Immunizations | 787482006 No known immunizations | 1287211007 |
+   | Devices | 787483001 No known device use | 1287211007 |
+
+   Every concept above is in the SNOMED CT International Edition. Only a "none known" concept
+   states "none known, checked"; 1287211007 states that nothing is known either way. It sits
+   outside the section value sets, which IPS 2.0.1 binds as preferred, so it remains valid in
+   an export.
+4. **Readers accept the retired HL7 codes too.** Documents written against IPS 1.1.0 (STU 1)
+   use `http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips`, and a reader accepts
+   those codes on import so older documents stay readable. An importer normalises them with
+   the IPS 1.1.0 ConceptMap `http://hl7.org/fhir/uv/ips/ConceptMap/absence-to-snomed-uv-ips`:
+   `no-known-allergies` to 716186003, `no-known-medication-allergies` to 409137002,
+   `no-known-environmental-allergies` to 428607008 and `no-known-food-allergies` to 429625007
+   (equivalent); `no-known-medications` to 787481004, `no-known-problems` to 160245001,
+   `no-known-procedures` to 787480003, `no-known-immunizations` to 787482006 and
+   `no-known-devices` to 787483001 (the SNOMED CT concept is narrower). The six `no-*-info`
+   codes are unmatched in that map; their IPS 2.0.1 counterpart is 1287211007. Normalising
+   adds the SNOMED CT code beside the source's; the layer 1 record keeps what the source said.
+5. **Export of an empty required section.** A required section (allergies, problems,
+   medications) with neither records nor an absence record is exported with the
+   `Composition.section.emptyReason` IPS requires (`ips-comp-1`), and never as `nilknown`,
+   since that would be the inference point 1 forbids.
+6. **Display.** An application that shows an absence record always shows who asserted it and
+   when. "No known allergies", stated years ago or by a source that never asked, misleads if
+   it reads as current.
+7. **Licensing.** The SNOMED CT concept identifiers and display terms above are shared under
+   the SNOMED CT Global Patient Set (CC BY-ND 4.0), which publishes every International
+   Edition identifier and its preferred term, so a pod or an export may carry them. The
+   repository README carries the attribution: SNOMED CT concept identifiers and terms are from
+   the SNOMED CT International Edition, included under the SNOMED CT Global Patient Set,
+   Creative Commons Attribution-NoDerivatives 4.0, from SNOMED International.
+8. **What follows, in a later vocabulary release.** Each class that can carry the assertion
+   gets a shape (a code from the table above or its HL7 predecessor, author and time
+   required, since the display depends on them) and a valid and an invalid conformance
+   fixture. Which property carries the code is settled with each shape:
+   `health:ConditionRecord` has `health:snomedCode`, `clinical:Medication` and
+   `clinical:Procedure` have `clinical:snomedCode`, `health:AllergyRecord` has
+   `health:allergenCode` and `health:ImmunizationRecord` has `health:vaccineCode`; a class with
+   no property able to carry the code is a vocabulary gap, closed in that release, not a reason
+   for an absence term.
+
+### Item 11: the clinical/health class split
+
+1. **One class per real thing serves both layers.** A canonical record uses the same class as
+   the layer 1 records it merges. Layer membership is told apart by provenance, not by class: a
+   canonical record carries `prov:wasDerivedFrom` each of its sources and a
+   `prov:wasGeneratedBy` naming the build that emitted it, stamped with the build's input
+   versions (ruling 6 of the 2026-09-09 amendment).
+2. **Strict layer 2 shapes select records by that marker, not by class.** A layer 1 record of
+   the same class stays under the open shapes it validates against today.
+3. **`clinical:Condition`, `clinical:Allergy`, `clinical:LabResult` and `clinical:Immunization`
+   are deprecated, not made into layer 2 classes.** Each already carries `owl:deprecated true`
+   and `rdfs:seeAlso` its `health:` equivalent, since clinical v1.13, so no ontology change is
+   needed to record the ruling. What it adds is the standard migration window, which clinical
+   has not yet opened for these four: a warning shape that fires wherever one of them is
+   typed, with the four classes and their shapes removed in a later clinical version once the
+   warning is observably absent from conforming output. One emitter remains, the reference
+   implementation's `pod extract` command; it moves to the `health:` classes before the
+   window closes. Properties still declared with one of the four as `rdfs:domain` are
+   dropped from that domain or retired before removal, as clinical v1.16 and v1.18 did for
+   others. Readers accept both spellings until the window closes.
