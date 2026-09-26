@@ -348,43 +348,64 @@ Proposed. The rulings are recorded here; the item text above is unchanged apart 
 ### Item 10: section-level absence
 
 1. **"None known, checked" is an explicit record.** It is a record of the class the IPS section
-   holds (an allergy, a medication, a problem, a procedure, an immunization, a device) whose
-   code comes from HL7's IPS absent-or-unknown code system,
-   `http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips`. A source or a person authors
-   it, with the provenance every record carries. It is never inferred from missing records: a
-   pod with no allergy records says nothing about allergies.
+   holds (an allergy, a medication, a problem, a procedure, an immunization, a device) coded
+   with an absence concept. A source or a person authors it, with the provenance every record
+   carries. It is never inferred from missing records: a pod with no allergy records says
+   nothing about allergies.
 2. **No new Cascade vocabulary for the assertion.** The assertion is a code value on a record
    class that already exists. Element-level absence stays on `cascade:dataAbsentReason`.
-3. **The codes**, verified against the code system as published (version 1.1.0). Per section,
-   a "none known" code and a "no information" code: `no-known-allergies` (narrower:
-   `no-known-medication-allergies`, `no-known-environmental-allergies`,
-   `no-known-food-allergies`) and `no-allergy-info`; `no-known-medications` and
-   `no-medication-info`; `no-known-problems` and `no-problem-info`; `no-known-procedures` and
-   `no-procedure-info`; `no-known-immunizations` and `no-immunization-info`;
-   `no-known-devices` and `no-device-info`. Only a `no-known-*` code states "none known,
-   checked"; a `no-*-info` code states that nothing is known either way.
-4. **Why the HL7 codes, and what IPS 2.0.1 says.** This code system was published with IPS
-   1.1.0 (STU 1). IPS 2.0.1 (STU 2, the version the mapping above used) removed it and now
-   recommends SNOMED CT concepts in each profile's primary code value set instead (for
-   allergies, 716186003 and its descendants). Cascade uses the HL7 codes because SNOMED CT is
-   licensed per country, and a pod must be able to state the assertion wherever it is used.
-   The IPS 2.0.1 bindings on `AllergyIntolerance.code`, `MedicationStatement.medication[x]`,
-   `Condition.code`, `Procedure.code` and `Immunization.vaccineCode` are preferred, not
-   required, so an entry coded from the HL7 system remains valid in an IPS 2.0.1 export. A
-   required section (allergies, problems, medications) with neither records nor an absence
-   record is exported with the `Composition.section.emptyReason` IPS requires (`ips-comp-1`),
-   and never as `nilknown`, since that would be the inference point 1 forbids.
-5. **Display.** An application that shows an absence record always shows who asserted it and
+3. **Written as SNOMED CT, following IPS 2.0.1.** IPS 2.0.1 (STU 2, "Empty Sections and
+   Missing Data", and each section's value set) removed the HL7 code system earlier versions
+   used and recommends SNOMED CT concepts, each included in the section's primary code value
+   set, plus one concept for an explicit "no information available" statement. A producer
+   writes these, and an IPS export carries them:
+
+   | Section | None known | No information available |
+   |---|---|---|
+   | Allergies | 716186003 No known allergy (narrower: 409137002 No known drug allergy, 428607008 No known environmental allergy, 429625007 No known food allergy) | 1287211007 No information available |
+   | Medications | 787481004 No known medications | 1287211007 |
+   | Problems | 160245001 No current problems or disability | 1287211007 |
+   | Procedures | 787480003 No known procedures | 1287211007 |
+   | Immunizations | 787482006 No known immunizations | 1287211007 |
+   | Devices | 787483001 No known device use | 1287211007 |
+
+   Every concept above is in the SNOMED CT International Edition. Only a "none known" concept
+   states "none known, checked"; 1287211007 states that nothing is known either way. It sits
+   outside the section value sets, which IPS 2.0.1 binds as preferred, so it remains valid in
+   an export.
+4. **Readers accept the retired HL7 codes too.** Documents written against IPS 1.1.0 (STU 1)
+   use `http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips`, and a reader accepts
+   those codes on import so older documents stay readable. An importer normalises them with
+   the IPS 1.1.0 ConceptMap `http://hl7.org/fhir/uv/ips/ConceptMap/absence-to-snomed-uv-ips`:
+   `no-known-allergies` to 716186003, `no-known-medication-allergies` to 409137002,
+   `no-known-environmental-allergies` to 428607008 and `no-known-food-allergies` to 429625007
+   (equivalent); `no-known-medications` to 787481004, `no-known-problems` to 160245001,
+   `no-known-procedures` to 787480003, `no-known-immunizations` to 787482006 and
+   `no-known-devices` to 787483001 (the SNOMED CT concept is narrower). The six `no-*-info`
+   codes are unmatched in that map; their IPS 2.0.1 counterpart is 1287211007. Normalising
+   adds the SNOMED CT code beside the source's; the layer 1 record keeps what the source said.
+5. **Export of an empty required section.** A required section (allergies, problems,
+   medications) with neither records nor an absence record is exported with the
+   `Composition.section.emptyReason` IPS requires (`ips-comp-1`), and never as `nilknown`,
+   since that would be the inference point 1 forbids.
+6. **Display.** An application that shows an absence record always shows who asserted it and
    when. "No known allergies", stated years ago or by a source that never asked, misleads if
    it reads as current.
-6. **What follows, in a later vocabulary release.** Each class that can carry the assertion
-   gets a shape (the code drawn from this code system, author and time required, since the
-   display depends on them) and a valid and an invalid conformance fixture. Which property
-   carries the code is settled with each shape: `health:AllergyRecord` has
-   `health:allergenCode`, while several classes have only system-specific code properties
-   (for example `clinical:rxNormCode`); a class with no property able to carry a code from
-   another system is a vocabulary gap, closed in that release, not a reason for an absence
-   term.
+7. **Licensing.** The SNOMED CT concept identifiers and display terms above are shared under
+   the SNOMED CT Global Patient Set (CC BY-ND 4.0), which publishes every International
+   Edition identifier and its preferred term, so a pod or an export may carry them. The
+   repository README carries the attribution: SNOMED CT concept identifiers and terms are from
+   the SNOMED CT International Edition, included under the SNOMED CT Global Patient Set,
+   Creative Commons Attribution-NoDerivatives 4.0, from SNOMED International.
+8. **What follows, in a later vocabulary release.** Each class that can carry the assertion
+   gets a shape (a code from the table above or its HL7 predecessor, author and time
+   required, since the display depends on them) and a valid and an invalid conformance
+   fixture. Which property carries the code is settled with each shape:
+   `health:ConditionRecord` has `health:snomedCode`, `clinical:Medication` and
+   `clinical:Procedure` have `clinical:snomedCode`, `health:AllergyRecord` has
+   `health:allergenCode` and `health:ImmunizationRecord` has `health:vaccineCode`; a class with
+   no property able to carry the code is a vocabulary gap, closed in that release, not a reason
+   for an absence term.
 
 ### Item 11: the clinical/health class split
 
