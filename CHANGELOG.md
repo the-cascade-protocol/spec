@@ -6,6 +6,22 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-26: Pod encryption format, as specification text
+
+New document [`pod-encryption.md`](pod-encryption.md) (version 1.0, Draft). `pod-structure.md` goes 1.6 to 1.7. No vocabulary, shape or context change.
+
+**Why.** The at-rest encryption format was defined only by its implementations, with the proof that two of them agree held in fixtures outside this repository. This document is its normative home, written from the reference implementation in `cascade-cli` and checked against an independent Rust implementation; the cross-implementation fixtures move to `conformance/pod-encryption/`.
+
+**What it specifies.** The sealed resource layout (`nonce(12) || ciphertext || tag(16)`, AES-256-GCM, no associated data) and exactly which files stay plaintext; the header `settings/encryption.json`, versions `1.0` (read only) and `1.1` (written), every member, wrap kinds, the wrap identifier, and the `1.0` to `1.1` migration; reader requirements, including every limit, the rule that the whole header is validated before any key is derived, how the header file is opened, and the five outcomes of an open; writer invariants (never zero wraps, unique salts, neutral plaintext labels, removing a wrap is not revocation); the re-key, as staging copy, verification, two renames and crash recovery; file system safety (no symbolic link is followed inside a Pod); and security considerations.
+
+**One new rule, settled here.** `t`, `m` and `p` must be written as plain decimal integers (`3.0` and `3e0` are refused), and `salt` and `wrappedDek` must be canonical padded base64 with no whitespace (never trimmed). Implementations had disagreed on the first.
+
+**A limitation disclosed, and a proposal.** Section 9.4 states that sealed files are not bound to their paths, so a file copied over another, or an older copy of a file, is accepted as authentic. [`decisions/2026-09-26-sealed-resource-binding.md`](decisions/2026-09-26-sealed-resource-binding.md) (D-SEAL-1, proposed, not normative) sets out options, with a recommendation, for binding each file to its path and format version, and states which kinds of rollback can and cannot be detected without state outside the Pod.
+
+**`pod-structure.md` 1.7.** New section 10.6 points to the format and adds one reader rule (a reader that does not implement encryption reports an encrypted Pod as encrypted, never as empty); section 4.3's note that the attachment protection mechanism was implementation-defined now points to the format; the overview links it.
+
+---
+
 ## 2026-09-25: comment hygiene, health v2.11
 
 `health` goes 2.10 to 2.11 and `health.shapes.ttl` goes 1.8 to 1.9. Comment-only change: internal tracker references (backlog numbers, an app-internal source path, a private planning-repo path) removed from TTL comments, `decisions/2026-09-19-wellness-reading-identity.md`, `serialization/index.md`, `PENDING_DOWNSTREAM_SYNC.md` and this changelog, replaced with language that keeps the meaning without the private identifier. No term, range, shape or context change. Adds `scripts/check-no-internal-references.py` to the CI checklist to keep this from recurring.
