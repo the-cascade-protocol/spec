@@ -4,9 +4,9 @@
 tie-break under the ratified working agreement, r3); merged 2026-09-24 as spec#65 with
 no objection posted, the review window waived by Jed after a conversation with Jay the same day in
 which the vocabulary was agreed to be the contract between the application and the import pipeline.
-RFC issue: the-cascade-protocol/spec#64. Q3's layer classification is superseded in direction by
-that conversation (a computed aggregate is a derived view, not a layer-1 record); an amendment
-follows.
+RFC issue: the-cascade-protocol/spec#64. Q3's layer classification is superseded by that
+conversation (a computed aggregate is a derived view, not a layer-1 record), recorded in the
+amendment of 2026-09-25 at the end of this document.
 **Date:** 2026-09-19
 **Proposed by:** Jed Reinitz
 **Prompted by:** D1 in the wellness aggregator scope decision (lines 138-146, 378), tracked
@@ -252,6 +252,9 @@ this RFC was posted:
 
 ## What remains genuinely open
 
+*Settled by the amendment of 2026-09-25 at the end of this document: a computed aggregate is a
+derived view. The paragraph below is kept as it was written.*
+
 The recommendations above lean on reading D-CANONICAL-1's digest tier as covering an aggregate whose
 constituent samples are the "raw source element". That reading is what lets this proceed without
 blocking on rulebook item 1 (creation/merge/split/retire), and it is the part most worth a second
@@ -314,3 +317,43 @@ minter should do the same, seeded per Q1.
   different path (live HealthKit → pod, not Apple Health export → pod) with existing production
   pods (POTS Check, shipping on the App Store) already written in the blank-node shape. Whether it
   is ever migrated is a separate, lower-priority decision, tracked as its own backlog follow-up.
+
+## Amendment 2026-09-25: a computed aggregate is a derived view
+
+The maintainers settled the question this document left open ("What remains genuinely open"), and
+the records, judgments and views design proposed the same day reached the same answer
+independently. This amendment records the outcome. It changes no name and no seed input, and no pod
+carries computed wellness aggregates yet, so nothing is re-minted.
+
+1. **Two kinds of daily number.** An aggregate a source supplies (Apple's `ActivitySummary`,
+   Google's daily rollups) is a source record: input-named, never edited, exactly as above. An
+   aggregate this protocol computes from samples (a day's step total, a day's mean resting heart
+   rate) is a derived view: the output of a published rule over the samples, rebuildable, and never
+   a source of truth.
+2. **Rebuildable means the samples are kept.** A computed aggregate is derived only because its
+   inputs stay in the pod, either as the retained source export or as a compact per-period sample
+   file. An importer MUST retain one of them before it writes computed aggregates. A pod that kept
+   neither would be holding the only copy of those numbers, and they would have to be treated as
+   source records. Where the samples live, and in what compact form, is decided separately.
+3. **Names do not change.** A computed aggregate is still named from its inputs, as Q1's digest tier
+   says: the pod subject, id space, device, metric, statistic, UTC interval and a digest of the
+   constituent samples. A rebuild over the same samples therefore produces the same name, so a
+   citation resolves whether the aggregate is stored or computed at read time. D-CANONICAL-1 ruling
+   1 (canonical identifiers are build-scoped) does not bite, because nothing about this name
+   depends on a build.
+4. **Q3 stands, relocated.** Aggregate only closed periods. Where a late sync produces a second
+   aggregate for an already-closed day, both remain derivable, and the "most recent import" choice
+   becomes a rule of the view's derivation rather than a choice each application makes.
+5. **Storage follows D-CANONICAL-1 ruling 6 and its amendments.** A computed aggregate may be stored
+   in the pod as a cache, stamped with the rule version that produced it, or computed when read.
+   Wearable daily views are expected to be stored, because recomputing them from millions of samples
+   on every read is too slow.
+6. **Interpretations are separate.** A classification an application computed and showed a person
+   at the time (a threshold result, a category) is an interpretation: a record of its own, traced to
+   the activity that made it, and never rewritten (D-CANONICAL-1 ruling 2). The same classification
+   recomputed later by a published rule is derived, like the aggregates above. The vocabulary for
+   interpretations is decided separately.
+7. **Still owed.** The conformance vector for the seed (the same inputs give the same name on two
+   independent implementations), and the hash the seed is fed to. Both implementations mint through
+   one naming function, so adopting a different name-based UUID version is a single change there.
+
