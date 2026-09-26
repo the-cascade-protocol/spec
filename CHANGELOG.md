@@ -6,6 +6,10 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-26: the pod identifier, core v3.11
+
+`core` goes 3.10 to 3.11, `core.shapes.ttl` 1.9 to 1.10, and `pod-structure.md` 1.6 to 1.7; `contexts/v1/core.jsonld` and the merged `contexts/v1/cascade.jsonld` gain `podIdentifier`. Records D-POD-ID-1 (`decisions/2026-09-26-pod-identifier.md`), the outcome agreed on spec#63: one random `urn:uuid` per pod, minted at creation, kept owner-only in `/profile/extended.ttl`, never exported, and used as the naming subject wherever a naming rule includes a pod subject. Settled now because the wellness importer is the first code to name records from a pod subject, and names are never re-minted.
+
 ## 2026-09-25: comment hygiene, health v2.11
 
 `health` goes 2.10 to 2.11 and `health.shapes.ttl` goes 1.8 to 1.9. Comment-only change: internal tracker references (backlog numbers, an app-internal source path, a private planning-repo path) removed from TTL comments, `decisions/2026-09-19-wellness-reading-identity.md`, `serialization/index.md`, `PENDING_DOWNSTREAM_SYNC.md` and this changelog, replaced with language that keeps the meaning without the private identifier. No term, range, shape or context change. Adds `scripts/check-no-internal-references.py` to the CI checklist to keep this from recurring.
