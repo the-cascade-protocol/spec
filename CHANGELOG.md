@@ -6,6 +6,14 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-26: Pod encryption 1.1, duplicate member names and the check-then-open boundary
+
+[`pod-encryption.md`](pod-encryption.md) goes 1.0 to 1.1. No vocabulary, shape or context change, and no change to the header format or its versions.
+
+**Duplicate member names are refused (section 4.1).** A header in which any JSON object contains the same member name twice is malformed; readers MUST refuse it before deriving any key. This was a SHOULD, with a reader that could not detect duplicates told to use the last occurrence, which let two conforming readers open the same bytes differently. It holds in every object of the header, and names are compared after escapes are decoded. Conformance vectors N-065 to N-070.
+
+**The file system checks have a stated boundary (section 8).** Implementations check a path and then open it; a concurrent local process that replaces an intermediate folder with a link between the two is outside the threat model, which is a Pod folder at rest, not a concurrent local attacker. Re-verifying an opened handle is allowed and not required.
+
 ## 2026-09-26: the deferred wellness metrics, health v2.12
 
 `health` goes 2.11 to 2.12 and `clinical` 1.20 to 1.21; `health.shapes.ttl` goes 1.9 to 1.10; `contexts/v1/health.jsonld` and the merged `contexts/v1/cascade.jsonld` gain `isMainSleep` and `basalEnergyKcal`; `serialization/index.md` goes 2.3 to 2.4 (Section 12). New per-vocabulary changelog [`ontologies/health/CHANGELOG.md`](ontologies/health/CHANGELOG.md). The four metrics the Apple Health importer deferred, each checked against the ratified standards (IEEE 1752.1, FHIR R4 vital signs, LOINC) and the platforms' published models before it is written.
