@@ -105,7 +105,7 @@ In an encrypted Pod, every regular file under the Pod root is a sealed resource,
 | `README.md` | A human-facing note describing the directory. It MUST NOT contain health data. |
 | `provenance/egress-log.jsonl` | An append-only log of what left the Pod, metadata only by design, written by more than one process. Whole-file authenticated encryption cannot be appended to by two writers. |
 
-Entries whose name begins with `.` are not Pod resources, with one exception: `.well-known` is a Pod container and its files are sealed. Other dot-prefixed entries (version-control metadata, operating-system files, a writer's temporary files) are outside this specification; a writer MUST NOT store Pod content in them.
+Entries whose name begins with `.` are not Pod resources, with one exception: a directory named `.well-known` is a Pod container at any depth, not only at the Pod root, and its files are sealed. Other dot-prefixed entries (version-control metadata, operating-system files, a writer's temporary files) are outside this specification; a writer MUST NOT store Pod content in them.
 
 Adding a path to the plaintext list above is a change to this specification, not an implementation choice: each entry is a file anyone holding the disk can read.
 
