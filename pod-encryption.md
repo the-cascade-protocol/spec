@@ -1,7 +1,7 @@
 # Cascade Protocol Pod Encryption Specification
 
 **Status:** Draft
-**Version:** 1.0
+**Version:** 1.1
 **Date:** 2026-09-26
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
@@ -137,7 +137,7 @@ The header is the file `settings/encryption.json` under the Pod root. It is plai
 
 The header MUST be encoded as UTF-8 JSON ([RFC 8259](https://www.rfc-editor.org/rfc/rfc8259)) without a byte order mark, and its top-level value MUST be an object.
 
-The order of members in an object is not significant. Writers SHOULD emit the orders shown in the examples below. Writers MUST NOT emit an object with duplicate member names; readers SHOULD refuse one as malformed, and a reader that cannot detect duplicates MUST use the last occurrence.
+The order of members in an object is not significant. Writers SHOULD emit the orders shown in the examples below. Writers MUST NOT emit an object with duplicate member names. A header in which any JSON object contains the same member name twice is malformed; readers MUST refuse it before deriving any key. This applies to every object in the header, including objects inside members the reader does not know and wraps of kinds it does not implement, and names are compared after escape sequences are decoded (`"label"` and `"lab\u0065l"` are the same name). Conformance vectors N-065 to N-070 (section 10) exercise this rule.
 
 A reader MUST ignore top-level members it does not know. A reader MUST ignore members it does not know inside a wrap. A writer that carries a wrap it did not create into a new header MUST carry it with all of its members unchanged.
 
@@ -407,6 +407,8 @@ A write that lands in the Pod after the final verification in step 2 and before 
 **Symbolic links are never followed inside a Pod.** Not the header, not a sealed resource, not a directory during a walk, not a directory a write would create. A reader or writer MUST check every existing component of a Pod-relative path without following links and refuse a path that contains one. As an independent second check, a path whose resolved location is outside the Pod root MUST be refused. The Pod root itself MAY be reached through a link (a folder moved to another disk); only what is inside the Pod is held to this rule. An implementation MAY refuse to re-key a Pod whose own path is a symbolic link.
 
 Pod-relative paths MUST NOT be absolute and MUST NOT contain `..` components.
+
+Implementations check a path and then open it. A concurrent local process that replaces an intermediate folder with a symbolic link between the check and the open is outside the threat model of this section, which is a Pod folder at rest (section 9.1), not a concurrent local attacker; an implementation MAY re-verify the location of an opened handle, and is not required to.
 
 **Only regular files are resources.** A walk of the Pod (to seal, decrypt, re-key or list it) MUST skip or refuse anything that is neither a regular file nor a directory, and a read of a single resource MUST refuse one, without blocking: a FIFO would hang the reader and a device can return bytes without end. A re-key refuses them outright (section 7.1), because a file the copy silently left out would be lost when the old directory is deleted.
 
