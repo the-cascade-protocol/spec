@@ -1,6 +1,6 @@
 # D-CANONICAL-1: Two layers: a source of record that only adds, and a canonical layer that only merges
 
-**Status:** Ratified by Jed Reinitz on 2026-09-26, every rulebook item ruled; direction ratified 2026-09-05; amended 2026-09-05 with the identity and IPS measurements, 2026-09-09 with the rulings from the spec#38 review, and 2026-09-26 with the rulings on rulebook items 10 and 11 and on item 9, the layer 1 naming rule (all below)
+**Status:** Ratified by Jed Reinitz on 2026-09-26, every rulebook item ruled; direction ratified 2026-09-05; amended 2026-09-05 with the identity and IPS measurements, 2026-09-09 with the rulings from the spec#38 review, and 2026-09-26 with the rulings on rulebook items 10 and 11 and on item 9, the layer 1 naming rule, whose ruling 6 followed on 2026-09-27 (all below)
 **Date:** 2026-09-05
 **Proposed by:** Jed Reinitz
 **Prompted by:** the-cascade-protocol/spec#38 (identity is a derived value used as the record's
@@ -75,13 +75,16 @@ omits a source record has failed at the one thing layer 1 exists to guarantee.
   supplies an identifier, the name is derived deterministically from the source system
   (`cascade:sourceIdentity`), the record class and that identifier, so two devices importing
   the same document converge without communicating and re-import is idempotent by
-  construction. Where it does not, the name is derived from a digest of the raw source
-  element under a canonicalisation this repository states per input format, with a declared
-  exclusion list for volatile fields and the enclosing document's identifier as context (the
-  amendment below records why each of those qualifications is there; the first draft of this
-  sentence said only "JCS for JSON, C14N for XML", and measurement showed that rule would
-  merge data). No regex, key set, comparator or terminology table participates in a name. An
-  import batch label never does either. Existing content-hashed IRIs remain valid as opaque
+  construction. Where it does not, the name is derived from the source element's own content
+  under a naming rule this repository states per input format, with a declared exclusion list
+  for volatile fields and the enclosing document as context (the amendments below record why
+  each of those qualifications is there; the first draft of this sentence said only "JCS for
+  JSON, C14N for XML", and measurement showed that rule would merge data). Amended
+  2026-09-27: this sentence said "a digest of the raw source element"; for C-CDA the rule is a
+  curated content key per record class, then a digest of the parsed element, as ruling 6 of
+  the item 9 amendment states, and not C14N 2.0 of the raw XML. No terminology table
+  participates in a name, and no regex, key set or comparator does outside the curated content
+  keys that ruling states. An import batch label never does either. Existing content-hashed IRIs remain valid as opaque
   names; nothing is re-minted.
 - **A canonical record's identifier names one build of the canonical layer, and nothing
   durable references it.** (Amended 2026-09-09; the first draft said "minted once and kept for
@@ -198,7 +201,7 @@ class is written.
 |---|---|---|
 | Source identifiers dominate | 548 of 574 FHIR resources carry `resource.id` (95.5%); `identifier[]` never appears without it (0 of 574). 125 of 131 C-CDA clinical statements carry an `<id>`. | Tier 1 is source identity + record class + the source's own identifier. The digest is the minority path, and an `identifier[]` tier would be dead code; do not specify one. |
 | Plain JCS merges FHIR decimals | 19 literals spelled `4.0`, `250.0`, `21.0` in the corpus collapse to `4`, `250`, `21` under RFC 8785 shortest-form numbers. FHIR treats that precision as significant. | JSON canonicalisation must keep number lexical forms as the source wrote them (JCS structure with numbers as source text, or a digest of the element's source bytes). |
-| C14N 1.0 breaks on whitespace | Re-indenting the source moves 131 of 131 C-CDA statement digests under C14N 1.0; C14N 2.0 with `TrimTextNodes` moves 0 of 131. Neither survives a namespace-prefix rewrite (131 of 131); prefix rewriting is untested here because the tooling to hand does not expose it. | XML canonicalisation is C14N 2.0 with trimmed text nodes. Whether prefix independence is required is open: it is not, if importers always digest the bytes the source sent. |
+| C14N 1.0 breaks on whitespace | Re-indenting the source moves 131 of 131 C-CDA statement digests under C14N 1.0; C14N 2.0 with `TrimTextNodes` moves 0 of 131. Neither survives a namespace-prefix rewrite (131 of 131); prefix rewriting is untested here because the tooling to hand does not expose it. | XML canonicalisation is C14N 2.0 with trimmed text nodes. Whether prefix independence is required is open: it is not, if importers always digest the bytes the source sent. Amended 2026-09-27: superseded for C-CDA by ruling 6 of the item 9 amendment (a curated content key, then a digest of the parsed element); C14N 2.0 is not used. |
 | Context must be the document | Statement alone: 7 collision groups. Statement plus its section: the same 7. Statement plus the enclosing document identifier: 1, a genuine intra-document twin. | The digest includes the enclosing document's identifier, not the section. |
 | Source ids are not always unique | In the C-CDA corpus 6 identifiers are claimed by more than one statement in the same document, and 33 statements carry a root-only id. | Tier 1 applies only when the identifier is unique within its document; otherwise the record falls to the digest tier with the identifier included. |
 | Volatility dominates the digest | Bumping `meta.versionId` moves 511 of 511 raw FHIR digests; the reference implementation's existing exclusion list moves 0 of 511, at a cost of one collision. C-CDA has its own axis, the narrative anchor `<reference value="#id">` on 15 of 131 statements, and no C-CDA exclusion list exists anywhere. | The exclusion list is declared here per format (FHIR `meta.versionId`, `meta.lastUpdated`, `text`; C-CDA document `effectiveTime`, narrative anchors, generated ids), and importers implement exactly it. |
@@ -519,22 +522,38 @@ content was printed or stored.
 5. **A split never changes a layer 1 name.** The reconciler's identity-collision split, a
    feared source of layer 1 renames, did not occur on the measured data. The rule is stated
    regardless: a split must never change the name of a record already written to layer 1.
+6. **A record with no source identifier is named by a curated content key, then a digest of
+   the parsed element, then a loud collapse.** Ruled 2026-09-27. For C-CDA, a record without a
+   usable source identifier is named, in order:
+   - **by its curated content key**: the fields that identify a record of its class as the
+     importer extracts them from the source (codes, names, dates and the like, declared once
+     per class in the importer), each value as the source stated it, never a default the
+     importer supplied, with some names lowercased and the medication name normalised. Empty
+     fields are dropped, the rest are written as `field=value`, sorted by Unicode code point and
+     joined, and the name is minted from `{class}::{key}`. A section narrative's key is its
+     section code, its document set (ruling 2) and a digest of its narrative with the ruling 2
+     exclusions applied;
+   - **when every key field is empty, by a digest of the parsed source element**: the element
+     as parsed, with the declared exclusion list removed, serialised as JSON with its keys
+     sorted at every level, and hashed. If nothing survives the exclusions, the element's own
+     text is put back and the element hashed again, so two elements that only their text tells
+     apart are never merged;
+   - **when nothing is left at all, by a collapse to one name per class**, which the importer
+     reports every time it happens, never silently.
 
-### Implementations released before this ruling, and one open question
+   This is the per-format canonicalisation the identity section says this repository states.
+   C14N 2.0 of the raw XML, which the 2026-09-05 amendment chose, is not used, and the
+   sentences that said so are amended in place. The reason is ruling 4: names already written
+   under the curated key stay valid, and switching to a raw-element digest would rename every
+   content-named record in every pod written so far.
+
+### Implementations released before this ruling
 
 Implementations released before this ruling may have named section narratives from the
 per-download document id and an import label, hashed the whole element in the id-reuse
 disambiguator, and let the reconciler's identity-collision split move a record already in the
 pod. Names they wrote stay valid under ruling 4; imports from an implementing release follow
 rulings 2, 3 and 5.
-
-One alignment question stays open, pending a ruling: how a record without a usable source
-identifier is named. The identity section and the 2026-09-05 amendment name it from a digest
-of the raw source element under C14N 2.0 with trimmed text nodes. The reference
-implementation names it from a curated set of fields per record class, reaching a raw-element
-digest only when those are empty, and that digest is of the parsed element serialised as JSON
-with sorted keys. Either the text or the implementation moves to meet the other; which one is
-not decided here.
 
 Conformance gains vectors for each ruling (a re-download with a new document id and the same
 `setId`; a narrative differing only in excluded markup or footnotes; an id reused with
