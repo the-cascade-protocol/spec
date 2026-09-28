@@ -28,7 +28,7 @@
 
 ## Scope: which exports
 
-"Export" in rulings 1 to 8 means a document made for a recipient outside the pod, of which the IPS Bundle is the first. A whole-pod copy (`pod export` as a zip or directory) is the pod itself, for backup, restore or moving between devices: it carries `/profile/extended.ttl`, and with it the pod identifier, because a restore must keep it (D-POD-ID-1, Consequences). Ruling 4 applies to both: every `cascade:ExportManifest` carries its own `dct:identifier`.
+"Export" in rulings 1 to 8 means a document made for a recipient outside the pod, of which the IPS Bundle is the first. Such an export is a report a person brings to a recipient: nothing in it is meant to be traced back to the pod, for now. If a recipient later needs that link, the direction is a `did:plc` linked to the pod identifier (spec#63), not the pod identifier itself. A whole-pod copy (`pod export` as a zip or directory) is the pod itself, for backup, restore or moving between devices: it carries `/profile/extended.ttl`, and with it the pod identifier, because a restore must keep it (D-POD-ID-1, Consequences). Ruling 4 applies to both: every `cascade:ExportManifest` carries its own `dct:identifier`.
 
 ## Vocabulary (core v3.12, core shapes 1.11)
 
