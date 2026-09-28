@@ -10,7 +10,7 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 `serialization/index.md` goes 2.4 to 2.5 and `pod-structure.md` 1.9 to 1.10. No vocabulary, shape or context change.
 
-**Blood pressure (Section 12.4).** Two spellings of one reading were shown side by side. The flat form, one `health:systolic` and one `health:diastolic` on one `health:BloodPressureReading`, is now the form a pod record is written in (12.4.1). FHIR's `fhir:component` panel is kept as the mapping used when a reading is exported to FHIR (12.4.2), with each value's component code stated. Section 12.5 now says a device's own active energy, like its basal energy, is a per-device snapshot, never a daily vital reading coded LOINC 41981-2.
+**Blood pressure (Section 12.4).** Two spellings of one reading were shown side by side. The flat form, one `health:systolic` and one `health:diastolic` on one `health:BloodPressureReading`, is now the form a pod record is written in (12.4.1). The flat example carries the panel codes a writer puts on it (`fhir:code` SNOMED CT 75367002, `cascade:loincCode` 85354-9). FHIR's `fhir:component` panel is kept as the mapping used when a reading is exported to FHIR (12.4.2), its components coded LOINC 8480-6 and 8462-4, which FHIR's blood pressure profile requires (the earlier example coded them in SNOMED CT). Section 12.5 now says a device's own active energy, like its basal energy, is a per-device snapshot, never a daily vital reading coded LOINC 41981-2.
 
 **Pod structure.** The "Vocabulary versions" line said health v2.11 and clinical v1.20; it now names the current versions (core v3.12, health v2.12, clinical v1.21, coverage v1.6).
 

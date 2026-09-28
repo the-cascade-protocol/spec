@@ -6,7 +6,7 @@
 **Organization:** Cascade Agentic Labs LLC
 **Vocabulary versions:** core v3.11, health v2.12 (`health.shapes.ttl` v1.10), clinical v1.21, coverage v1.6
 
-> **v2.5 (2026-09-27).** Section 12.4 is aligned to the ruled form of a blood pressure reading: one record with flat `health:systolic` and `health:diastolic` is how a reading is written in a pod (12.4.1), and FHIR's `fhir:component` panel is the mapping used when a reading is exported to FHIR (12.4.2), no longer shown as the primary form. Section 12.5 states that a per-device snapshot may carry active energy (`health:activeEnergyKcal`) as well as steps and basal energy, one metric per snapshot. No vocabulary, shape or context change.
+> **v2.5 (2026-09-27).** Section 12.4 is aligned to the ruled form of a blood pressure reading: one record with flat `health:systolic` and `health:diastolic`, coded as the panel (SNOMED CT 75367002, LOINC 85354-9), is how a reading is written in a pod (12.4.1), and FHIR's `fhir:component` panel is the mapping used when a reading is exported to FHIR (12.4.2), its components coded LOINC 8480-6 and 8462-4 as FHIR's profile requires, no longer shown as the primary form. Section 12.5 states that a per-device snapshot may carry active energy (`health:activeEnergyKcal`) as well as steps and basal energy, one metric per snapshot. No vocabulary, shape or context change.
 
 > **v2.4 (2026-09-26).** Section 12 is brought to health v2.12. Blood pressure is stated as one paired reading per record, with averages as views (Section 12.4, with the flat spelling shown beside the FHIR panel). Daily activity gains `health:basalEnergyKcal` and every daily aggregate example states `health:sourceIdSpace` (Section 12.5). Sleep sessions state how a night is dated, that naps are separate and that a source's own sessions are never regrouped, and show an Apple session assembled by the one-hour grouping rule, recorded as its generating activity's `cascade:version`, and a source-flagged nap with `health:isMainSleep` (Section 12.6.3). VO2 max readings carry `clinical:measurementMethod`, and `health:vo2Max` no longer carries LOINC 60842-2 (Section 12.8.3). The 12.10 shape tables gain the shapes of `health.shapes.ttl` v1.10.
 
@@ -1948,7 +1948,7 @@ Device blood pressure data uses `health:BloodPressureData` with the `health:bloo
 
 **One paired reading per record (health v2.12).** A record is one reading: a systolic and a diastolic value measured together, at the reading's exact time, by one device, as FHIR's vital signs blood pressure profile (panel LOINC 85354-9, components 8480-6 and 8462-4, https://hl7.org/fhir/R4/bp.html), Open mHealth, HealthKit's blood pressure correlation and Health Connect's `BloodPressureRecord` all model it. A reading is never bucketed by day. In a pod the reading is written flat, with `health:systolic` and `health:diastolic` on the record (12.4.1); `health:BloodPressureReadingShape` reports, at `sh:Warning`, a node that carries one without the other or more than one of either. From an Apple Health export a reading is built from the `<Correlation>`, never also from the systolic and diastolic records the export repeats at top level.
 
-**FHIR's component form is the export mapping.** When a reading is exported as a FHIR `Observation`, the two values become the panel's two `component` entries (12.4.2): `health:systolic` maps to the component coded 8480-6 and `health:diastolic` to the one coded 8462-4, each a `valueQuantity` in mm[Hg]. A reading written in that component spelling holds its values in `fhir:component`, which `health:BloodPressureReadingShape` does not reach; a writer does not use it for a pod record.
+**FHIR's component form is the export mapping.** When a reading is exported as a FHIR `Observation`, the two values become the panel's two `component` entries (12.4.2): `health:systolic` maps to the component coded LOINC 8480-6 and `health:diastolic` to the one coded LOINC 8462-4 (the codes FHIR's blood pressure profile requires on the components), each a `valueQuantity` in mm[Hg]. A reading written in that component spelling holds its values in `fhir:component`, which `health:BloodPressureReadingShape` does not reach; a writer does not use it for a pod record.
 
 **An average is a view, not a reading.** A clinical home average (a 7-day home protocol of morning and evening readings, for example) depends on its protocol: which days count, whether the first day is dropped, whether morning and evening are averaged separately. It is computed over the readings, stating its protocol (`health:BPStatistics`), and never written as a reading. A mean that is stored or exported is coded LOINC 96607-7 (blood pressure panel, mean systolic and mean diastolic), never 85354-9.
 
@@ -1957,6 +1957,9 @@ Device blood pressure data uses `health:BloodPressureData` with the `health:bloo
 ```turtle
 @prefix cascade: <https://ns.cascadeprotocol.org/core/v1#> .
 @prefix health:  <https://ns.cascadeprotocol.org/health/v1#> .
+@prefix fhir:    <http://hl7.org/fhir/> .
+@prefix sct:     <http://snomed.info/sct/> .
+@prefix loinc:   <http://loinc.org/rdf#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
@@ -1971,6 +1974,8 @@ Device blood pressure data uses `health:BloodPressureData` with the `health:bloo
     ) .
 
 <urn:uuid:9e2d4f10-0000-5000-8000-000000000031> a health:BloodPressureReading ;
+    fhir:code sct:75367002 ;                       # Blood pressure (observable)
+    cascade:loincCode loinc:85354-9 ;              # Blood pressure panel
     health:systolic "128"^^xsd:double ;
     health:diastolic "79"^^xsd:double ;
     health:date "2026-01-20T19:45:00Z"^^xsd:dateTime ;
@@ -1990,17 +1995,18 @@ Device blood pressure data uses `health:BloodPressureData` with the `health:bloo
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
 # The same reading as 12.4.1, as it is mapped when exported to a FHIR vital signs
-# blood pressure panel: health:systolic becomes the component coded 8480-6, and
-# health:diastolic the component coded 8462-4. This is the export form, not the
-# form a pod record is written in.
+# blood pressure panel: health:systolic becomes the component coded LOINC 8480-6,
+# and health:diastolic the component coded LOINC 8462-4, the codes FHIR's blood
+# pressure profile requires. This is the export form, not the form a pod record
+# is written in.
 <urn:uuid:9e2d4f10-0000-5000-8000-000000000031> a fhir:Observation ;
     fhir:code sct:75367002 ;                       # Blood pressure (observable)
     cascade:loincCode loinc:85354-9 ;              # Blood pressure panel
     fhir:component (
-        [ fhir:code sct:271649006 ;                # Systolic BP
+        [ fhir:code loinc:8480-6 ;                 # Systolic blood pressure
           fhir:valueQuantity [ fhir:value "128"^^xsd:double ; fhir:unit "mmHg" ;
                                fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
-        [ fhir:code sct:271650006 ;                # Diastolic BP
+        [ fhir:code loinc:8462-4 ;                 # Diastolic blood pressure
           fhir:valueQuantity [ fhir:value "79"^^xsd:double ; fhir:unit "mmHg" ;
                                fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
     ) ;
