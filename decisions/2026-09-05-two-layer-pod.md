@@ -171,6 +171,11 @@ new clinician for intake, a second opinion, or a language model that must reason
 unambiguous record. Terminology licensing for IPS is decided by the organisation's existing
 licensing policy, not here.
 
+Who authors an export, its `Bundle.identifier`, the identifiers of the people in it, and the
+rule that an export is valid unsigned are decided in D-EXPORT-1
+(`decisions/2026-09-28-export-authorship-identity.md`, 2026-09-28), normative in
+`pod-structure.md` section 9.4.
+
 ## Amendment 2026-09-05: what two measurements changed
 
 Before the rulebook went to review, two read-only measurements were run against the public
@@ -280,7 +285,10 @@ text above is amended in place where a sentence changed, and this section record
    or its sources. For the IPS this means the Bundle identifier and each entry's identifier are
    minted by the export's publication event, which is the same record spec#47 asks
    `cascade:ExportManifest` to carry as `dct:identifier`; an IPS export is a recorded
-   publication, not a property of the canonical rows.
+   publication, not a property of the canonical rows. (Amended 2026-09-28 by D-EXPORT-1: the
+   manifest's `dct:identifier` is the Bundle identifier, and the patient and each author get
+   an entry identifier minted for that export only; identifiers for other entries are a
+   separate question, still governed by this ruling.)
 6. **The derivation is published as data.** Layer 2 is defined as the triples that published
    SPARQL `CONSTRUCT` queries emit, run to a fixpoint, over four versioned inputs: layer 1
    source records, layer 1 judgements, the queries themselves, and reference data (brand to

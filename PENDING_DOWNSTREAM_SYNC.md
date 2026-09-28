@@ -1104,6 +1104,50 @@ the property instead.
 
 ---
 
+## Pending batch: core v3.12 (authored 2026-09-28)
+
+Who authors an export and how it is identified (D-EXPORT-1, spec#47). Tag
+`vocab/core-v3.12` at merge. No new term; one shape change, one context term.
+See `CHANGELOG.md`.
+
+**What was authored:**
+
+- `core` 3.11 to 3.12: comments on `cascade:ExportManifest` and
+  `cascade:ProxyAgent` state the identifier and authorship mapping.
+- `core.shapes.ttl` 1.11: `cascade:ExportManifestShape` gains
+  `dct:identifier`, at most one (Violation), present and in lowercase
+  version 4 `urn:uuid` form typed `xsd:anyURI` (Warning).
+- `contexts/v1/core.jsonld` and `contexts/v1/cascade.jsonld`: `identifier`.
+- `pod-structure.md` 1.9: section 9.4 (normative), manifest examples and
+  tables in 9.1, 9.2, C.2 and C.3, and the section 3.6 note on the pod
+  identifier.
+
+**Steps 2 to 7, pending:**
+
+- [ ] `cascadeprotocol.org`: `scripts/sync-from-spec.sh` (carries the
+      contexts, the core TTLs and `pod-structure.md`), then the core HTML page
+      and `cascade-protocol-schemas.md`.
+- [ ] `conformance`: manifest fixtures with one valid identifier, none
+      (Warning), two (Violation), an uppercase or non-v4 value (Warning), a
+      plain string literal (Warning); add a `dct:identifier` to the reference
+      pod's `manifest.ttl`; tag.
+- [ ] `cascade-cli`: `scripts/sync-shapes-from-spec.sh`, `VOCAB_VERSIONS`;
+      the manifest writer mints a fresh `urn:uuid` per export; the IPS export
+      maps it to `Bundle.identifier` and applies section 9.4 (authors,
+      attesters, `Device`, per-export `urn:uuid` entries, no pod identifier,
+      no `Composition.identifier`).
+- [ ] `sdk-typescript`, `sdk-python`: an `identifier` field on the
+      `ExportManifest` model, serializer and deserializer, round-tripped;
+      `VOCAB_VERSIONS`.
+- [ ] `cascade-agent`: query patterns for an export's identifier and
+      authors; `VOCAB_VERSIONS`.
+
+**MIGRATION.** Nothing stored changes meaning. An existing manifest gains one
+Warning for the missing identifier and is not rewritten: an identifier is
+minted when an export is made, never back-filled.
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred

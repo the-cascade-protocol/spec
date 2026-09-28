@@ -406,6 +406,7 @@
     "statistic": { "@id": "cascade:statistic", "@type": "xsd:string" },
     "dayZone": { "@id": "cascade:dayZone", "@type": "xsd:string" },
     "podIdentifier": { "@id": "cascade:podIdentifier", "@type": "xsd:anyURI" },
+    "identifier": { "@id": "dc:identifier", "@type": "xsd:anyURI" },
 
     "Attachment": "cascade:Attachment",
     "hasAttachment": { "@id": "cascade:hasAttachment", "@type": "@id", "@container": "@set" },

@@ -1,11 +1,11 @@
 # Cascade Protocol Pod Structure Specification
 
 **Status:** Draft
-**Version:** 1.8
-**Date:** 2026-09-26
+**Version:** 1.9
+**Date:** 2026-09-28
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
-**Vocabulary versions:** core v3.11, health v2.11, clinical v1.20, coverage v1.6
+**Vocabulary versions:** core v3.12, health v2.11, clinical v1.20, coverage v1.6
 
 > **v1.1 correction.** Every `solid:forClass` registration and every file/class table in this document has been checked against the published ontologies and against the [reference patient pod](/reference-patient-pod/README.md). Fourteen class names were corrected: they named classes that no Cascade ontology defines and no implementation writes, inside registration examples an implementer would copy. Two remaining names (`clinical:ScreeningResult`, `clinical:DiagnosticResult`) have no ratified equivalent and are marked rather than invented.
 
@@ -356,7 +356,7 @@ All three are PHI and therefore stay here: they MUST NOT be moved to `card.ttl`,
 
 | Predicate | Object | Notes |
 |-----------|--------|-------|
-| `cascade:podIdentifier` | Literal (`xsd:anyURI`) | REQUIRED before any record is named from a pod subject. A random version 4 UUID in `urn:uuid:` form, lowercase. Exactly one. Owner-only: it MUST NOT be written to `card.ttl` and is not exported by default |
+| `cascade:podIdentifier` | Literal (`xsd:anyURI`) | REQUIRED before any record is named from a pod subject. A random version 4 UUID in `urn:uuid:` form, lowercase. Exactly one. Owner-only: it MUST NOT be written to `card.ttl`, and MUST NOT be written to an export made for a recipient (Section 9.4) |
 
 - **Minted once.** `pod init` mints it. A Pod created before core v3.11 gets one the first time a command needs it, written before anything is named from it. It never changes and is never derived: it is read back.
 - **The naming subject.** Wherever a naming rule includes a pod subject (the wellness seeds of D-WELLNESS-1), this value as written is the input. Seeds are hashed, so a name does not reveal it.
@@ -828,6 +828,7 @@ The manifest file provides machine-readable metadata about the Pod export, inclu
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <#manifest> a cascade:ExportManifest ;
+    dct:identifier "urn:uuid:9b1c6e2a-4f3d-4c8e-a1b7-2d5e8f0c3a91"^^xsd:anyURI ;
     dct:title "Cascade Checkup Export" ;
     dct:created "2026-02-19T10:00:00Z"^^xsd:dateTime ;
     cascade:schemaVersion "1.3" ;
@@ -850,6 +851,7 @@ The manifest file provides machine-readable metadata about the Pod export, inclu
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `dct:identifier` | `xsd:anyURI` | This export's identifier: a random version 4 UUID in `urn:uuid:` form, lowercase, new for every export (core v3.12, Section 9.4) |
 | `dct:title` | Literal | Human-readable name of the export |
 | `dct:created` | `xsd:dateTime` | ISO 8601 timestamp of when the export was generated |
 | `cascade:schemaVersion` | Literal | Version of the Cascade Protocol schema used |
@@ -866,6 +868,137 @@ The `prov:wasGeneratedBy` block records:
 - **What:** `prov:wasAssociatedWith` linking to a `prov:SoftwareAgent` that identifies the exporting application and version
 
 This provenance chain ensures that any recipient of a Pod export can determine which application produced it and when, without relying on filesystem metadata.
+
+### 9.4 Export Identity, Authorship and Signatures
+
+Decided in [D-EXPORT-1](https://github.com/the-cascade-protocol/spec/blob/main/decisions/2026-09-28-export-authorship-identity.md) (core v3.12). This section is normative for every export; the subsections on people and signatures apply to an **export made for a recipient** outside the Pod, of which the HL7 FHIR International Patient Summary (IPS) Bundle is the first. A whole-Pod copy (a zip or directory export used for backup, restore or moving between devices) is the Pod itself and carries its files as they are, `/profile/extended.ttl` included.
+
+#### The export's identifier
+
+- Every `cascade:ExportManifest` MUST carry exactly one `dct:identifier`: a random version 4 UUID in `urn:uuid:` form, lowercase, typed `xsd:anyURI`.
+- It is minted when the export is made, by the export's publication event ([D-CANONICAL-1](https://github.com/the-cascade-protocol/spec/blob/main/decisions/2026-09-05-two-layer-pod.md), ruling 5 of the 2026-09-09 amendment), and is new for every export. It MUST NOT be reused, and MUST NOT be derived from the export's content, the Pod identifier or any record's name.
+- In an IPS export it is `Bundle.identifier`, with `system` `urn:ietf:rfc:3986` and `value` the `urn:uuid`. `Composition.identifier` is omitted.
+
+`cascade:ExportManifestShape` checks the identifier: a second value is a `sh:Violation`; a missing value and a value not in the lowercase version 4 form are `sh:Warning`, because manifests written before core v3.12 carry none.
+
+#### Authors, attesters and the software
+
+The manifest records who made the export with `prov:wasAttributedTo` (PROV-O; no new term): the Pod owner's WebID, a `cascade:ProxyAgent`, or both. The software is the `prov:SoftwareAgent` already recorded under `prov:wasGeneratedBy` (Section 9.3). In an IPS export:
+
+| IPS element | Populated from |
+|---|---|
+| `Composition.author` | Every person who made the export: the Patient entry if the Pod owner made it, a `RelatedPerson` entry for each `cascade:ProxyAgent` who made it; plus one `Device` entry for the software |
+| `Composition.attester` | One per person author, `mode` `personal`, `party` that author's entry |
+| `Composition.subject` | The Patient entry |
+| `Device` | The software agent's `rdfs:label` and `cascade:exporterVersion` |
+| `RelatedPerson.patient` | The Patient entry. `cascade:proxyRelationship` MAY be carried as `RelatedPerson.relationship` text |
+| `Composition.custodian` | Omitted: a patient-held Pod has no custodian organisation |
+
+The Pod owner is not an author by default: a parent exporting a young child's summary is the author, and the child is the subject.
+
+#### Identifiers of the people in an export
+
+- The Patient entry and each author entry get a `fullUrl` that is a random `urn:uuid` minted for this export only. The subject, the authors, the attesters and `RelatedPerson.patient` reference those entries by it. These values mean nothing outside the one export, and a new export mints new ones.
+- `cascade:podIdentifier` (Section 3.6) MUST NOT appear anywhere in such an export.
+- `Patient.identifier` carries only record numbers from the source systems the data came from (a hospital's MRN, for example), where appropriate, and nothing minted by the Pod.
+- Identifiers for other entries (observations and other records a recipient must tell apart across exports) are not decided here.
+
+#### Signatures
+
+An export is valid unsigned. This version defines no signature property on `cascade:ExportManifest` and an IPS export leaves `Bundle.signature` (0..1 in FHIR R4) unpopulated. Signing will be specified together with the key a recipient checks, how that key is trusted, and how it survives a lost or replaced device, with `did:plc` as the direction ([spec#63](https://github.com/the-cascade-protocol/spec/issues/63)). The publication event is required with or without a signature.
+
+#### Example
+
+A manifest for a summary a parent exported for a child:
+
+```turtle
+@prefix cascade: <https://ns.cascadeprotocol.org/core/v1#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<#manifest> a cascade:ExportManifest ;
+    dct:identifier "urn:uuid:9b1c6e2a-4f3d-4c8e-a1b7-2d5e8f0c3a91"^^xsd:anyURI ;
+    dct:title "Patient summary" ;
+    dct:created "2026-09-28T16:20:00Z"^^xsd:dateTime ;
+    cascade:schemaVersion "1.3" ;
+    prov:wasAttributedTo <#parent> ;
+    prov:wasGeneratedBy [
+        a prov:Activity ;
+        prov:startedAtTime "2026-09-28T16:20:00Z"^^xsd:dateTime ;
+        prov:wasAssociatedWith [
+            a prov:SoftwareAgent ;
+            rdfs:label "Cascade Workbench" ;
+            cascade:exporterVersion "0.9.0"
+        ]
+    ] .
+
+<#parent> a cascade:ProxyAgent ;
+    cascade:actsForPatient </profile/card.ttl#me> ;
+    cascade:proxyRelationship "parent" ;
+    cascade:proxyGrantedAt "2026-01-05T09:00:00Z"^^xsd:dateTime .
+```
+
+The header of the IPS Bundle it describes (a sketch; sections, the parent's name and the Patient's other fields omitted, and the Composition's own `fullUrl` illustrative, since entries other than the people are outside this section):
+
+```json
+{
+  "resourceType": "Bundle",
+  "type": "document",
+  "identifier": {
+    "system": "urn:ietf:rfc:3986",
+    "value": "urn:uuid:9b1c6e2a-4f3d-4c8e-a1b7-2d5e8f0c3a91"
+  },
+  "timestamp": "2026-09-28T16:20:00Z",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:0e6f2c5d-7a41-4b9e-8c3f-5d21a7e9b604",
+      "resource": {
+        "resourceType": "Composition",
+        "status": "final",
+        "type": { "coding": [{ "system": "http://loinc.org", "code": "60591-5" }] },
+        "subject": { "reference": "urn:uuid:4d2a8b17-3c6e-4f09-b5a2-e81c7d3f6a20" },
+        "date": "2026-09-28T16:20:00Z",
+        "author": [
+          { "reference": "urn:uuid:c7e35a90-1b2d-4e6f-9a84-36f0d2b5c1e7" },
+          { "reference": "urn:uuid:58b0f4e1-9d37-42ac-8e65-a1c9b7d20f36" }
+        ],
+        "attester": [
+          { "mode": "personal", "time": "2026-09-28T16:20:00Z",
+            "party": { "reference": "urn:uuid:c7e35a90-1b2d-4e6f-9a84-36f0d2b5c1e7" } }
+        ],
+        "title": "Patient summary"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:4d2a8b17-3c6e-4f09-b5a2-e81c7d3f6a20",
+      "resource": {
+        "resourceType": "Patient",
+        "identifier": [{ "system": "urn:oid:2.16.840.1.113883.19.5", "value": "MRN-004417" }]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:c7e35a90-1b2d-4e6f-9a84-36f0d2b5c1e7",
+      "resource": {
+        "resourceType": "RelatedPerson",
+        "patient": { "reference": "urn:uuid:4d2a8b17-3c6e-4f09-b5a2-e81c7d3f6a20" },
+        "relationship": [{ "text": "parent" }]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:58b0f4e1-9d37-42ac-8e65-a1c9b7d20f36",
+      "resource": {
+        "resourceType": "Device",
+        "deviceName": [{ "name": "Cascade Workbench", "type": "user-friendly-name" }],
+        "version": [{ "value": "0.9.0" }]
+      }
+    }
+  ]
+}
+```
+
+No `Composition.identifier`, no `Bundle.signature`, no `Composition.custodian`, and no Pod identifier anywhere. The Patient's only identifier is the source hospital's record number.
 
 ---
 
@@ -1266,6 +1399,7 @@ A complete manifest includes the generating software agent and content summary:
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <#manifest> a cascade:ExportManifest ;
+    dct:identifier "urn:uuid:9b1c6e2a-4f3d-4c8e-a1b7-2d5e8f0c3a91"^^xsd:anyURI ;
     dct:title "Cascade Checkup Export" ;
     dct:created "2026-02-19T10:00:00Z"^^xsd:dateTime ;
     cascade:schemaVersion "1.3" ;
@@ -1290,6 +1424,7 @@ A complete manifest includes the generating software agent and content summary:
 |----------|------|----------|-------------|
 | `a` | `cascade:PodExport` or `cascade:ExportManifest` | REQUIRED | Resource type |
 | `dct:created` or `prov:generatedAtTime` | `xsd:dateTime` | REQUIRED | Export timestamp |
+| `dct:identifier` | `xsd:anyURI` | REQUIRED on new exports (checked at `sh:Warning`) | Random `urn:uuid`, new for every export; Section 9.4 |
 | `cascade:schemaVersion` | Literal | REQUIRED | Protocol schema version |
 | `cascade:exportFormat` | Literal | RECOMMENDED | `"solidPod"` or `"directory"` |
 | `cascade:resourceCount` or `cascade:containerCount` | `xsd:integer` | RECOMMENDED | Number of data files |
