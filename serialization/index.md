@@ -1,10 +1,12 @@
 # Cascade Protocol Serialization Specification
 
-**Version:** 2.4
-**Date:** 2026-09-26
+**Version:** 2.5
+**Date:** 2026-09-27
 **Status:** Descriptive with normative examples
 **Organization:** Cascade Agentic Labs LLC
-**Vocabulary versions:** core v3.11, health v2.12 (`health.shapes.ttl` v1.10), clinical v1.21, coverage v1.6
+**Vocabulary versions:** core v3.12, health v2.12 (`health.shapes.ttl` v1.10), clinical v1.21, coverage v1.6
+
+> **v2.5 (2026-09-27).** Section 12.4 is aligned to the ruled form of a blood pressure reading: one record with flat `health:systolic` and `health:diastolic`, coded as the panel (SNOMED CT 75367002, LOINC 85354-9), is how a reading is written in a pod (12.4.1), and FHIR's `fhir:component` panel is the mapping used when a reading is exported to FHIR (12.4.2), its components coded LOINC 8480-6 and 8462-4 as FHIR's profile requires, no longer shown as the primary form. Section 12.5 states that a per-device snapshot may carry active energy (`health:activeEnergyKcal`) as well as steps and basal energy, one metric per snapshot. No vocabulary, shape or context change.
 
 > **v2.4 (2026-09-26).** Section 12 is brought to health v2.12. Blood pressure is stated as one paired reading per record, with averages as views (Section 12.4, with the flat spelling shown beside the FHIR panel). Daily activity gains `health:basalEnergyKcal` and every daily aggregate example states `health:sourceIdSpace` (Section 12.5). Sleep sessions state how a night is dated, that naps are separate and that a source's own sessions are never regrouped, and show an Apple session assembled by the one-hour grouping rule, recorded as its generating activity's `cascade:version`, and a source-flagged nap with `health:isMainSleep` (Section 12.6.3). VO2 max readings carry `clinical:measurementMethod`, and `health:vo2Max` no longer carries LOINC 60842-2 (Section 12.8.3). The 12.10 shape tables gain the shapes of `health.shapes.ttl` v1.10.
 
@@ -1942,9 +1944,11 @@ Heart rate data is stored as `health:HeartRateData` with separate history lists 
 
 ### 12.4 Blood Pressure (Device)
 
-Device blood pressure data uses `health:BloodPressureData` with the `health:bloodPressureHistory` list. Each reading is a `fhir:Observation` with two `fhir:component` entries for systolic and diastolic values.
+Device blood pressure data uses `health:BloodPressureData` with the `health:bloodPressureHistory` list. Each reading is a `health:BloodPressureReading` carrying one `health:systolic` and one `health:diastolic` value (12.4.1).
 
-**One paired reading per record (health v2.12).** A record is one reading: a systolic and a diastolic value measured together, at the reading's exact time, by one device, as FHIR's vital signs blood pressure profile (panel LOINC 85354-9, components 8480-6 and 8462-4, https://hl7.org/fhir/R4/bp.html), Open mHealth, HealthKit's blood pressure correlation and Health Connect's `BloodPressureRecord` all model it. A reading is never bucketed by day. The same reading can be written flat, with `health:systolic` and `health:diastolic` on the record (12.4.2); `health:BloodPressureReadingShape` then reports, at `sh:Warning`, a node that carries one without the other or more than one of either. From an Apple Health export a reading is built from the `<Correlation>`, never also from the systolic and diastolic records the export repeats at top level.
+**One paired reading per record (health v2.12).** A record is one reading: a systolic and a diastolic value measured together, at the reading's exact time, by one device, as FHIR's vital signs blood pressure profile (panel LOINC 85354-9, components 8480-6 and 8462-4, https://hl7.org/fhir/R4/bp.html), Open mHealth, HealthKit's blood pressure correlation and Health Connect's `BloodPressureRecord` all model it. A reading is never bucketed by day. In a pod the reading is written flat, with `health:systolic` and `health:diastolic` on the record (12.4.1); `health:BloodPressureReadingShape` reports, at `sh:Warning`, a node that carries one without the other or more than one of either. From an Apple Health export a reading is built from the `<Correlation>`, never also from the systolic and diastolic records the export repeats at top level.
+
+**FHIR's component form is the export mapping.** When a reading is exported as a FHIR `Observation`, the two values become the panel's two `component` entries (12.4.2): `health:systolic` maps to the component coded LOINC 8480-6 and `health:diastolic` to the one coded LOINC 8462-4 (the codes FHIR's blood pressure profile requires on the components), each a `valueQuantity` in mm[Hg]. A reading written in that component spelling holds its values in `fhir:component`, which `health:BloodPressureReadingShape` does not reach; a writer does not use it for a pod record.
 
 **An average is a view, not a reading.** A clinical home average (a 7-day home protocol of morning and evening readings, for example) depends on its protocol: which days count, whether the first day is dropped, whether morning and evening are averaged separately. It is computed over the readings, stating its protocol (`health:BPStatistics`), and never written as a reading. A mean that is stored or exported is coded LOINC 96607-7 (blood pressure panel, mean systolic and mean diastolic), never 85354-9.
 
@@ -1956,47 +1960,22 @@ Device blood pressure data uses `health:BloodPressureData` with the `health:bloo
 @prefix fhir:    <http://hl7.org/fhir/> .
 @prefix sct:     <http://snomed.info/sct/> .
 @prefix loinc:   <http://loinc.org/rdf#> .
-@prefix ucum:    <http://unitsofmeasure.org/> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov:    <http://www.w3.org/ns/prov#> .
 
-# Home blood pressure data from Omron BP monitor. Unlike the daily-aggregate metrics in
-# this section, BP is never aggregated to a daily mean (D5, the wellness aggregator
-# scope decision) -- each entry is a
-# named individual seeded per EXACT READING (device identity + fhir:effectiveDateTime
-# to the second), not per day, so a morning and an evening reading mint distinct IRIs.
+# Home blood pressure data from an Omron BP monitor. Unlike the daily-aggregate
+# metrics in this section, BP is never aggregated to a daily mean (D5, the wellness
+# aggregator scope decision): each entry is one reading, one systolic and one
+# diastolic value on one record, at the reading's exact time. A morning and an
+# evening reading are two records, never two values on one.
 <#blood-pressure> a health:BloodPressureData ;
     health:bloodPressureHistory (
-        <urn:uuid:9e2d4f10-0000-5000-8000-000000000030>
+        <urn:uuid:9e2d4f10-0000-5000-8000-000000000031>
     ) .
 
-<urn:uuid:9e2d4f10-0000-5000-8000-000000000030> a fhir:Observation ;
+<urn:uuid:9e2d4f10-0000-5000-8000-000000000031> a health:BloodPressureReading ;
     fhir:code sct:75367002 ;                       # Blood pressure (observable)
     cascade:loincCode loinc:85354-9 ;              # Blood pressure panel
-    fhir:component (
-        [ fhir:code sct:271649006 ;                # Systolic BP
-          fhir:valueQuantity [ fhir:value "132"^^xsd:double ; fhir:unit "mmHg" ;
-                               fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
-        [ fhir:code sct:271650006 ;                # Diastolic BP
-          fhir:valueQuantity [ fhir:value "82"^^xsd:double ; fhir:unit "mmHg" ;
-                               fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
-    ) ;
-    fhir:effectiveDateTime "2026-01-20T07:30:00Z"^^xsd:dateTime ;
-    prov:wasGeneratedBy [ a prov:Activity ; prov:label "Omron Evolv" ] .
-```
-
-#### 12.4.2 Turtle Example -- Blood Pressure, Flat
-
-```turtle
-@prefix cascade: <https://ns.cascadeprotocol.org/core/v1#> .
-@prefix health:  <https://ns.cascadeprotocol.org/health/v1#> .
-@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-@prefix prov:    <http://www.w3.org/ns/prov#> .
-
-# The same kind of reading written flat: one systolic and one diastolic value on
-# one record, at the reading's exact time. An evening reading the same day is a
-# second record, never a second value here.
-<urn:uuid:9e2d4f10-0000-5000-8000-000000000031> a health:BloodPressureReading ;
     health:systolic "128"^^xsd:double ;
     health:diastolic "79"^^xsd:double ;
     health:date "2026-01-20T19:45:00Z"^^xsd:dateTime ;
@@ -2004,11 +1983,42 @@ Device blood pressure data uses `health:BloodPressureData` with the `health:bloo
     prov:wasGeneratedBy [ a prov:Activity ; prov:label "Omron Evolv" ] .
 ```
 
+#### 12.4.2 FHIR Export Mapping -- Blood Pressure Components
+
+```turtle
+@prefix cascade: <https://ns.cascadeprotocol.org/core/v1#> .
+@prefix fhir:    <http://hl7.org/fhir/> .
+@prefix sct:     <http://snomed.info/sct/> .
+@prefix loinc:   <http://loinc.org/rdf#> .
+@prefix ucum:    <http://unitsofmeasure.org/> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+
+# The same reading as 12.4.1, as it is mapped when exported to a FHIR vital signs
+# blood pressure panel: health:systolic becomes the component coded LOINC 8480-6,
+# and health:diastolic the component coded LOINC 8462-4, the codes FHIR's blood
+# pressure profile requires. This is the export form, not the form a pod record
+# is written in.
+<urn:uuid:9e2d4f10-0000-5000-8000-000000000031> a fhir:Observation ;
+    fhir:code sct:75367002 ;                       # Blood pressure (observable)
+    cascade:loincCode loinc:85354-9 ;              # Blood pressure panel
+    fhir:component (
+        [ fhir:code loinc:8480-6 ;                 # Systolic blood pressure
+          fhir:valueQuantity [ fhir:value "128"^^xsd:double ; fhir:unit "mmHg" ;
+                               fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
+        [ fhir:code loinc:8462-4 ;                 # Diastolic blood pressure
+          fhir:valueQuantity [ fhir:value "79"^^xsd:double ; fhir:unit "mmHg" ;
+                               fhir:system ucum: ; fhir:code "mm[Hg]" ] ]
+    ) ;
+    fhir:effectiveDateTime "2026-01-20T19:45:00Z"^^xsd:dateTime ;
+    prov:wasGeneratedBy [ a prov:Activity ; prov:label "Omron Evolv" ] .
+```
+
 ### 12.5 Activity
 
 Activity data uses `health:ActivityData` with the `health:dailyActivityHistory` list. Each snapshot captures steps, active energy, exercise minutes, and stand hours. Workouts live on the same container, in `health:workoutHistory` (Section 12.13).
 
-**Where the values come from (health v2.10). One record per (source, day).** Apple's own `<ActivitySummary>` element, one per day, is a source in its own right: it carries Apple's active energy, exercise minutes and stand hours, already de-duplicated across devices. Those three values form one snapshot whose source is the ActivitySummary (source name `ActivitySummary`, and a provenance label saying so), with `cascade:statistic "sum"` and no `health:device`, since the summary names none. The ring triple lives only on that snapshot. Steps are not in `ActivitySummary`: a step snapshot is per device source, aggregated from that device's step samples, and carries `health:steps` and `health:device`. A snapshot never mixes values from two sources under one identity, and no source-priority logic applies at write time. Google Health supplies daily resting heart rate, HRV, SpO2, respiratory rate and VO2 max (written as `health:DailyVitalReading` entries), but no daily step, distance or energy total in either of its export formats.
+**Where the values come from (health v2.10). One record per (source, day).** Apple's own `<ActivitySummary>` element, one per day, is a source in its own right: it carries Apple's active energy, exercise minutes and stand hours, already de-duplicated across devices. Those three values form one snapshot whose source is the ActivitySummary (source name `ActivitySummary`, and a provenance label saying so), with `cascade:statistic "sum"` and no `health:device`, since the summary names none. The ring triple lives only on that snapshot. Steps are not in `ActivitySummary`: a step snapshot is per device source, aggregated from that device's step samples, and carries `health:steps` and `health:device`. A device's own active and basal energy are per-device snapshots in the same way, one metric per snapshot (`health:activeEnergyKcal`, `health:basalEnergyKcal`), summed from that device's samples; never a `health:DailyVitalReading` coded LOINC 41981-2, which means energy burned of any kind. A snapshot never mixes values from two sources under one identity, and no source-priority logic applies at write time. Google Health supplies daily resting heart rate, HRV, SpO2, respiratory rate and VO2 max (written as `health:DailyVitalReading` entries), but no daily step, distance or energy total in either of its export formats.
 
 #### 12.5.1 Properties Table -- DailyActivitySnapshot
 
@@ -2018,7 +2028,7 @@ Activity data uses `health:ActivityData` with the `health:dailyActivityHistory` 
 | Period Start / End | `health:periodStart` / `health:periodEnd` | `xsd:dateTime` | UTC interval of the day (health v2.10) |
 | Statistic | `cascade:statistic` | `xsd:string` | `"sum"` for every value on a snapshot (core v3.10) |
 | Steps | `health:steps` | `xsd:integer` | Total steps for the day, on a per-device snapshot |
-| Active Energy | `health:activeEnergyKcal` | `xsd:decimal` | Active calories burned (kcal), on the ActivitySummary snapshot only |
+| Active Energy | `health:activeEnergyKcal` | `xsd:decimal` | Active calories burned (kcal): Apple's own value on the ActivitySummary snapshot, or a device's own sum on a per-device snapshot |
 | Basal Energy | `health:basalEnergyKcal` | `xsd:decimal` | Basal (resting) energy burned over the day (kcal), on a per-device snapshot, summed from that device's basal energy samples (health v2.12). Energy, never a basal metabolic rate; no LOINC code separates it from active energy, so the property says which |
 | Exercise Minutes | `health:exerciseMinutes` | `xsd:integer` | Minutes of exercise, on the ActivitySummary snapshot only |
 | Stand Hours | `health:standHours` | `xsd:integer` | Hours with standing activity, on the ActivitySummary snapshot only |
@@ -3109,3 +3119,4 @@ The following data types are not yet covered and will be addressed in subsequent
 | 2.2 | 2026-09-23 | Union of 2.0 (as since amended in `spec/`, including the Section 1.7 entailment note) and 2.1. The 2.1 changes outside Section 12 are ported with every constraint table re-checked against `health.shapes.ttl` v1.7, `clinical.shapes.ttl` (clinical v1.19) and `coverage.shapes.ttl` (coverage v1.6) and corrected where the shapes moved after August; medication dates move to `clinical:startDate` / `clinical:endDate`. The two 2.1 Section 12 notes are deferred until the pending Section 12 revision for wellness reading identity lands, and need re-checking against the shapes before they are ported: `health:DailyVitalReadingShape` requires a timestamp as either `cascade:date` or `health:date`, not `cascade:date` alone as 2.1 stated. From 2.2 the site copy is synced byte-for-byte from `spec/`. |
 | 2.3 | 2026-09-24 | Section 12 brought to health v2.10 and core v3.10: the UTC interval, `cascade:statistic`, the cut zone and the device link on every daily aggregate example; new worked examples for `health:Device` (12.12), `health:Workout` with a route attachment (12.13) and `health:SleepSession` with stage totals and a source-supplied score (12.6.3); the `ActivitySummary` provenance note in 12.5; the "latest reading" properties shown as the scalars `health.ttl` declares, the object-valued use of those names removed, and "latest" defined as the newest `*History` entry (12.2); `health:sleepQuality` deprecated and removed from the examples; the undeclared `health:height` and `health:computedBMI` in 12.9 corrected to `health:bodyHeight` and `health:bodyMassIndex`; the 12.10 shape tables extended with the six shapes of `health.shapes.ttl` v1.8. The two 2.1 Section 12 notes remain unported. |
 | 2.4 | 2026-09-26 | Section 12 brought to health v2.12 and clinical v1.21: blood pressure as one paired reading per record, averages as views coded 96607-7, and a flat example (12.4, 12.4.2); `health:basalEnergyKcal` and `health:sourceIdSpace` on the daily activity example (12.5); sleep-session dating, naps, never regrouping a source's sessions, the Apple one-hour grouping rule recorded as `cascade:version` on the generating activity, retained stage segments, and `health:isMainSleep` (12.6.3); VO2 max readings with `clinical:measurementMethod` and the removal of LOINC 60842-2 (12.8.3); the 12.10 tables extended with the shapes of `health.shapes.ttl` v1.10. |
+| 2.5 | 2026-09-27 | Blood pressure written flat: one `health:systolic` and one `health:diastolic` on one `health:BloodPressureReading` is the pod form (12.4.1), and FHIR's `fhir:component` panel is the export mapping (12.4.2). A device's own active energy is a per-device snapshot beside basal energy (12.5). No vocabulary change. |

@@ -1,11 +1,11 @@
 # Cascade Protocol Pod Structure Specification
 
 **Status:** Draft
-**Version:** 1.9
+**Version:** 1.10
 **Date:** 2026-09-28
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
-**Vocabulary versions:** core v3.12, health v2.11, clinical v1.20, coverage v1.6
+**Vocabulary versions:** core v3.12, health v2.12, clinical v1.21, coverage v1.6
 
 > **v1.1 correction.** Every `solid:forClass` registration and every file/class table in this document has been checked against the published ontologies and against the [reference patient pod](/reference-patient-pod/README.md). Fourteen class names were corrected: they named classes that no Cascade ontology defines and no implementation writes, inside registration examples an implementer would copy. Two remaining names (`clinical:ScreeningResult`, `clinical:DiagnosticResult`) have no ratified equivalent and are marked rather than invented.
 
