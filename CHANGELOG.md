@@ -6,6 +6,18 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-09-28: who authors an export and how it is identified, core v3.12
+
+`core` goes 3.11 to 3.12, `core.shapes.ttl` 1.10 to 1.11, and `pod-structure.md` 1.8 to 1.9; `contexts/v1/core.jsonld` and the merged `contexts/v1/cascade.jsonld` gain `identifier`. Records D-EXPORT-1 (`decisions/2026-09-28-export-authorship-identity.md`), the ruling on spec#47. No new term.
+
+**Identifier.** Every `cascade:ExportManifest` carries one `dct:identifier`, a random `urn:uuid` new for every export, minted by its publication event; in an IPS export it is `Bundle.identifier`, and `Composition.identifier` is omitted. The shape caps it at one (Violation) and reports a missing or malformed one as a Warning, because every manifest written before this version has none.
+
+**Authorship.** The author is whoever made the export: the patient, a `cascade:ProxyAgent` exported as a `RelatedPerson`, or both. The author attests; the software is a `Device`. The patient and each author get a `urn:uuid` minted for that export only; the pod identifier never goes in an export; `Patient.identifier` carries only source-system record numbers. Identifiers for other entries are a separate question.
+
+**Signatures.** An export is valid unsigned. No signature property is added until signing itself is specified, with `did:plc` as the direction (spec#63).
+
+`pod-structure.md` section 9.4 is the normative text, with an example manifest and the IPS Bundle header it produces; D-CANONICAL-1's IPS export section points to it.
+
 ## 2026-09-26: Pod encryption 1.1, duplicate member names and the check-then-open boundary
 
 [`pod-encryption.md`](pod-encryption.md) goes 1.0 to 1.1. No vocabulary, shape or context change, and no change to the header format or its versions.

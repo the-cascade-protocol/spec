@@ -1,5 +1,36 @@
 # Core Vocabulary Changelog
 
+## v3.12 - 2026-09-28
+
+No new term: the export manifest's identifier, and who authors an export
+(D-EXPORT-1, ruled on spec#47).
+
+- **`dct:identifier` on `cascade:ExportManifest`**: a random version 4 UUID in
+  `urn:uuid:` form, lowercase, typed `xsd:anyURI`, minted by the export's
+  publication event and new for every export. In an IPS export it is
+  `Bundle.identifier` (`system` `urn:ietf:rfc:3986`); `Composition.identifier`
+  is omitted. Dublin Core already defines the term, so no `cascade:` spelling
+  is minted.
+- **Authorship.** The author is whoever made the export: the patient, a
+  `cascade:ProxyAgent` (exported as a FHIR `RelatedPerson`), or both, recorded
+  with `prov:wasAttributedTo`. The author attests; the software is a `Device`.
+  The patient and each author get an entry with a `urn:uuid` minted for that
+  export only; `cascade:podIdentifier` never goes in an export;
+  `Patient.identifier` carries only source-system record numbers. Stated on
+  the `cascade:ExportManifest` and `cascade:ProxyAgent` comments, normative in
+  `pod-structure.md` section 9.4.
+- **Unsigned is valid.** No signature property is added; it is specified with
+  signing itself, `did:plc` the direction (spec#63).
+- **`cascade:ExportManifestShape`** (core shapes 1.11): at most one
+  `dct:identifier` (Violation); present and in the lowercase version 4 form
+  (Warning). Presence is a Warning because every manifest written before this
+  version lacks one.
+- JSON-LD: `identifier` in `core.jsonld` and `cascade.jsonld`,
+  `"@type": "xsd:anyURI"`.
+
+Compatibility: additive. Nothing that validated under v3.11 stops validating;
+an existing manifest gains one Warning.
+
 ## v3.11 - 2026-09-26
 
 One property: the pod's identifier (D-POD-ID-1, recording spec#63's outcome).
