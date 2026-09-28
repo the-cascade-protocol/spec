@@ -4,7 +4,7 @@
 **Date:** 2026-09-27
 **Status:** Descriptive with normative examples
 **Organization:** Cascade Agentic Labs LLC
-**Vocabulary versions:** core v3.11, health v2.12 (`health.shapes.ttl` v1.10), clinical v1.21, coverage v1.6
+**Vocabulary versions:** core v3.12, health v2.12 (`health.shapes.ttl` v1.10), clinical v1.21, coverage v1.6
 
 > **v2.5 (2026-09-27).** Section 12.4 is aligned to the ruled form of a blood pressure reading: one record with flat `health:systolic` and `health:diastolic`, coded as the panel (SNOMED CT 75367002, LOINC 85354-9), is how a reading is written in a pod (12.4.1), and FHIR's `fhir:component` panel is the mapping used when a reading is exported to FHIR (12.4.2), its components coded LOINC 8480-6 and 8462-4 as FHIR's profile requires, no longer shown as the primary form. Section 12.5 states that a per-device snapshot may carry active energy (`health:activeEnergyKcal`) as well as steps and basal energy, one metric per snapshot. No vocabulary, shape or context change.
 
