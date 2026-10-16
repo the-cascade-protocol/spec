@@ -6,6 +6,10 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-10-16: sealed delivery envelope, draft 0.1 (proposed, not ratified)
+
+New top-level document `sealed-envelope.md`, with a proposed decision record (D-PAIR-1, `decisions/2026-10-16-sealed-delivery-envelope.md`) and deterministic vectors in `vectors/sealed-envelope/`. It specifies a pairing shown as a QR code or link, a JWE envelope sealed to it with HPKE (`HPKE-7`), the same envelope opened with a Pod's six-word key instead (`dir`, the content key wrapped as `pod-encryption.md` wraps a Pod's data key), and a store-only ZIP profile for the bundle inside. No vocabulary, shape or context change.
+
 ## 2026-09-28: blood pressure written flat, and the pod structure's vocabulary versions
 
 `serialization/index.md` goes 2.4 to 2.5 and `pod-structure.md` 1.9 to 1.10. No vocabulary, shape or context change.
