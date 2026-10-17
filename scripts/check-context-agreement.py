@@ -9,8 +9,8 @@ A context is a published artefact that MUST agree with them: a context that
 disagrees is the defect, never the ontology. That is D-CONTEXT-1 C1, and this
 check is what makes it a gate rather than a sentence.
 
-Four questions are asked of every term in the six per-vocabulary contexts under
-contexts/v1/ (core, health, clinical, coverage, checkup, pots):
+Four questions are asked of every term in the seven per-vocabulary contexts under
+contexts/v1/ (core, health, clinical, coverage, checkup, pots, assessment):
 
   1. DECLARED. The term's @id, expanded through the context's own prefixes, is a
      property, class or individual actually declared in that vocabulary's
@@ -125,7 +125,7 @@ XSD = "http://www.w3.org/2001/XMLSchema#"
 RDF_LIST = "http://www.w3.org/1999/02/22-rdf-syntax-ns#List"
 CASCADE_NS_PREFIX = "https://ns.cascadeprotocol.org/"
 
-VOCABS = ("core", "health", "clinical", "coverage", "checkup", "pots")
+VOCABS = ("core", "health", "clinical", "coverage", "checkup", "pots", "assessment")
 AGGREGATE = "cascade"
 BASELINE = "scripts/known-context-disagreements.json"
 
@@ -152,6 +152,7 @@ EXTERNAL_NAMESPACES = {
     "http://www.nlm.nih.gov/research/umls/rxnorm/": "rxnorm",
     "http://unitsofmeasure.org/": "ucum",
     "http://terminology.hl7.org/CodeSystem/": "hl7cs",
+    "http://spdx.org/rdf/terms#": "spdx",
 }
 
 PROPERTY_TYPES = (
@@ -283,7 +284,7 @@ def load_contexts(contexts_dir):
         contexts[name] = ctx
     missing = [v for v in VOCABS if v not in contexts]
     if len(missing) == len(VOCABS):
-        die("none of the six per-vocabulary contexts were found under %s" % contexts_dir)
+        die("none of the %d per-vocabulary contexts were found under %s" % (len(VOCABS), contexts_dir))
     return contexts, missing
 
 
@@ -608,7 +609,7 @@ def report_aggregate(contexts):
         elif not entry.get("@container"):
             lost.append((term, shapes))
 
-    print("  keys whose meaning collides across the six vocabularies: %d" % len(collisions))
+    print("  keys whose meaning collides across the %d vocabularies: %d" % (len(VOCABS), len(collisions)))
     for term in collisions:
         seen = meanings[term]
         print("    %-28s %s" % (term, "; ".join(

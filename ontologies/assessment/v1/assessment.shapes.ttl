@@ -1,0 +1,1524 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix assessment: <https://ns.cascadeprotocol.org/assessment/v1#> .
+@prefix cascade: <https://ns.cascadeprotocol.org/core/v1#> .
+@prefix health: <https://ns.cascadeprotocol.org/health/v1#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix schema: <https://schema.org/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix spdx: <http://spdx.org/rdf/terms#> .
+@prefix loinc: <http://loinc.org/rdf#> .
+@prefix checkup: <https://ns.cascadeprotocol.org/checkup/v1#> .
+
+# =============================================================================
+# Cascade Protocol -- Assessment Vocabulary SHACL Shapes v1.0
+# =============================================================================
+#
+# Changelog
+#   v1.0 (2026-10-16): First ratified release. Against the 0.1 draft shapes:
+#     shapes follow the vocabulary onto the standard terms it now uses; the
+#     item shape is CLOSED, so an item can carry only its identifier, printed
+#     position, response scale, scale membership and LOINC code; answers are
+#     numeric literals drawn from their item's response scale; every instrument
+#     carries its edition and every item its response scale definition; the
+#     cross-property invariants are stated (see INVARIANTS below); a bundle's
+#     files are SPDX files with SHA-256 checksums.
+#   0.1-draft (2026-08-05): Initial draft shapes, staged outside this repository.
+#
+# Entailment independence (validation/index.md, normative):
+#   S1  Every class this file constrains carries its own sh:targetClass. The
+#       assessment classes are declared subclasses of PROV-O and SKOS classes
+#       and NO shape here targets a prov: or skos: class, so nothing depends
+#       on those axioms being present at validation time.
+#   S3  Enumerated value spaces (rater role, setting, the FHIR and LOINC code
+#       lists) use sh:in over the values themselves rather than sh:class over
+#       a class, so a verdict never depends on a type triple for the value.
+#   S5  The three shapes reached by sh:node (the administration association,
+#       a bundle file and its checksum) carry only sh:Violation constraints.
+#   V6  This file declares no sh:entailment, and must not.
+#
+# Severity levels follow the house convention:
+#   sh:Violation - required; the data is wrong without it
+#   sh:Warning   - important; the data is usable but diminished
+#   sh:Info      - suggested; improves quality when present
+#
+# INVARIANTS. Cross-property rules are written in SHACL Core (sh:lessThanOrEquals,
+# sh:xone, sh:or, an inverse path), because SHACL Core is what every Cascade
+# validator evaluates. This file contains NO SHACL-SPARQL constraint: a SHACL
+# Core engine either ignores one or refuses the shapes graph outright, so a
+# SPARQL constraint here would make the whole file unusable to such an engine.
+# Two further rules need a join across nodes that Core cannot express (I9 and
+# I10 below); they are normative producer rules, stated in the ontology, and
+# are not checked by this file.
+#
+#   I1  ScaleScore     countedItems <= scaleItemCount
+#   I2  ScaleScore     answeredItemCount <= scaleItemCount
+#   I3  ScaleScore     countedItems <= answeredItemCount
+#   I4  ScaleScore     exactly one of countedItems and rdf:value
+#   I5  BundleManifest completedRaterCount <= totalRaterCount
+#   I6  ResponseSet    respondedItemCount <= instrumentItemCount
+#   I7  Assignment     'completed' if and only if it has a response set
+#   I8  ItemResponse   exactly one of rdf:value and cascade:dataAbsentReason
+#   I9  ItemResponse   rdf:value is a skos:notation of the item's response scale (not checked here)
+#   I10 ItemResponse   the item is a part of the response set's instrument (not checked here)
+#   I11 ScreenOutcome  a verdict, or an absence reason with the missing input, never both
+#   I12 ResponseSet    health:periodStart <= health:periodEnd
+#   I13 Instrument     ratingWindowDuration present exactly when the kind is 'fixed-lookback'
+#   I14 Assignment     listed by a wave's prov:hadMember
+#
+# =============================================================================
+
+# =============================================================================
+# Shape: Instrument
+# =============================================================================
+
+assessment:InstrumentShape a sh:NodeShape ;
+    sh:targetClass assessment:Instrument ;
+    rdfs:label "Instrument Shape"@en ;
+    rdfs:comment "A published edition of a rating instrument as one producer reproduces it. The edition and the citation are required: with item text deliberately absent, the citation is the only route back to what was asked, and the edition is what says how to read a raw answer."@en ;
+
+    sh:property [
+        sh:path dct:identifier ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Instrument Identifier"@en ;
+        sh:message "Instrument MUST have exactly one non-empty dct:identifier containing no ':' (it is an identity key segment)"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:title ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Title"@en ;
+        sh:message "Instrument MUST have exactly one dct:title"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:instrumentVersion ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Instrument Version (edition)"@en ;
+        sh:message "Instrument MUST name exactly one published edition in assessment:instrumentVersion, containing no ':'. Editions differ in wording and in scale direction, so a raw answer cannot be read without it"@en
+    ] ;
+
+    sh:property [
+        sh:path schema:version ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Reproduction Version"@en ;
+        sh:message "Instrument MUST carry exactly one schema:version, the version of the producer's reproduction of the edition, containing no ':'"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:bibliographicCitation ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minLength 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Citation"@en ;
+        sh:message "Instrument MUST carry one dct:bibliographicCitation: with item text deliberately omitted, the citation is the only route back to what was asked"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:rights ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Rights"@en ;
+        sh:message "An edition that prints a copyright or attribution line should carry it verbatim, once, in dct:rights"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:license ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Violation ;
+        sh:name "License (form)"@en ;
+        sh:message "dct:license MUST be an IRI naming the license or the publisher's permission statement"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:license ;
+        sh:minCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "License (presence)"@en ;
+        sh:message "Instrument should state with dct:license the basis on which the producer reproduces the edition"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:hasPart ;
+        sh:or ( [ sh:class assessment:Item ] [ sh:class assessment:Scale ] ) ;
+        sh:severity sh:Violation ;
+        sh:name "Parts"@en ;
+        sh:message "An instrument's dct:hasPart values MUST be its items and its scales"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:hasPart ;
+        sh:qualifiedValueShape [ sh:class assessment:Item ] ;
+        sh:qualifiedMinCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Has Item"@en ;
+        sh:message "Instrument MUST have at least one item as a dct:hasPart"@en
+    ] ;
+
+    sh:property [
+        sh:path cascade:loincCode ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Info ;
+        sh:name "LOINC Code"@en ;
+        sh:message "cascade:loincCode carries the instrument's LOINC panel code where one exists, and is absent where none does"@en
+    ] ;
+
+    sh:property [
+        sh:path cascade:schemaVersion ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Schema Version"@en ;
+        sh:message "cascade:schemaVersion records the vocabulary version this record was written against"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:ratingWindowKind ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:in ( "fixed-lookback" "since-school-year-start" "since-previous-rating" "unspecified" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Rating Window Kind (form)"@en ;
+        sh:message "ratingWindowKind MUST be one of: fixed-lookback, since-school-year-start, since-previous-rating, unspecified"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:ratingWindowKind ;
+        sh:minCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Rating Window Kind (presence)"@en ;
+        sh:message "Instrument should state the period its edition asks raters to think about; write 'unspecified' when the edition states none"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:ratingWindowDuration ;
+        sh:datatype xsd:duration ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Rating Window Duration"@en ;
+        sh:message "ratingWindowDuration MUST be a single xsd:duration"@en
+    ] .
+
+# I13: a fixed look-back window has a duration, and only that kind has one.
+assessment:InstrumentWindowRuleShape a sh:NodeShape ;
+    sh:targetClass assessment:Instrument ;
+    rdfs:label "Instrument Window Rule Shape"@en ;
+    sh:or (
+        [ sh:and (
+            [ sh:property [ sh:path assessment:ratingWindowKind ; sh:minCount 1 ; sh:in ( "fixed-lookback" ) ] ]
+            [ sh:property [ sh:path assessment:ratingWindowDuration ; sh:minCount 1 ] ]
+        ) ]
+        [ sh:and (
+            [ sh:property [ sh:path assessment:ratingWindowKind ; sh:not [ sh:in ( "fixed-lookback" ) ] ] ]
+            [ sh:property [ sh:path assessment:ratingWindowDuration ; sh:maxCount 0 ] ]
+        ) ]
+    ) ;
+    sh:severity sh:Violation ;
+    sh:message "ratingWindowDuration MUST be present exactly when ratingWindowKind is 'fixed-lookback'"@en .
+
+# =============================================================================
+# Shape: Item
+# =============================================================================
+#
+# THE ITEM-TEXT BOUNDARY, enforced at the schema. The shape is CLOSED: an item
+# may carry only the predicates named in its property shapes, plus rdf:type.
+# The four sh:maxCount 0 constraints are kept so that the most likely accident
+# (a human-readable label on an item) fails with a message that says why; the
+# closure is what stops every other spelling of the same wording, including
+# checkup:itemText, rdfs:comment and schema:name.
+#
+# =============================================================================
+
+assessment:ItemShape a sh:NodeShape ;
+    sh:targetClass assessment:Item ;
+    rdfs:label "Item Shape"@en ;
+    rdfs:comment "One published instrument item, referenced by identifier and printed number. Closed: it carries no item text, by constraint."@en ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+
+    sh:property [
+        sh:path dct:identifier ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Item Identifier"@en ;
+        sh:message "Item MUST have exactly one non-empty dct:identifier containing no ':'"@en
+    ] ;
+
+    sh:property [
+        sh:path schema:position ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Printed Number (form)"@en ;
+        sh:message "schema:position MUST be the single 1-based number the item carries as printed"@en
+    ] ;
+
+    sh:property [
+        sh:path schema:position ;
+        sh:minCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Printed Number (presence)"@en ;
+        sh:message "Item should carry the number printed beside it on the edition; omit it only where the edition prints none"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:usesResponseScale ;
+        sh:class assessment:ResponseScale ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Uses Response Scale"@en ;
+        sh:message "Item MUST link to exactly one response scale, or a bare answer has no value space and no direction"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:isPartOf ;
+        sh:class assessment:Scale ;
+        sh:severity sh:Violation ;
+        sh:name "Member Of Scale"@en ;
+        sh:message "An item's dct:isPartOf values MUST be the scales it contributes to"@en
+    ] ;
+
+    sh:property [
+        sh:path cascade:loincCode ;
+        sh:nodeKind sh:IRI ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "LOINC Code"@en ;
+        sh:message "cascade:loincCode on an item is at most one IRI, emitted only once its alignment is verified, and never with its display string"@en
+    ] ;
+
+    sh:property [
+        sh:path rdfs:label ;
+        sh:maxCount 0 ;
+        sh:severity sh:Violation ;
+        sh:name "No Item Label"@en ;
+        sh:message "An item MUST NOT carry rdfs:label: instrument item wording is the publisher's content and this vocabulary conveys none of it"@en
+    ] ;
+    sh:property [
+        sh:path dct:title ;
+        sh:maxCount 0 ;
+        sh:severity sh:Violation ;
+        sh:name "No Item Title"@en ;
+        sh:message "An item MUST NOT carry dct:title (item-text boundary)"@en
+    ] ;
+    sh:property [
+        sh:path skos:prefLabel ;
+        sh:maxCount 0 ;
+        sh:severity sh:Violation ;
+        sh:name "No Item Preferred Label"@en ;
+        sh:message "An item MUST NOT carry skos:prefLabel (item-text boundary)"@en
+    ] ;
+    sh:property [
+        sh:path dct:description ;
+        sh:maxCount 0 ;
+        sh:severity sh:Violation ;
+        sh:name "No Item Description"@en ;
+        sh:message "An item MUST NOT carry dct:description (item-text boundary)"@en
+    ] .
+
+# =============================================================================
+# Shape: Scale
+# =============================================================================
+
+assessment:ScaleShape a sh:NodeShape ;
+    sh:targetClass assessment:Scale ;
+    rdfs:label "Scale Shape"@en ;
+
+    sh:property [
+        sh:path dct:identifier ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Scale Identifier"@en ;
+        sh:message "Scale MUST have exactly one non-empty dct:identifier containing no ':'"@en
+    ] ;
+
+    sh:property [
+        sh:path rdfs:label ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:minCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Scale Label"@en ;
+        sh:message "Scale should carry one rdfs:label, the name its instrument's scoring page uses"@en
+    ] ;
+
+    sh:property [
+        sh:path cascade:loincCode ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Info ;
+        sh:name "LOINC Code"@en ;
+        sh:message "cascade:loincCode identifies the dimension where LOINC codes it; it does not assert numeric equivalence"@en
+    ] .
+
+# =============================================================================
+# Shape: Response Scale and Response Option
+# =============================================================================
+
+assessment:ResponseScaleShape a sh:NodeShape ;
+    sh:targetClass assessment:ResponseScale ;
+    rdfs:label "Response Scale Shape"@en ;
+    rdfs:comment "The definition a raw answer is read against: every value, its printed label, and which end is the problem end."@en ;
+
+    sh:property [
+        sh:path dct:identifier ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Response Scale Identifier"@en ;
+        sh:message "ResponseScale MUST have exactly one non-empty dct:identifier containing no ':'"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:problemEnd ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "high" "low" "unordered" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Problem End"@en ;
+        sh:message "ResponseScale MUST state its problem end: 'high', 'low' or 'unordered'. Editions of one instrument run the same scale in opposite directions"@en
+    ] ;
+
+    sh:property [
+        sh:path skos:hasTopConcept ;
+        sh:class assessment:ResponseOption ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Options"@en ;
+        sh:message "ResponseScale MUST list every permitted answer as a skos:hasTopConcept that is an assessment:ResponseOption"@en
+    ] .
+
+assessment:ResponseOptionShape a sh:NodeShape ;
+    sh:targetClass assessment:ResponseOption ;
+    rdfs:label "Response Option Shape"@en ;
+
+    sh:property [
+        sh:path skos:notation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:decimal ] ) ;
+        sh:severity sh:Violation ;
+        sh:name "Option Value"@en ;
+        sh:message "ResponseOption MUST carry exactly one numeric skos:notation (xsd:integer or xsd:decimal): the value an answer records"@en
+    ] ;
+
+    sh:property [
+        sh:path skos:prefLabel ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Option Label"@en ;
+        sh:message "A ResponseOption carries at most one skos:prefLabel, the label printed for that value alone"@en
+    ] .
+
+# =============================================================================
+# Shape: Assessment Subject
+# =============================================================================
+
+assessment:AssessmentSubjectShape a sh:NodeShape ;
+    sh:targetClass assessment:AssessmentSubject ;
+    rdfs:label "Assessment Subject Shape"@en ;
+    rdfs:comment "A provenance descriptor, not an identity record. The shape deliberately requires nothing that would make it usable as one."@en ;
+
+    sh:property [
+        sh:path rdfs:label ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minLength 1 ;
+        sh:maxLength 120 ;
+        sh:severity sh:Violation ;
+        sh:name "Display Label"@en ;
+        sh:message "AssessmentSubject MUST have exactly one non-empty rdfs:label of at most 120 characters"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:gradeLevel ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Grade Level"@en ;
+        sh:message "gradeLevel gives a family a second recognition cue when labels are initials"@en
+    ] .
+
+# =============================================================================
+# Shape: Rater
+# =============================================================================
+
+assessment:RaterShape a sh:NodeShape ;
+    sh:targetClass assessment:Rater ;
+    rdfs:label "Rater Shape"@en ;
+
+    sh:property [
+        sh:path rdfs:label ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minLength 1 ;
+        sh:maxLength 120 ;
+        sh:severity sh:Violation ;
+        sh:name "Display Label"@en ;
+        sh:message "Rater MUST have exactly one non-empty rdfs:label of at most 120 characters"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:raterRole ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( assessment:ParentRater assessment:CaregiverRater assessment:TeacherRater assessment:CoachRater assessment:OtherRater ) ;
+        sh:severity sh:Violation ;
+        sh:name "Rater Role"@en ;
+        sh:message "Rater MUST have exactly one raterRole drawn from the declared enumeration"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:atLocation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( assessment:HomeSetting assessment:SchoolSetting assessment:ActivitySetting assessment:OtherSetting ) ;
+        sh:severity sh:Violation ;
+        sh:name "Setting"@en ;
+        sh:message "Rater MUST record exactly one observation setting with prov:atLocation, drawn from the declared enumeration"@en
+    ] .
+
+# =============================================================================
+# Shape: Wave
+# =============================================================================
+
+assessment:WaveShape a sh:NodeShape ;
+    sh:targetClass assessment:Wave ;
+    rdfs:label "Wave Shape"@en ;
+
+    sh:property [
+        sh:path schema:position ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minInclusive 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Wave Number"@en ;
+        sh:message "Wave MUST have exactly one schema:position, 1 or greater"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:subject ;
+        sh:class assessment:AssessmentSubject ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Subject"@en ;
+        sh:message "Wave MUST name the subject descriptor it is about with dct:subject"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:hadMember ;
+        sh:class assessment:Assignment ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Assignments"@en ;
+        sh:message "Wave MUST list every rater assignment, answered or not, with prov:hadMember: a wave that lists only the raters who replied misrepresents what was collected"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:waveStatus ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:in ( "open" "closed" ) ;
+        sh:severity sh:Warning ;
+        sh:name "Wave Status"@en ;
+        sh:message "waveStatus should be 'open' or 'closed'"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:instrumentSetId ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Instrument Set Id"@en ;
+        sh:message "instrumentSetId names the battery administered in this wave"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:created ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Created"@en ;
+        sh:message "dct:created records when the wave was opened"@en
+    ] ;
+
+    sh:property [
+        sh:path cascade:hasAttachment ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Violation ;
+        sh:name "Rendering"@en ;
+        sh:message "A rendering made from the wave MUST be referenced as a cascade:Attachment by IRI"@en
+    ] .
+
+# =============================================================================
+# Shape: Assignment
+# =============================================================================
+
+assessment:AssignmentShape a sh:NodeShape ;
+    sh:targetClass assessment:Assignment ;
+    rdfs:label "Assignment Shape"@en ;
+    rdfs:comment "One rater asked to complete one instrument. Present whether or not they answered."@en ;
+
+    sh:property [
+        sh:path dct:isPartOf ;
+        sh:class assessment:Wave ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Wave"@en ;
+        sh:message "Assignment MUST name its wave with dct:isPartOf"@en
+    ] ;
+
+    # I14
+    sh:property [
+        sh:path [ sh:inversePath prov:hadMember ] ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Listed By Its Wave"@en ;
+        sh:message "Assignment MUST be listed by its wave's prov:hadMember, or the wave's roster is missing a rater"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:assignedRater ;
+        sh:class assessment:Rater ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Assigned Rater"@en ;
+        sh:message "Assignment MUST name its rater"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:forInstrument ;
+        sh:class assessment:Instrument ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "For Instrument"@en ;
+        sh:message "Assignment MUST name the instrument edition the rater was given"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:assignmentStatus ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "draft" "requested" "received" "accepted" "rejected" "ready" "cancelled" "in-progress" "on-hold" "failed" "completed" "entered-in-error" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Assignment Status"@en ;
+        sh:message "Assignment MUST carry exactly one status from the HL7 FHIR R4 task-status code system (normally requested, in-progress, completed or cancelled)"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:hasResponseSet ;
+        sh:class assessment:ResponseSet ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Has Response Set"@en ;
+        sh:message "An assignment is fulfilled by at most one response set"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:consentRecordedAt ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Consent Recorded At"@en ;
+        sh:message "consentRecordedAt is a timestamp only"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:consentTextVersion ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Consent Text Version"@en ;
+        sh:message "consentTextVersion names the text the rater acknowledged"@en
+    ] .
+
+# I7: completed exactly when there is a response set.
+assessment:AssignmentCompletionRuleShape a sh:NodeShape ;
+    sh:targetClass assessment:Assignment ;
+    rdfs:label "Assignment Completion Rule Shape"@en ;
+    sh:or (
+        [ sh:and (
+            [ sh:property [ sh:path assessment:assignmentStatus ; sh:in ( "completed" ) ] ]
+            [ sh:property [ sh:path assessment:hasResponseSet ; sh:minCount 1 ] ]
+        ) ]
+        [ sh:and (
+            [ sh:property [ sh:path assessment:assignmentStatus ; sh:not [ sh:in ( "completed" ) ] ] ]
+            [ sh:property [ sh:path assessment:hasResponseSet ; sh:maxCount 0 ] ]
+        ) ]
+    ) ;
+    sh:severity sh:Violation ;
+    sh:message "An assignment MUST carry a response set exactly when its status is 'completed'"@en .
+
+# =============================================================================
+# Shape: Response Set
+# =============================================================================
+
+assessment:ResponseSetShape a sh:NodeShape ;
+    sh:targetClass assessment:ResponseSet ;
+    rdfs:label "Response Set Shape"@en ;
+    rdfs:comment "One rater's completed instrument. The instrument data every score derives from."@en ;
+
+    sh:property [
+        sh:path assessment:forInstrument ;
+        sh:class assessment:Instrument ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "For Instrument"@en ;
+        sh:message "ResponseSet MUST name the instrument edition it answers"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:subject ;
+        sh:class assessment:AssessmentSubject ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Subject"@en ;
+        sh:message "ResponseSet MUST name the subject descriptor it is about with dct:subject"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:responseSetStatus ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "in-progress" "completed" "amended" "entered-in-error" "stopped" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Response Set Status"@en ;
+        sh:message "responseSetStatus MUST be one of the HL7 FHIR questionnaire-answers-status codes: in-progress, completed, amended, entered-in-error, stopped"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:hasPart ;
+        sh:class assessment:ItemResponse ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Item Responses"@en ;
+        sh:message "ResponseSet MUST have at least one item response as a dct:hasPart, and nothing else"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:wasGeneratedBy ;
+        sh:class assessment:AdministrationActivity ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Was Generated By"@en ;
+        sh:message "ResponseSet MUST link to the administration activity that produced it, so who answered and in what role survives"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:fulfillsAssignment ;
+        sh:class assessment:Assignment ;
+        sh:maxCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Fulfills Assignment"@en ;
+        sh:message "fulfillsAssignment lets a consumer traverse from a response back to the invitation without inference"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:isPartOf ;
+        sh:class assessment:Wave ;
+        sh:maxCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Wave"@en ;
+        sh:message "dct:isPartOf places the response set in its wave"@en
+    ] ;
+
+    # I6
+    sh:property [
+        sh:path assessment:respondedItemCount ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:lessThanOrEquals assessment:instrumentItemCount ;
+        sh:severity sh:Violation ;
+        sh:name "Responded Item Count"@en ;
+        sh:message "respondedItemCount MUST be a non-negative integer no greater than instrumentItemCount"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:instrumentItemCount ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:severity sh:Violation ;
+        sh:name "Instrument Item Count"@en ;
+        sh:message "instrumentItemCount MUST be a single non-negative integer"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:respondentComment ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Respondent Comment"@en ;
+        sh:message "respondentComment carries the rater's own free text"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:language ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Language"@en ;
+        sh:message "dct:language records, as a BCP 47 tag, the language the form was given in"@en
+    ] ;
+
+    # I12
+    sh:property [
+        sh:path health:periodStart ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        sh:lessThanOrEquals health:periodEnd ;
+        sh:severity sh:Violation ;
+        sh:name "Rated Period Start"@en ;
+        sh:message "health:periodStart MUST be a single instant no later than health:periodEnd"@en
+    ] ;
+
+    sh:property [
+        sh:path health:periodEnd ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Rated Period End"@en ;
+        sh:message "health:periodEnd MUST be a single instant"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:raterObservationLength ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Rater Observation Length"@en ;
+        sh:message "raterObservationLength is the rater's own statement of how long they could observe"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:medicationStatusAtRating ;
+        sh:maxCount 1 ;
+        sh:in ( loinc:LA34443-4 loinc:LA34444-2 loinc:LA12693-0 ) ;
+        sh:severity sh:Violation ;
+        sh:name "Medication Status At Rating"@en ;
+        sh:message "medicationStatusAtRating MUST be one of the LOINC answers LA34443-4 (Was on medication), LA34444-2 (Was not on medication), LA12693-0 (Not sure)"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:treatmentPeriod ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Violation ;
+        sh:name "Treatment Period"@en ;
+        sh:message "treatmentPeriod MUST link to the treatment period record by IRI"@en
+    ] .
+
+# =============================================================================
+# Shape: Item Response
+# =============================================================================
+
+assessment:ItemResponseShape a sh:NodeShape ;
+    sh:targetClass assessment:ItemResponse ;
+    rdfs:label "Item Response Shape"@en ;
+
+    sh:property [
+        sh:path assessment:forItem ;
+        sh:class assessment:Item ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "For Item"@en ;
+        sh:message "ItemResponse MUST name exactly one item"@en
+    ] ;
+
+    sh:property [
+        sh:path rdf:value ;
+        sh:maxCount 1 ;
+        sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:decimal ] ) ;
+        sh:severity sh:Violation ;
+        sh:name "Answer"@en ;
+        sh:message "An answer's rdf:value MUST be a single xsd:integer or xsd:decimal literal: no other literal can be one of a response scale's values, and a free-text literal is a way to carry item wording"@en
+    ] ;
+
+    sh:property [
+        sh:path cascade:dataAbsentReason ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:in ( "unknown" "asked-unknown" "temp-unknown" "not-asked" "asked-declined" "masked" "not-applicable" "unsupported" "as-text" "error" "not-a-number" "negative-infinity" "positive-infinity" "not-performed" "not-permitted" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Data Absent Reason"@en ;
+        sh:message "cascade:dataAbsentReason MUST be a code from the HL7 FHIR data-absent-reason code system"@en
+    ] .
+
+# I8: an answer states a value or why there is none, and never both.
+assessment:ItemResponseAnswerRuleShape a sh:NodeShape ;
+    sh:targetClass assessment:ItemResponse ;
+    rdfs:label "Item Response Answer Rule Shape"@en ;
+    sh:xone (
+        [ sh:property [ sh:path rdf:value ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path cascade:dataAbsentReason ; sh:minCount 1 ] ]
+    ) ;
+    sh:severity sh:Violation ;
+    sh:message "ItemResponse MUST carry exactly one of rdf:value and cascade:dataAbsentReason: an answer with neither hides whether the rater was asked, and one with both contradicts itself"@en .
+
+# =============================================================================
+# Shape: Administration Activity
+# =============================================================================
+
+assessment:AdministrationActivityShape a sh:NodeShape ;
+    sh:targetClass assessment:AdministrationActivity ;
+    rdfs:label "Administration Activity Shape"@en ;
+    rdfs:comment "The rater filling out the form. Its qualified association is where the rater role lives."@en ;
+
+    sh:property [
+        sh:path prov:qualifiedAssociation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:node assessment:AdministrationAssociationShape ;
+        sh:severity sh:Violation ;
+        sh:name "Qualified Association"@en ;
+        sh:message "AdministrationActivity MUST carry a qualified association naming the rater agent and the role they answered in"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:atLocation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( assessment:HomeSetting assessment:SchoolSetting assessment:ActivitySetting assessment:OtherSetting ) ;
+        sh:severity sh:Violation ;
+        sh:name "At Location"@en ;
+        sh:message "AdministrationActivity MUST record the observation setting as prov:atLocation, drawn from the declared setting enumeration"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:endedAtTime ;
+        sh:datatype xsd:dateTime ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Ended At Time"@en ;
+        sh:message "AdministrationActivity MUST record when the rater finished"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:startedAtTime ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Started At Time"@en ;
+        sh:message "startedAtTime should be recorded where the producer knows it"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:activeResponseSeconds ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:severity sh:Info ;
+        sh:name "Active Response Seconds"@en ;
+        sh:message "activeResponseSeconds should be a non-negative integer"@en
+    ] .
+
+assessment:AdministrationAssociationShape a sh:NodeShape ;
+    rdfs:label "Administration Association Shape"@en ;
+    rdfs:comment "Reached only through sh:node from AdministrationActivityShape, so it needs no target of its own, and carries only sh:Violation constraints (rule S5)."@en ;
+
+    sh:property [
+        sh:path prov:agent ;
+        sh:class assessment:Rater ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Agent"@en ;
+        sh:message "The administration association MUST name the rater as its prov:agent"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:hadRole ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( assessment:ParentRater assessment:CaregiverRater assessment:TeacherRater assessment:CoachRater assessment:OtherRater ) ;
+        sh:severity sh:Violation ;
+        sh:name "Had Role"@en ;
+        sh:message "The administration association MUST carry the role the rater answered in"@en
+    ] .
+
+# =============================================================================
+# Shape: Scoring Activity
+# =============================================================================
+
+assessment:ScoringActivityShape a sh:NodeShape ;
+    sh:targetClass assessment:ScoringActivity ;
+    rdfs:label "Scoring Activity Shape"@en ;
+    rdfs:comment "Applying the instrument's published scoring rules. Every constraint here exists so the result can be recomputed by someone who does not trust it."@en ;
+
+    sh:property [
+        sh:path prov:used ;
+        sh:class assessment:ResponseSet ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Used"@en ;
+        sh:message "ScoringActivity MUST name the response set it scored"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:wasAssociatedWith ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Violation ;
+        sh:name "Was Associated With"@en ;
+        sh:message "ScoringActivity MUST name the software agent that ran it"@en
+    ] ;
+
+    sh:property [
+        sh:path health:algorithmVersion ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Algorithm Version"@en ;
+        sh:message "ScoringActivity MUST record one health:algorithmVersion containing no ':'"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:inputsHash ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[0-9a-f]{64}$" ;
+        sh:severity sh:Violation ;
+        sh:name "Inputs Hash"@en ;
+        sh:message "ScoringActivity MUST record a lowercase hex SHA-256 inputs hash"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:inputsHashMethod ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "cascade-assessment-inputs-sha256-v2" "cascade-assessment-inputs-sha256-v1" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Inputs Hash Method"@en ;
+        sh:message "ScoringActivity MUST name a registered hashing procedure: a hash whose method is unstated cannot be recomputed"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:endedAtTime ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Ended At Time"@en ;
+        sh:message "endedAtTime records when scoring ran"@en
+    ] .
+
+# The -v1 method stays readable but is not what a producer writes.
+assessment:CurrentHashMethodShape a sh:NodeShape ;
+    sh:targetClass assessment:ScoringActivity , assessment:ScaleScore , assessment:ScreenOutcome ;
+    rdfs:label "Current Hash Method Shape"@en ;
+    sh:property [
+        sh:path assessment:inputsHashMethod ;
+        sh:in ( "cascade-assessment-inputs-sha256-v2" ) ;
+        sh:severity sh:Warning ;
+        sh:name "Current Hash Method"@en ;
+        sh:message "cascade-assessment-inputs-sha256-v1 is accepted on read and deprecated; it is ambiguous for item ids containing '=' or '|'. Producers write -v2"@en
+    ] .
+
+# =============================================================================
+# Shape: Scale Score
+# =============================================================================
+
+assessment:ScaleScoreShape a sh:NodeShape ;
+    sh:targetClass assessment:ScaleScore ;
+    rdfs:label "Scale Score Shape"@en ;
+    rdfs:comment "A score the instrument's published rules define, traceable to the responses it came from and to the code that computed it."@en ;
+
+    sh:property [
+        sh:path assessment:forScale ;
+        sh:class assessment:Scale ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "For Scale"@en ;
+        sh:message "ScaleScore MUST name the scored dimension it is of"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:wasDerivedFrom ;
+        sh:class assessment:ResponseSet ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Was Derived From"@en ;
+        sh:message "ScaleScore MUST link back to the response set it was derived from"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:wasGeneratedBy ;
+        sh:class assessment:ScoringActivity ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Was Generated By"@en ;
+        sh:message "ScaleScore MUST link to the scoring activity that produced it"@en
+    ] ;
+
+    sh:property [
+        sh:path health:algorithmVersion ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Algorithm Version"@en ;
+        sh:message "ScaleScore MUST carry one health:algorithmVersion containing no ':'"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:inputsHash ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[0-9a-f]{64}$" ;
+        sh:severity sh:Violation ;
+        sh:name "Inputs Hash"@en ;
+        sh:message "ScaleScore MUST carry the inputs hash so a consumer can verify it belongs to the responses shipped with it"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:inputsHashMethod ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "cascade-assessment-inputs-sha256-v2" "cascade-assessment-inputs-sha256-v1" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Inputs Hash Method"@en ;
+        sh:message "ScaleScore MUST name a registered hashing procedure"@en
+    ] ;
+
+    # I1
+    sh:property [
+        sh:path assessment:countedItems ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:lessThanOrEquals assessment:scaleItemCount ;
+        sh:severity sh:Violation ;
+        sh:name "Counted Items Within Scale"@en ;
+        sh:message "countedItems MUST be a non-negative integer no greater than scaleItemCount"@en
+    ] ;
+
+    # I3
+    sh:property [
+        sh:path assessment:countedItems ;
+        sh:lessThanOrEquals assessment:answeredItemCount ;
+        sh:severity sh:Violation ;
+        sh:name "Counted Items Within Answered"@en ;
+        sh:message "countedItems MUST NOT exceed answeredItemCount: a scale cannot count more items than were answered"@en
+    ] ;
+
+    sh:property [
+        sh:path rdf:value ;
+        sh:maxCount 1 ;
+        sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:decimal ] ) ;
+        sh:severity sh:Violation ;
+        sh:name "Score Value"@en ;
+        sh:message "A computed score's rdf:value MUST be a single xsd:integer or xsd:decimal"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:countThreshold ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:severity sh:Warning ;
+        sh:name "Count Threshold"@en ;
+        sh:message "countThreshold should be the instrument's published cutoff"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:meetsThreshold ;
+        sh:datatype xsd:boolean ;
+        sh:maxCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Meets Threshold"@en ;
+        sh:message "meetsThreshold should be a boolean"@en
+    ] ;
+
+    # I2
+    sh:property [
+        sh:path assessment:answeredItemCount ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:lessThanOrEquals assessment:scaleItemCount ;
+        sh:severity sh:Violation ;
+        sh:name "Answered Item Count"@en ;
+        sh:message "answeredItemCount MUST be a non-negative integer no greater than scaleItemCount"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:scaleItemCount ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:severity sh:Violation ;
+        sh:name "Scale Item Count"@en ;
+        sh:message "scaleItemCount MUST be a single non-negative integer"@en
+    ] .
+
+# I4: a scale is counted or computed, never both.
+assessment:ScaleScoreKindRuleShape a sh:NodeShape ;
+    sh:targetClass assessment:ScaleScore ;
+    rdfs:label "Scale Score Kind Rule Shape"@en ;
+    sh:xone (
+        [ sh:property [ sh:path assessment:countedItems ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path rdf:value ; sh:minCount 1 ] ]
+    ) ;
+    sh:severity sh:Violation ;
+    sh:message "ScaleScore MUST carry exactly one of countedItems (a counted scale) and rdf:value (a computed score)"@en .
+
+# =============================================================================
+# Shape: Screen Outcome
+# =============================================================================
+
+assessment:ScreenOutcomeShape a sh:NodeShape ;
+    sh:targetClass assessment:ScreenOutcome ;
+    rdfs:label "Screen Outcome Shape"@en ;
+
+    sh:property [
+        sh:path dct:identifier ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Screen Identifier"@en ;
+        sh:message "ScreenOutcome MUST have exactly one non-empty dct:identifier naming the rule, containing no ':'"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:screenStatus ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:in ( "meets" "does-not-meet" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Screen Status"@en ;
+        sh:message "screenStatus MUST be 'meets' or 'does-not-meet'. A rule that could not be evaluated carries no verdict at all"@en
+    ] ;
+
+    sh:property [
+        sh:path cascade:dataAbsentReason ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:in ( "unknown" "asked-unknown" "temp-unknown" "not-asked" "asked-declined" "masked" "not-applicable" "unsupported" "as-text" "error" "not-a-number" "negative-infinity" "positive-infinity" "not-performed" "not-permitted" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Data Absent Reason"@en ;
+        sh:message "A ScreenOutcome's cascade:dataAbsentReason MUST be a code from the HL7 FHIR data-absent-reason code system"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:notAssessableReason ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:minLength 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Not Assessable Reason"@en ;
+        sh:message "notAssessableReason MUST be a single non-empty string naming the missing input"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:wasDerivedFrom ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Violation ;
+        sh:name "Was Derived From"@en ;
+        sh:message "ScreenOutcome MUST link back to what it was derived from"@en
+    ] ;
+
+    sh:property [
+        sh:path prov:wasGeneratedBy ;
+        sh:class assessment:ScoringActivity ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Was Generated By"@en ;
+        sh:message "ScreenOutcome MUST link to the scoring activity that produced it"@en
+    ] ;
+
+    sh:property [
+        sh:path health:algorithmVersion ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[^:]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Algorithm Version"@en ;
+        sh:message "ScreenOutcome MUST carry one health:algorithmVersion containing no ':'"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:inputsHash ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[0-9a-f]{64}$" ;
+        sh:severity sh:Violation ;
+        sh:name "Inputs Hash"@en ;
+        sh:message "ScreenOutcome MUST carry the inputs hash"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:inputsHashMethod ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "cascade-assessment-inputs-sha256-v2" "cascade-assessment-inputs-sha256-v1" ) ;
+        sh:severity sh:Violation ;
+        sh:name "Inputs Hash Method"@en ;
+        sh:message "ScreenOutcome MUST name a registered hashing procedure"@en
+    ] ;
+
+    sh:property [
+        sh:path rdfs:label ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Screen Label"@en ;
+        sh:message "rdfs:label should carry the published rule's human-readable name, once"@en
+    ] ;
+
+    # Producer commentary rides on the ratified generic notes predicate, not on
+    # an assessment: term, so every assessment:* predicate on this node is an
+    # instrument-published fact and nothing else.
+    sh:property [
+        sh:path cascade:notes ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+        sh:name "Notes"@en ;
+        sh:message "cascade:notes carries producer-authored commentary and no authority the counts do not"@en
+    ] .
+
+# I11: a verdict, or no verdict WITH a ratified absence code and the missing
+# input. Never both, never neither.
+assessment:ScreenOutcomeVerdictRuleShape a sh:NodeShape ;
+    sh:targetClass assessment:ScreenOutcome ;
+    rdfs:label "Screen Outcome Verdict Rule Shape"@en ;
+    sh:xone (
+        [ sh:property [ sh:path assessment:screenStatus ; sh:minCount 1 ] ]
+        [ sh:and (
+            [ sh:property [ sh:path cascade:dataAbsentReason ; sh:minCount 1 ] ]
+            [ sh:property [ sh:path assessment:notAssessableReason ; sh:minCount 1 ] ]
+        ) ]
+    ) ;
+    sh:severity sh:Violation ;
+    sh:message "A ScreenOutcome MUST carry either a screenStatus verdict, or BOTH a cascade:dataAbsentReason and a notAssessableReason, and never both: reporting that a published rule could not be run is only honest if it says what was missing"@en .
+
+# =============================================================================
+# Shape: Bundle Manifest
+# =============================================================================
+#
+# Targets assessment:BundleManifest. Serialized manifests are typed as BOTH
+# that and cascade:ExportManifest, so the core export-manifest shape applies as
+# well, with no entailment either way.
+#
+# =============================================================================
+
+assessment:BundleManifestShape a sh:NodeShape ;
+    sh:targetClass assessment:BundleManifest ;
+    rdfs:label "Bundle Manifest Shape"@en ;
+
+    sh:property [
+        sh:path dct:conformsTo ;
+        sh:minCount 1 ;
+        sh:qualifiedValueShape [ sh:in ( <https://ns.cascadeprotocol.org/assessment/v1#> ) ] ;
+        sh:qualifiedMinCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Vocabulary"@en ;
+        sh:message "A bundle MUST declare with dct:conformsTo the assessment vocabulary it is written against"@en
+    ] ;
+
+    sh:property [
+        sh:path cascade:schemaVersion ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[0-9]+\\.[0-9]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Vocabulary Version"@en ;
+        sh:message "A bundle MUST declare the version of the assessment vocabulary it was written against in cascade:schemaVersion, as major.minor, so a consumer can gate on compatibility instead of guessing"@en
+    ] ;
+
+    sh:property [
+        sh:path cascade:sourceRecordId ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minLength 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Source Collection"@en ;
+        sh:message "A bundle MUST name its source collection with cascade:sourceRecordId, an opaque record id, never an access credential"@en
+    ] ;
+
+    # I5
+    sh:property [
+        sh:path assessment:completedRaterCount ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:lessThanOrEquals assessment:totalRaterCount ;
+        sh:severity sh:Violation ;
+        sh:name "Completed Rater Count"@en ;
+        sh:message "A bundle MUST say how many raters had finished when it was written, never more than were asked"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:totalRaterCount ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:severity sh:Violation ;
+        sh:name "Total Rater Count"@en ;
+        sh:message "A bundle MUST say how many raters had been asked when it was written"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:created ;
+        sh:datatype xsd:dateTime ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Created"@en ;
+        sh:message "A bundle MUST carry its creation time, which is what makes the rater counts readable as a snapshot"@en
+    ] ;
+
+    sh:property [
+        sh:path spdx:hasFile ;
+        sh:minCount 1 ;
+        sh:node assessment:BundleFileShape ;
+        sh:severity sh:Violation ;
+        sh:name "Files"@en ;
+        sh:message "A manifest MUST describe every other file in the bundle as an spdx:File with a path and an SHA-256 checksum"@en
+    ] ;
+
+    sh:property [
+        sh:path dct:subject ;
+        sh:class assessment:AssessmentSubject ;
+        sh:maxCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Subject"@en ;
+        sh:message "The manifest should name, with its rdfs:label, the subject descriptor the bundle is about, so a consumer can show a person what a file is about before unpacking it"@en
+    ] ;
+
+    sh:property [
+        sh:path assessment:isDemoData ;
+        sh:datatype xsd:boolean ;
+        sh:maxCount 1 ;
+        sh:severity sh:Warning ;
+        sh:name "Is Demo Data"@en ;
+        sh:message "isDemoData marks a bundle of synthetic demonstration records"@en
+    ] .
+
+assessment:BundleFileShape a sh:NodeShape ;
+    rdfs:label "Bundle File Shape"@en ;
+    rdfs:comment "One file of a bundle, as an SPDX 2.3 file entry. Reached only by sh:node from the manifest shape, so it carries only sh:Violation constraints (rule S5)."@en ;
+
+    sh:property [
+        sh:path spdx:fileName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[a-zA-Z0-9][a-zA-Z0-9._-]*(/[a-zA-Z0-9][a-zA-Z0-9._-]*)*$" ;
+        sh:severity sh:Violation ;
+        sh:name "File Name"@en ;
+        sh:message "A bundle file MUST name exactly one bundle-relative path whose segments begin with an alphanumeric and use only [a-zA-Z0-9._-]: no absolute path, no URL, no '..'"@en
+    ] ;
+
+    sh:property [
+        sh:path spdx:checksum ;
+        sh:minCount 1 ;
+        sh:node assessment:BundleFileChecksumShape ;
+        sh:qualifiedValueShape [ sh:path spdx:algorithm ; sh:hasValue spdx:checksumAlgorithm_sha256 ] ;
+        sh:qualifiedMinCount 1 ;
+        sh:severity sh:Violation ;
+        sh:name "Checksum"@en ;
+        sh:message "A bundle file MUST carry an SHA-256 spdx:checksum of its exact bytes"@en
+    ] .
+
+assessment:BundleFileChecksumShape a sh:NodeShape ;
+    rdfs:label "Bundle File Checksum Shape"@en ;
+    rdfs:comment "An SPDX checksum on a bundle file. Reached only by sh:node; sh:Violation constraints only (rule S5)."@en ;
+
+    sh:property [
+        sh:path spdx:algorithm ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:severity sh:Violation ;
+        sh:name "Checksum Algorithm"@en ;
+        sh:message "A checksum MUST name exactly one SPDX checksum algorithm"@en
+    ] ;
+
+    sh:property [
+        sh:path spdx:checksumValue ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^[0-9a-f]+$" ;
+        sh:severity sh:Violation ;
+        sh:name "Checksum Value"@en ;
+        sh:message "A checksum value MUST be one lowercase hexadecimal string"@en
+    ] .
+
+# An SHA-256 checksum is 64 hex characters. Kept apart from the shape above
+# so the length is checked for the algorithm it belongs to.
+assessment:Sha256ChecksumLengthShape a sh:NodeShape ;
+    sh:targetSubjectsOf spdx:checksumValue ;
+    rdfs:label "SHA-256 Checksum Length Shape"@en ;
+    sh:or (
+        [ sh:not [ sh:property [ sh:path spdx:algorithm ; sh:hasValue spdx:checksumAlgorithm_sha256 ] ] ]
+        [ sh:property [ sh:path spdx:checksumValue ; sh:pattern "^[0-9a-f]{64}$" ] ]
+    ) ;
+    sh:severity sh:Violation ;
+    sh:message "An SHA-256 checksum value MUST be exactly 64 lowercase hexadecimal characters"@en .

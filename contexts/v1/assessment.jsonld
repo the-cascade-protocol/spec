@@ -1,0 +1,561 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "assessment": "https://ns.cascadeprotocol.org/assessment/v1#",
+    "prov": "http://www.w3.org/ns/prov#",
+    "dct": "http://purl.org/dc/terms/",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "schema": "https://schema.org/",
+    "spdx": "http://spdx.org/rdf/terms#",
+    "loinc": "http://loinc.org/rdf#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "AdministrationActivity": "assessment:AdministrationActivity",
+    "AssessmentSubject": {
+      "@id": "assessment:AssessmentSubject",
+      "@context": {
+        "gradeLevel": {
+          "@id": "assessment:gradeLevel"
+        }
+      }
+    },
+    "Assignment": "assessment:Assignment",
+    "BundleManifest": "assessment:BundleManifest",
+    "Instrument": {
+      "@id": "assessment:Instrument",
+      "@context": {
+        "version": {
+          "@id": "schema:version"
+        }
+      }
+    },
+    "Item": "assessment:Item",
+    "ItemResponse": {
+      "@id": "assessment:ItemResponse",
+      "@context": {
+        "value": {
+          "@id": "rdf:value"
+        }
+      }
+    },
+    "Rater": "assessment:Rater",
+    "RaterRole": "assessment:RaterRole",
+    "ResponseOption": "assessment:ResponseOption",
+    "ResponseScale": "assessment:ResponseScale",
+    "ResponseSet": "assessment:ResponseSet",
+    "Scale": "assessment:Scale",
+    "ScaleScore": {
+      "@id": "assessment:ScaleScore",
+      "@context": {
+        "value": {
+          "@id": "rdf:value"
+        }
+      }
+    },
+    "ScoringActivity": "assessment:ScoringActivity",
+    "ScreenOutcome": "assessment:ScreenOutcome",
+    "Setting": "assessment:Setting",
+    "Wave": "assessment:Wave",
+    "ActivitySetting": "assessment:ActivitySetting",
+    "CaregiverRater": "assessment:CaregiverRater",
+    "CoachRater": "assessment:CoachRater",
+    "HomeSetting": "assessment:HomeSetting",
+    "OtherRater": "assessment:OtherRater",
+    "OtherSetting": "assessment:OtherSetting",
+    "ParentRater": "assessment:ParentRater",
+    "SchoolSetting": "assessment:SchoolSetting",
+    "TeacherRater": "assessment:TeacherRater",
+    "activeResponseSeconds": {
+      "@id": "assessment:activeResponseSeconds",
+      "@type": "xsd:integer"
+    },
+    "answeredItemCount": {
+      "@id": "assessment:answeredItemCount",
+      "@type": "xsd:integer"
+    },
+    "assignedRater": {
+      "@id": "assessment:assignedRater",
+      "@type": "assessment:Rater",
+      "@context": {
+        "label": {
+          "@id": "rdfs:label",
+          "@type": "xsd:string"
+        },
+        "raterRole": {
+          "@id": "assessment:raterRole",
+          "@type": "@vocab"
+        },
+        "atLocation": {
+          "@id": "prov:atLocation",
+          "@type": "@vocab"
+        }
+      }
+    },
+    "assignmentStatus": {
+      "@id": "assessment:assignmentStatus",
+      "@type": "xsd:string"
+    },
+    "completedRaterCount": {
+      "@id": "assessment:completedRaterCount",
+      "@type": "xsd:integer"
+    },
+    "consentRecordedAt": {
+      "@id": "assessment:consentRecordedAt",
+      "@type": "xsd:dateTime"
+    },
+    "consentTextVersion": {
+      "@id": "assessment:consentTextVersion",
+      "@type": "xsd:string"
+    },
+    "countThreshold": {
+      "@id": "assessment:countThreshold",
+      "@type": "xsd:integer"
+    },
+    "countedItems": {
+      "@id": "assessment:countedItems",
+      "@type": "xsd:integer"
+    },
+    "forInstrument": {
+      "@id": "assessment:forInstrument",
+      "@type": "assessment:Instrument",
+      "@context": {
+        "identifier": {
+          "@id": "dct:identifier",
+          "@type": "xsd:string"
+        },
+        "title": {
+          "@id": "dct:title",
+          "@type": "xsd:string"
+        },
+        "instrumentVersion": {
+          "@id": "assessment:instrumentVersion",
+          "@type": "xsd:string"
+        },
+        "version": {
+          "@id": "schema:version",
+          "@type": "xsd:string"
+        },
+        "bibliographicCitation": {
+          "@id": "dct:bibliographicCitation",
+          "@type": "xsd:string"
+        },
+        "rights": {
+          "@id": "dct:rights",
+          "@type": "xsd:string"
+        },
+        "license": {
+          "@id": "dct:license",
+          "@type": "@id",
+          "@container": "@set"
+        },
+        "hasPart": {
+          "@id": "dct:hasPart",
+          "@type": "@id",
+          "@container": "@set"
+        },
+        "ratingWindowKind": {
+          "@id": "assessment:ratingWindowKind",
+          "@type": "xsd:string"
+        },
+        "ratingWindowDuration": {
+          "@id": "assessment:ratingWindowDuration",
+          "@type": "xsd:duration"
+        }
+      }
+    },
+    "forItem": {
+      "@id": "assessment:forItem",
+      "@type": "assessment:Item",
+      "@context": {
+        "identifier": {
+          "@id": "dct:identifier",
+          "@type": "xsd:string"
+        },
+        "position": {
+          "@id": "schema:position",
+          "@type": "xsd:integer"
+        },
+        "usesResponseScale": {
+          "@id": "assessment:usesResponseScale",
+          "@type": "@id"
+        },
+        "isPartOf": {
+          "@id": "dct:isPartOf",
+          "@type": "@id"
+        },
+        "label": {
+          "@id": "rdfs:label",
+          "@type": "xsd:string"
+        },
+        "title": {
+          "@id": "dct:title",
+          "@type": "xsd:string"
+        },
+        "prefLabel": {
+          "@id": "skos:prefLabel"
+        },
+        "description": {
+          "@id": "dct:description"
+        }
+      }
+    },
+    "forScale": {
+      "@id": "assessment:forScale",
+      "@type": "assessment:Scale",
+      "@context": {
+        "identifier": {
+          "@id": "dct:identifier",
+          "@type": "xsd:string"
+        },
+        "label": {
+          "@id": "rdfs:label",
+          "@type": "xsd:string"
+        }
+      }
+    },
+    "fulfillsAssignment": {
+      "@id": "assessment:fulfillsAssignment",
+      "@type": "assessment:Assignment",
+      "@context": {
+        "isPartOf": {
+          "@id": "dct:isPartOf",
+          "@type": "@id"
+        },
+        "assignedRater": {
+          "@id": "assessment:assignedRater",
+          "@type": "@id"
+        },
+        "forInstrument": {
+          "@id": "assessment:forInstrument",
+          "@type": "@id"
+        },
+        "assignmentStatus": {
+          "@id": "assessment:assignmentStatus",
+          "@type": "xsd:string"
+        },
+        "hasResponseSet": {
+          "@id": "assessment:hasResponseSet",
+          "@type": "@id"
+        },
+        "consentRecordedAt": {
+          "@id": "assessment:consentRecordedAt",
+          "@type": "xsd:dateTime"
+        },
+        "consentTextVersion": {
+          "@id": "assessment:consentTextVersion",
+          "@type": "xsd:string"
+        }
+      }
+    },
+    "hasResponseSet": {
+      "@id": "assessment:hasResponseSet",
+      "@type": "assessment:ResponseSet",
+      "@context": {
+        "forInstrument": {
+          "@id": "assessment:forInstrument",
+          "@type": "@id"
+        },
+        "subject": {
+          "@id": "dct:subject",
+          "@type": "@id"
+        },
+        "responseSetStatus": {
+          "@id": "assessment:responseSetStatus",
+          "@type": "xsd:string"
+        },
+        "hasPart": {
+          "@id": "dct:hasPart",
+          "@type": "@id",
+          "@container": "@set"
+        },
+        "wasGeneratedBy": {
+          "@id": "prov:wasGeneratedBy",
+          "@type": "@id"
+        },
+        "fulfillsAssignment": {
+          "@id": "assessment:fulfillsAssignment",
+          "@type": "@id"
+        },
+        "isPartOf": {
+          "@id": "dct:isPartOf",
+          "@type": "@id"
+        },
+        "respondedItemCount": {
+          "@id": "assessment:respondedItemCount",
+          "@type": "xsd:integer"
+        },
+        "instrumentItemCount": {
+          "@id": "assessment:instrumentItemCount",
+          "@type": "xsd:integer"
+        },
+        "respondentComment": {
+          "@id": "assessment:respondentComment",
+          "@type": "xsd:string"
+        },
+        "language": {
+          "@id": "dct:language",
+          "@type": "xsd:string"
+        },
+        "raterObservationLength": {
+          "@id": "assessment:raterObservationLength",
+          "@type": "xsd:string"
+        },
+        "medicationStatusAtRating": {
+          "@id": "assessment:medicationStatusAtRating",
+          "@type": "@id"
+        },
+        "treatmentPeriod": {
+          "@id": "assessment:treatmentPeriod",
+          "@type": "@id",
+          "@container": "@set"
+        }
+      }
+    },
+    "inputsHash": {
+      "@id": "assessment:inputsHash",
+      "@type": "xsd:string"
+    },
+    "inputsHashMethod": {
+      "@id": "assessment:inputsHashMethod",
+      "@type": "xsd:string"
+    },
+    "instrumentItemCount": {
+      "@id": "assessment:instrumentItemCount",
+      "@type": "xsd:integer"
+    },
+    "instrumentSetId": {
+      "@id": "assessment:instrumentSetId",
+      "@type": "xsd:string"
+    },
+    "instrumentVersion": {
+      "@id": "assessment:instrumentVersion",
+      "@type": "xsd:string"
+    },
+    "isDemoData": {
+      "@id": "assessment:isDemoData",
+      "@type": "xsd:boolean"
+    },
+    "medicationStatusAtRating": {
+      "@id": "assessment:medicationStatusAtRating",
+      "@type": "@id"
+    },
+    "meetsThreshold": {
+      "@id": "assessment:meetsThreshold",
+      "@type": "xsd:boolean"
+    },
+    "notAssessableReason": {
+      "@id": "assessment:notAssessableReason",
+      "@type": "xsd:string"
+    },
+    "problemEnd": {
+      "@id": "assessment:problemEnd",
+      "@type": "xsd:string"
+    },
+    "raterObservationLength": {
+      "@id": "assessment:raterObservationLength",
+      "@type": "xsd:string"
+    },
+    "raterRole": {
+      "@id": "assessment:raterRole",
+      "@type": "@vocab"
+    },
+    "ratingWindowDuration": {
+      "@id": "assessment:ratingWindowDuration",
+      "@type": "xsd:duration"
+    },
+    "ratingWindowKind": {
+      "@id": "assessment:ratingWindowKind",
+      "@type": "xsd:string"
+    },
+    "respondedItemCount": {
+      "@id": "assessment:respondedItemCount",
+      "@type": "xsd:integer"
+    },
+    "respondentComment": {
+      "@id": "assessment:respondentComment",
+      "@type": "xsd:string"
+    },
+    "responseSetStatus": {
+      "@id": "assessment:responseSetStatus",
+      "@type": "xsd:string"
+    },
+    "scaleItemCount": {
+      "@id": "assessment:scaleItemCount",
+      "@type": "xsd:integer"
+    },
+    "screenStatus": {
+      "@id": "assessment:screenStatus",
+      "@type": "xsd:string"
+    },
+    "totalRaterCount": {
+      "@id": "assessment:totalRaterCount",
+      "@type": "xsd:integer"
+    },
+    "treatmentPeriod": {
+      "@id": "assessment:treatmentPeriod",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "usesResponseScale": {
+      "@id": "assessment:usesResponseScale",
+      "@type": "assessment:ResponseScale",
+      "@context": {
+        "identifier": {
+          "@id": "dct:identifier",
+          "@type": "xsd:string"
+        },
+        "problemEnd": {
+          "@id": "assessment:problemEnd",
+          "@type": "xsd:string"
+        },
+        "hasTopConcept": {
+          "@id": "skos:hasTopConcept",
+          "@type": "@id",
+          "@container": "@set"
+        }
+      }
+    },
+    "waveStatus": {
+      "@id": "assessment:waveStatus",
+      "@type": "xsd:string"
+    },
+    "agent": {
+      "@id": "prov:agent",
+      "@type": "@id"
+    },
+    "algorithm": {
+      "@id": "spdx:algorithm",
+      "@type": "@id"
+    },
+    "atLocation": {
+      "@id": "prov:atLocation",
+      "@type": "@vocab"
+    },
+    "bibliographicCitation": {
+      "@id": "dct:bibliographicCitation",
+      "@type": "xsd:string"
+    },
+    "checksum": {
+      "@id": "spdx:checksum",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "checksumValue": {
+      "@id": "spdx:checksumValue",
+      "@type": "xsd:string"
+    },
+    "conformsTo": {
+      "@id": "dct:conformsTo"
+    },
+    "created": {
+      "@id": "dct:created",
+      "@type": "xsd:dateTime"
+    },
+    "description": {
+      "@id": "dct:description"
+    },
+    "endedAtTime": {
+      "@id": "prov:endedAtTime",
+      "@type": "xsd:dateTime"
+    },
+    "fileName": {
+      "@id": "spdx:fileName",
+      "@type": "xsd:string"
+    },
+    "hadMember": {
+      "@id": "prov:hadMember",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hadRole": {
+      "@id": "prov:hadRole",
+      "@type": "@vocab"
+    },
+    "hasFile": {
+      "@id": "spdx:hasFile",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasPart": {
+      "@id": "dct:hasPart",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasTopConcept": {
+      "@id": "skos:hasTopConcept",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "identifier": {
+      "@id": "dct:identifier",
+      "@type": "xsd:string"
+    },
+    "isPartOf": {
+      "@id": "dct:isPartOf",
+      "@type": "@id"
+    },
+    "label": {
+      "@id": "rdfs:label",
+      "@type": "xsd:string"
+    },
+    "language": {
+      "@id": "dct:language",
+      "@type": "xsd:string"
+    },
+    "license": {
+      "@id": "dct:license",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "notation": {
+      "@id": "skos:notation"
+    },
+    "position": {
+      "@id": "schema:position",
+      "@type": "xsd:integer"
+    },
+    "prefLabel": {
+      "@id": "skos:prefLabel"
+    },
+    "qualifiedAssociation": {
+      "@id": "prov:qualifiedAssociation",
+      "@type": "@id"
+    },
+    "rights": {
+      "@id": "dct:rights",
+      "@type": "xsd:string"
+    },
+    "startedAtTime": {
+      "@id": "prov:startedAtTime",
+      "@type": "xsd:dateTime"
+    },
+    "subject": {
+      "@id": "dct:subject",
+      "@type": "@id"
+    },
+    "title": {
+      "@id": "dct:title",
+      "@type": "xsd:string"
+    },
+    "used": {
+      "@id": "prov:used",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "wasAssociatedWith": {
+      "@id": "prov:wasAssociatedWith",
+      "@type": "@id"
+    },
+    "wasDerivedFrom": {
+      "@id": "prov:wasDerivedFrom",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "wasGeneratedBy": {
+      "@id": "prov:wasGeneratedBy",
+      "@type": "@id"
+    }
+  }
+}

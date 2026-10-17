@@ -1148,6 +1148,46 @@ minted when an export is made, never back-filled.
 
 ---
 
+## Pending batch: assessment v1.0 (authored 2026-10-16, awaiting ratification)
+
+A new vocabulary, ratified in place at the namespace its draft already used.
+Tag `vocab/assessment-v1.0` at merge, and only once it is ratified. See
+`ontologies/assessment/CHANGELOG.md`.
+
+**What was authored:**
+
+- `ontologies/assessment/v1/assessment.ttl` 1.0 and `assessment.shapes.ttl`
+  1.0 (SHACL Core only).
+- `contexts/v1/assessment.jsonld` (JSON-LD 1.1, type-scoped; never merged
+  into `cascade.jsonld`).
+- `VOCAB_VERSIONS`: `assessment=1.0`.
+- `scripts/check-context-agreement.py`: the assessment context is checked;
+  the SPDX namespace is allow-listed.
+
+**Steps 2 to 7, pending:**
+
+- [ ] `cascadeprotocol.org`: `scripts/sync-from-spec.sh` (add the assessment
+      ontology, shapes and context to what it carries), an HTML page, and
+      `cascade-protocol-schemas.md`.
+- [ ] `conformance`: a positive fixture per class and a negative fixture per
+      product rule and per invariant (I1 to I14), including the two
+      cross-node rules that need a SHACL-SPARQL validator; tag.
+- [ ] `cascade-cli`: `scripts/sync-shapes-from-spec.sh`, `VOCAB_VERSIONS`;
+      route `assessment:` records into an `assessments/` directory rather than
+      the FHIR passthrough file, with the prefix registered.
+- [ ] `sdk-typescript`, `sdk-python`: models, predicates, the context,
+      `VOCAB_VERSIONS`; the identity keys and the `-v2` inputs hash.
+- [ ] `cascade-agent`: query patterns for waves, response sets and scores;
+      `VOCAB_VERSIONS`.
+
+**MIGRATION.** Data written against the 0.1 draft keeps the subject IRIs of
+every class except `Instrument`, `Item` and `Scale`, whose keys now carry the
+edition and the reproduction version. Its draft-only predicates are replaced
+term by term (the table in the vocabulary changelog), and its `-v1` inputs
+hashes stay valid.
+
+---
+
 ## Open items
 
 ### 1. `clinical:sourceSystemOID` (planned) — NOT yet authored, deferred
@@ -1176,4 +1216,4 @@ minted when an export is made, never back-filled.
 
 ---
 
-_Last updated: 2026-09-06._
+_Last updated: 2026-10-16._

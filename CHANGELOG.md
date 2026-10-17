@@ -6,6 +6,14 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-10-16: the assessment vocabulary, assessment v1.0
+
+New vocabulary `assessment` v1.0: `ontologies/assessment/v1/assessment.ttl`, `assessment.shapes.ttl`, and `contexts/v1/assessment.jsonld` (JSON-LD 1.1, type-scoped). New per-vocabulary changelog [`ontologies/assessment/CHANGELOG.md`](ontologies/assessment/CHANGELOG.md). `VOCAB_VERSIONS` gains `assessment=1.0`.
+
+Standardized rating instruments as published (each edition with its response scales: values, printed labels and which end is the problem end), multi-rater waves, the raters asked including those who have not answered, each rater's answers with the period rated and their own answer about medication, and the scores and screen results the instrument's own published rules define, with PROV-O provenance and a recomputable inputs hash. Item wording is never carried, and the item shape is closed to enforce it. Terms that a ratified standard already defines are used rather than minted: DCMI Terms, RDF Schema, SKOS, PROV-O, schema.org, SPDX 2.3, and the core and health vocabularies.
+
+`scripts/check-context-agreement.py` now checks the assessment context as a seventh per-vocabulary context and allows the SPDX namespace.
+
 ## 2026-09-28: blood pressure written flat, and the pod structure's vocabulary versions
 
 `serialization/index.md` goes 2.4 to 2.5 and `pod-structure.md` 1.9 to 1.10. No vocabulary, shape or context change.
