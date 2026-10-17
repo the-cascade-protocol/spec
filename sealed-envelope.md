@@ -26,7 +26,8 @@ It defines as little as it can. The envelope is a JSON Web Encryption object; th
 9. [Delivery Through a Relay](#9-delivery-through-a-relay)
 10. [Outcomes](#10-outcomes)
 11. [Security Considerations](#11-security-considerations)
-12. [Conformance](#12-conformance)
+12. [Relation to SMART Health Links](#12-relation-to-smart-health-links)
+13. [Conformance](#13-conformance)
 
 ---
 
@@ -83,14 +84,16 @@ A construct in this document is new only when no ratified standard defines it. S
 | Content type | `cty` `zip`, RFC 7516 section 4.1.12, for the registered media type [`application/zip`](https://www.iana.org/assignments/media-types/application/zip) | none |
 | Public key in the pairing | JWK, [RFC 7517](https://www.rfc-editor.org/rfc/rfc7517) and [RFC 7518](https://www.rfc-editor.org/rfc/rfc7518) section 6.2 (Proposed Standard), inside `cnf`, [RFC 7800](https://www.rfc-editor.org/rfc/rfc7800) section 3.2 (Proposed Standard) | none |
 | Expiry | `exp` as a NumericDate, [RFC 7519](https://www.rfc-editor.org/rfc/rfc7519) section 4.1.4 (Proposed Standard) | none |
-| Mailbox id, Pod reference, pairing version | none found | members `mbx`, `pod`, `v`: a relay mailbox and a Pod reference are Cascade concepts no registry defines |
+| Pairing version | `v` as in the SMART Health Links payload (section 12); no JWT claim carries a format version | none |
+| Mailbox id, Pod reference | none found | members `mbx`, `pod`: a relay mailbox and a Pod reference are Cascade concepts no registry defines |
 | Key identifier | `kid` = JWK Thumbprint, [RFC 7638](https://www.rfc-editor.org/rfc/rfc7638) (Proposed Standard) | none |
 | Fingerprint for people to compare | RFC 7638 thumbprint, rendered in base32, [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648) section 6 | the truncation to 40 bits and the `XXXX-XXXX` grouping: no standard defines a short human comparison string for a JWK |
 | Binary-to-text in links and envelopes | base64url without padding, RFC 4648 section 5, as RFC 7515 section 2 uses it | none |
 | Link carrying the pairing | URI fragment, [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) section 3.5 | the `pair.` prefix, so a page that reads other fragments can tell this one apart |
 | Receiver private key storage | JWK with `d`, `x`, `y`, RFC 7518 section 6.2.2 | none |
 | Bundle framing | ZIP, [PKWARE APPNOTE](https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) as profiled by [ISO/IEC 21320-1:2015](https://www.iso.org/standard/60101.html) (International Standard), further restricted (section 7.2) | none; the restrictions only remove options |
-| Per-file digests and completeness | the bundle's own manifest (section 7.4); for assessment bundles, the `assessment:` vocabulary's file declarations | none in this document |
+| Per-file digests and completeness | the bundle's own manifest (section 7.4); for assessment bundles, the `assessment:` vocabulary's file declarations, written with the SPDX terms `spdx:hasFile`, `spdx:fileName` and `spdx:checksum` ([SPDX 2.3](https://spdx.github.io/spdx-spec/v2.3/)) | none in this document |
+| Shape of the pairing link | the SMART Health Links payload ([HL7 SMART Health Cards and Links IG](https://hl7.org/fhir/uv/smart-health-cards-and-links/links-specification.html) 1.0.0, STU): base64url JSON after `#`, with `exp` and `v` | the pairing members of section 4.1 that SMART Health Links does not have; section 12 says why route a is not a SMART Health Link |
 | Duplicate JSON member names | refused, as [`pod-encryption.md`](pod-encryption.md) section 4.1 does; [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259) section 4 leaves them undefined | none |
 | Saved file name extension | none registered for a JWE | `.cpseal`: an operating system needs a distinctive extension to hand the file to the right application |
 
@@ -140,11 +143,18 @@ The same URI is shown as a QR code and offered as a link to copy. With an origin
 
 The **kid** of a pairing is the JWK Thumbprint (RFC 7638, SHA-256) of `cnf.jwk`, base64url without padding. The **fingerprint** is the first 5 bytes of that thumbprint encoded in base32 (RFC 4648 section 6, alphabet `A`-`Z` `2`-`7`, no padding), 8 characters, shown as two groups of four separated by a hyphen, for example `K7QM-2XRD`.
 
-A receiver SHOULD show the fingerprint beside the QR code and the link. A sender SHOULD show it before sealing. The person compares them when the link has travelled through anything other than their own camera (section 11.4).
+A receiver MUST show the fingerprint beside the QR code and beside the link.
+
+A sender's duty depends on how the pairing reached it:
+
+- **By its own camera scanning the receiver's screen.** The sender SHOULD show the fingerprint before sealing.
+- **By any other route** (a copied link, pasted text, a message, a link opened from anywhere). The sender MUST show the fingerprint and MUST NOT seal until the person has confirmed that it matches the fingerprint the receiver shows. A sender that cannot establish that the pairing came from its own camera scanning the receiver's screen MUST treat it as having arrived by another route.
+
+Section 11.4 gives the reason.
 
 ### 4.4 The Pod reference
 
-`pod` lets a sender recognize the destination ("the same record as last time") without learning anything about the Pod. It MUST NOT be `cascade:podIdentifier` ([`decisions/2026-09-26-pod-identifier.md`](decisions/2026-09-26-pod-identifier.md)) and MUST NOT be derived from it. A receiver mints it as 16 random bytes, either once per Pod and kept with the Pod, or fresh for every pairing. A sender MUST NOT treat it as an identifier of a person.
+`pod` lets a sender recognize the destination ("the same record as last time") without learning anything about the Pod. A receiver MUST mint it once per Pod, as 16 bytes from a cryptographically secure random generator, keep it with the Pod, and put the same value in every pairing it makes for that Pod. It MUST NOT be `cascade:podIdentifier` ([`decisions/2026-09-26-pod-identifier.md`](decisions/2026-09-26-pod-identifier.md)) and MUST NOT be derived from it or from any other identifier of the Pod or of a person. A sender MUST NOT treat it as an identifier of a person.
 
 ### 4.5 What the sender checks
 
@@ -281,10 +291,15 @@ The bundle MUST NOT exceed 33,554,432 bytes (32 MiB). There is no chunking: the 
 
 The envelope's authentication proves the archive arrived exactly as sealed. Whether the archive holds what it should is the bundle's own manifest's job, and this document adds no digests of its own:
 
-- An **assessment bundle** has `manifest.ttl` at the root, typed `assessment:BundleManifest`, declaring every other file with its path, SHA-256 and byte count (the `assessment:` vocabulary). A receiver MUST check every declared file is present with the declared length and digest, and SHOULD refuse files the manifest does not declare.
+- An **assessment bundle** has `manifest.ttl` at the root, typed `assessment:BundleManifest` (and `cascade:ExportManifest`), declaring every other file under the `assessment:` vocabulary's rules: one `spdx:hasFile` per file, whose `spdx:fileName` is the file's path in the archive and whose `spdx:checksum` is a SHA-256 (`spdx:algorithm spdx:checksumAlgorithm_sha256`, `spdx:checksumValue` 64 lowercase hexadecimal characters). A receiver MUST check that every declared file is present and that the SHA-256 of its bytes equals the declared value, and SHOULD refuse a bundle holding files the manifest does not declare.
+- Where a declared file is also described by a `cascade:Attachment` in the bundle (for example a packet PDF at its content-addressed path `attachments/sha-256/{hex}`), the attachment's `cascade:contentHash` MUST equal the manifest's checksum for that path, and a receiver MUST refuse the bundle when they differ.
 - Other bundle kinds name their manifest in their own specification.
 
 The receiver identifies the bundle kind from its manifest's type, not from the envelope.
+
+### 7.5 Signed content
+
+This version specifies no signature. A later revision MAY carry a signature inside the bundle, made before the bundle is sealed (sign, then seal), for example a detached JWS ([RFC 7515](https://www.rfc-editor.org/rfc/rfc7515) Appendix F) over the bundle manifest, which through its digests covers every file it declares; such a signature needs no change to the envelope format. The envelope itself does not identify its sender (section 11.2), and HPKE's authenticated modes would not provide a signature that anyone other than the one receiver could check.
 
 ---
 
@@ -343,7 +358,7 @@ An envelope sealed to one pairing is refused by every other pairing (its `kid` a
 
 Someone who photographs the QR code learns the public key and the mailbox. They cannot read anything sealed to it. They can deposit their own envelope first, which the single-deposit rule then lets through and which blocks the real one. A receiver MUST show what arrived (who and what the bundle says it is) before writing it into the Pod and let the person refuse it; a real sender whose deposit is refused tells the person to start again with a new code.
 
-Someone who substitutes the code (a doctored link, a forwarded message) can make the sender seal to their key. Scanning the receiver's own screen with the sender's camera is the strong channel; a copied link is weaker, which is why the fingerprint (section 4.3) exists. The 40-bit fingerprint is fresh for every pairing, so an attacker would have to find a key matching it within the pairing's lifetime.
+Someone who substitutes the code (a doctored link, a forwarded message) can make the sender seal to their key. Scanning the receiver's own screen with the sender's camera is the strong channel: what the camera reads is what the receiver drew. Any other route (a copied link, pasted text, a message) passes through something that could change it, which is why section 4.3 requires the receiver always to show the fingerprint and requires the sender, on any route but its own camera, to show it and wait for the person to confirm the match before sealing. After a camera scan the comparison remains recommended, not required. The 40-bit fingerprint is fresh for every pairing, so an attacker would have to find a key matching it within the pairing's lifetime (1 hour recommended, 24 hours at most, section 4.6).
 
 ### 11.5 Key lifetime and forward secrecy
 
@@ -367,8 +382,30 @@ A sender that is a web page runs code its server delivers. A server operator who
 
 ---
 
-## 12. Conformance
+## 12. Relation to SMART Health Links
 
-Deterministic vectors are in [`vectors/sealed-envelope/vectors.json`](vectors/sealed-envelope/vectors.json): two receivers (fixed `ikm`, RFC 9180 `DeriveKeyPair`, the stored JWK, `kid`, fingerprint); two pairings; three positive envelopes (route a with a fixed ephemeral `ikm`, and route b with fixed salt, nonces and keys), each with its bundle files and ZIP bytes; and negative vectors with their expected outcome (section 10): pairing negatives (version, curve, off-curve point, a private key in the pairing, expiry, encoding, duplicate members) and envelope negatives (wrong AAD, wrong `info`, truncation, tampered tag and encapsulated key, replay into another mailbox, a different key under the same `kid`, unsupported `alg` and `typ`, IV and header rules, every ZIP profile rule, wrong and untrimmed six words, an edited wrap, no `passphrase` wrap, a missing `crit`).
+SMART Health Links ([HL7 SMART Health Cards and Links Implementation Guide](https://hl7.org/fhir/uv/smart-health-cards-and-links/links-specification.html), version 1.0.0, STU; canonical `http://hl7.org/fhir/uv/smart-health-cards-and-links`) lets a person share health data by a link or QR code. This document borrows from it where the meaning is the same and departs from it where the job differs.
+
+**What is shared.**
+
+- **The saved-file form uses the SMART Health Links file profile.** A SMART Health Links file is a JWE Compact Serialization with `alg` `dir`, `enc` `A256GCM` and a `cty` naming the content; so is a route b envelope (section 6.4). The difference is where the key comes from: SMART Health Links carries the key in the link, and route b carries it wrapped by the six-word key in `cascade-header`, which is marked critical so a JOSE reader that does not know it, a SMART Health Links reader included, refuses the file rather than misreading it.
+- **The pairing link is shaped like a SMART Health Links payload.** Both are minified JSON, base64url-encoded, carried after `#` in a URL (optional for a SMART Health Link, which may also stand alone as `shlink:/...`; always for a pairing) so the server that serves the page never receives it. Members whose meaning is the same carry the same name: `exp` is the expiry in seconds since 1970-01-01T00:00:00Z, and `v` is the integer version of the payload format, `1` for this version. This document makes `v` required and `exp` binding (section 4.5) where SMART Health Links lets both be omitted and treats `exp` as a hint. The `pair.` prefix differs from `shlink:/` so neither reader mistakes the other's link for its own.
+- **The relay plays the SMART Health Links server's part:** it holds encrypted bytes it cannot read.
+
+**Why route a is not a SMART Health Link.**
+
+1. **The key travels in the link.** A SMART Health Link carries the decryption key, so anyone who sees the code or the copied link can read the data until it expires. A pairing carries only a public key (section 4.1): someone who sees it learns nothing they can read (section 11.4).
+2. **The direction is reversed.** In SMART Health Links the sharer shows the code and the recipient scans it. In route a the receiver, the application that holds the Pod, shows the code and the sender scans it, so that no key ever reaches the sender from a server (section 4.2).
+3. **The content types do not fit.** SMART Health Links defines three file content types: `application/smart-health-card`, `application/fhir+json` and `application/smart-api-access`. A bundle of Turtle records, its manifest and a PDF has none of them.
+
+SMART Health Links members with no counterpart here are not used: `url` (a pairing names a mailbox, not a manifest URL), `key` (section 12, point 1), `flag`. Its `label`, a short description of the data the sharer is sending, is not added: a pairing sends no data, and a description of the destination shown in a QR code would tell whoever sees the code whose record it is.
+
+**Sharing with clinicians and outside tools.** SMART Health Links is the intended route for sharing records with clinicians and with software outside the Cascade ecosystem, carrying a FHIR projection of the records. That route is specified separately; this document does not define it.
+
+---
+
+## 13. Conformance
+
+Deterministic vectors are in [`vectors/sealed-envelope/vectors.json`](vectors/sealed-envelope/vectors.json): two receivers (fixed `ikm`, RFC 9180 `DeriveKeyPair`, the stored JWK, `kid`, fingerprint); two pairings; three positive envelopes (route a with a fixed ephemeral `ikm`, and route b with fixed salt, nonces and keys), each with its bundle files and ZIP bytes (the three-file bundle is a minimal synthetic assessment bundle: a manifest in the form of section 7.4, one wave holding a `cascade:Attachment`, and a PDF at its content-addressed path, every digest consistent); and negative vectors with their expected outcome (section 10): pairing negatives (version, curve, off-curve point, a private key in the pairing, expiry, encoding, duplicate members) and envelope negatives (wrong AAD, wrong `info`, truncation, tampered tag and encapsulated key, replay into another mailbox, a different key under the same `kid`, unsupported `alg` and `typ`, IV and header rules, every ZIP profile rule, wrong and untrimmed six words, an edited wrap, no `passphrase` wrap, a missing `crit`).
 
 A conforming implementation re-seals each positive vector from its inputs where its HPKE library accepts a fixed ephemeral key, opens every positive vector to the stated files, and refuses every negative vector with the stated outcome. The vectors were cross-checked by independent implementations before publication; the decision record names them. They move to the conformance repository when this document is ratified.
