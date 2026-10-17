@@ -1,0 +1,627 @@
+@prefix assessment: <https://ns.cascadeprotocol.org/assessment/v1#> .
+@prefix cascade: <https://ns.cascadeprotocol.org/core/v1#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix loinc: <http://loinc.org/rdf#> .
+
+# ============================================================================
+# Changelog
+# ============================================================================
+# v1.0 (2026-10-16): First ratified release, at the namespace the draft already
+#     used. Every term that kept its meaning kept its IRI. Full detail, with the
+#     standard each removed draft term was replaced by, is in
+#     ontologies/assessment/CHANGELOG.md. In short, against the 0.1 draft:
+#     - Draft terms that a ratified standard already defines are REMOVED and the
+#       standard term is used instead (DCMI Terms, RDF Schema, SKOS, PROV-O,
+#       schema.org, SPDX 2.3, and the ratified core and health vocabularies).
+#     - ADDED: ResponseScale and ResponseOption (a response scale's values,
+#       labels and problem end, carried with every instrument); CaregiverRater;
+#       ratingWindowKind, ratingWindowDuration, usesResponseScale, problemEnd,
+#       medicationStatusAtRating, treatmentPeriod, raterObservationLength,
+#       consentTextVersion.
+#     - CHANGED: instrumentVersion is required and names the published edition;
+#       assignmentStatus takes the FHIR R4 task-status codes; the instrument,
+#       item and scale identity keys gain the edition and the reproduction; the
+#       -v2 inputs-hash method is accepted and is the one new producers emit.
+# 0.1-draft (2026-08-05): Initial draft, staged outside this repository.
+
+# ============================================================================
+# Ontology Metadata
+# ============================================================================
+
+<https://ns.cascadeprotocol.org/assessment/v1#> a owl:Ontology ;
+    owl:imports <https://ns.cascadeprotocol.org/core/v1#> ;
+    dct:title "Cascade Protocol Assessment Ontology"@en ;
+    dct:description "Vocabulary for standardized rating instruments as published, the responses raters give to them, multi-rater response waves, and the scores and screen results an instrument's own published scoring rules define"@en ;
+    dct:creator "Cascade Agentic Labs" ;
+    dct:created "2026-08-05"^^xsd:date ;
+    dct:modified "2026-10-16"^^xsd:date ;
+    owl:versionInfo "1.0" ;
+    cascade:schemaVersion "1.0" ;
+    rdfs:comment "Layer 2 cross-cutting vocabulary for administered assessment instruments. Aligned with FHIR R4 Questionnaire and QuestionnaireResponse; written with W3C PROV-O, DCMI Terms, SKOS and RDF Schema wherever those already define the term; anchored to LOINC survey codes where they exist. Mints a term only where no ratified standard and no ratified Cascade vocabulary defines it."@en ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/questionnaire.html> ,
+                 <https://hl7.org/fhir/R4/questionnaireresponse.html> ,
+                 <https://www.w3.org/TR/prov-o/> .
+
+# ============================================================================
+# SCOPE BOUNDARY (normative)
+# ============================================================================
+# This vocabulary represents instrument-PUBLISHED outputs only: an instrument's
+# items and response scales, a rater's responses to them, and the scale scores
+# and screen results that the instrument's OWN published scoring rules define,
+# always with computation provenance (software agent, algorithm version,
+# inputs hash). It mints no term for an interpretation the instrument does not
+# itself publish: no risk score, classification, recommendation, triage level
+# or severity grade. Producer-authored prose about a result is carried by
+# cascade:notes, so that every assessment:* predicate on a result is an
+# instrument-published fact.
+#
+# A rater's raw answer is never rewritten. A view that normalizes answers
+# across editions of an instrument (for example one that reverses a scale whose
+# direction differs between editions) is a derivation over the raw values and
+# the response scale definitions recorded here. It is never stored in place of
+# them, and this vocabulary defines no term for it.
+#
+# ============================================================================
+# ITEM-TEXT BOUNDARY (normative)
+# ============================================================================
+# No property used by this vocabulary carries the wording of an instrument
+# item, and the item shape is closed: an item carries only its identifier, its
+# printed position, its response scale, its scale membership and a LOINC code.
+# Instrument wording is commonly the publisher's copyrighted content, and its
+# reproduction rights are a question for each producer, not for this
+# vocabulary. Three kinds of verbatim instrument content ARE carried: the
+# title, the citation and rights statement, and the labels of a response
+# scale's options, without which a bare number is uninterpretable.
+#
+# A rendered document attached to a wave with cascade:hasAttachment (for
+# example the report a clinician was given) MAY contain item wording. The
+# boundary above applies to RDF. A producer that attaches such a document is
+# responsible for carrying it only where its reproduction is permitted, and
+# for delivering it only inside an encrypted container.
+#
+# ============================================================================
+# IDENTITY (normative)
+# ============================================================================
+# Every subject IRI this vocabulary's classes are written with is
+#     urn:uuid:{UUIDv5(N, key)}
+# where N is 03fdd588-cbd2-54d1-a582-1ed8987c2028, itself the UUIDv5 of the
+# string "https://ns.cascadeprotocol.org/assessment/v1#" under the RFC 4122 URL
+# namespace, and key is the per-class content key below with its segments
+# joined by ":" (U+003A). No key segment may contain ":"; the shapes enforce
+# this on every property whose value is a key segment.
+#
+#   Instrument        instrument:{instrument id}:{edition}:{reproduction}
+#   Item              item:{instrument id}:{edition}:{reproduction}:{item id}
+#   Scale             scale:{instrument id}:{edition}:{reproduction}:{scale id}
+#   ResponseScale     responseScale:{instrument id}:{edition}:{reproduction}:{response scale id}
+#   ResponseOption    responseOption:{instrument id}:{edition}:{reproduction}:{response scale id}:{option notation}
+#   AssessmentSubject subject:{caseId}
+#   Rater             rater:{caseId}:{invitationId}
+#   Wave              wave:{waveId}
+#   Assignment        assignment:{caseId}:{invitationId}
+#   ResponseSet       responseSet:{caseId}:{invitationId}
+#   ItemResponse      itemResponse:{caseId}:{invitationId}:{item id}
+#   AdministrationActivity administration:{caseId}:{invitationId}
+#   ScoringActivity   scoring:{caseId}:{invitationId}:{algorithm version}:{inputs hash}
+#   ScaleScore        scaleScore:{caseId}:{invitationId}:{algorithm version}:{inputs hash}:{scale id}
+#   ScreenOutcome     screenOutcome:{caseId}:{invitationId}:{algorithm version}:{inputs hash}:{screen id}
+#   BundleManifest    manifest:{caseId}:{waveId}
+#
+# "instrument id", "item id", "scale id", "response scale id" and "screen id"
+# are the dct:identifier of the node in question; "edition" is
+# assessment:instrumentVersion; "reproduction" is schema:version on the
+# instrument; "option notation" is the canonical lexical form of the option's
+# skos:notation; "algorithm version" is health:algorithmVersion; "inputs hash"
+# is assessment:inputsHash. caseId, waveId and invitationId are the producer's
+# own record identifiers for the collection, the round and the invitation.
+#
+# No wall-clock time and no randomness enters any key, so re-serializing the
+# same data yields the same IRIs, a re-import deduplicates, and re-scoring
+# under a changed algorithm yields a new score rather than overwriting the old
+# one. An instrument's key carries its edition and the producer's reproduction
+# of it, because two editions of the same instrument can differ in wording and
+# in the direction of a response scale.
+#
+# ============================================================================
+# PACKAGING
+# ============================================================================
+# Assessment records belong in a pod's assessments/ container (pod-structure.md
+# section 5.1 permits an application-defined top-level directory). A bundle
+# moving one wave between applications carries a manifest typed both
+# assessment:BundleManifest and cascade:ExportManifest, the wave file, and any
+# attached rendering, each listed with spdx:hasFile and its SHA-256 checksum.
+#
+# ============================================================================
+# TERMS USED FROM RATIFIED STANDARDS AND VOCABULARIES (not redeclared here)
+# ============================================================================
+#   dct:identifier        producer-local id of an instrument, item, scale,
+#                         response scale or screen rule
+#   dct:title             an instrument's printed title
+#   dct:bibliographicCitation  an instrument's citation
+#   dct:rights            the copyright or attribution line an edition prints
+#   dct:license           the license or permission a producer reproduces an
+#                         edition under (an IRI)
+#   dct:hasPart / dct:isPartOf  instrument to item and scale; item to scale;
+#                         response set to item response; assignment and
+#                         response set to wave
+#   dct:subject           wave, response set or manifest to the subject
+#                         descriptor (FHIR QuestionnaireResponse.subject)
+#   dct:conformsTo        manifest to this vocabulary
+#   dct:language          the language a response set was given in (BCP 47)
+#   rdfs:label            display label of a subject, rater, scale, screen
+#                         rule or software agent
+#   rdf:value             a rater's answer (FHIR answer.value[x]); a summed or
+#                         computed scale score (Observation.value[x])
+#   skos:hasTopConcept / skos:notation / skos:prefLabel  a response scale's
+#                         options, each option's value and printed label
+#   schema:position       an item's printed number; a wave's ordinal
+#   schema:version        the version of the producer's reproduction of an
+#                         edition (FHIR Questionnaire.version)
+#   prov:hadMember        wave to its assignments (a wave is a prov:Collection)
+#   prov:atLocation       rater and administration to the setting observed
+#   prov:qualifiedAssociation / prov:agent / prov:hadRole / prov:used /
+#   prov:wasGeneratedBy / prov:wasDerivedFrom / prov:wasAssociatedWith /
+#   prov:startedAtTime / prov:endedAtTime   the administration and derivation chain
+#   spdx:hasFile / spdx:fileName / spdx:checksum  the files in a bundle
+#   cascade:dataAbsentReason  why an answer's value or a screen's verdict is
+#                         absent (core v3.6; HL7 data-absent-reason codes)
+#   cascade:loincCode     LOINC code of an instrument, item or scale
+#   cascade:schemaVersion version of this vocabulary a record or bundle uses
+#   cascade:version       version of a software agent
+#   cascade:sourceRecordId  the producer's id of the collection a bundle is from
+#   cascade:Attachment / cascade:hasAttachment  a rendering made from a wave
+#   cascade:notes         producer-authored prose on a screen outcome
+#   health:periodStart / health:periodEnd  the period a response set describes
+#                         (UTC instants, half-open; the flattened spelling of
+#                         an OWL-Time interval)
+#   health:algorithmVersion  version of the scoring implementation
+
+# ============================================================================
+# Instrument definition
+# ============================================================================
+
+assessment:Instrument a owl:Class ;
+    rdfs:label "Instrument"@en ;
+    rdfs:comment "One published edition of a standardized rating instrument, as one producer reproduces it: a fixed set of items with fixed response scales and published scoring rules. FHIR R4 analogue: Questionnaire (dct:identifier is Questionnaire.name, dct:title is .title, schema:version is .version, cascade:loincCode is .code). Two editions of the same instrument are two Instrument nodes sharing a dct:identifier and differing in assessment:instrumentVersion, because editions can differ in item wording, in time frame and in the direction of a response scale. Describes the instrument as published, not any one administration of it."@en ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/questionnaire.html> .
+
+assessment:Item a owl:Class ;
+    rdfs:label "Item"@en ;
+    rdfs:comment "One published item of an instrument edition, referenced by dct:identifier (FHIR Questionnaire.item.linkId), printed number (schema:position), response scale and, once its alignment is verified, a LOINC code. CARRIES NO ITEM TEXT BY DESIGN; see the item-text boundary. An identifier is kept the same across editions when an edition changes only the item's wording, so that one item can be followed across editions while the edition records that its wording differed."@en ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/questionnaire-definitions.html#Questionnaire.item> .
+
+assessment:Scale a owl:Class ;
+    rdfs:label "Scale"@en ;
+    rdfs:comment "A scored dimension published by an instrument (commonly called a subscale), over which the instrument's scoring rules compute a score. Its items are dct:isPartOf it. Distinct from assessment:ResponseScale, which is the set of answers an item offers. The LOINC code of a scale (cascade:loincCode) identifies the DIMENSION, not a claim that a producer's number is unit-equivalent to the coded score. Implementer warning, verified 2026-08-05: LOINC's panel metadata types the NICHQ Vanderbilt score codes as REAL / TOTALSCORE, while the code definitions state a count (106402-1 is the count of questions scored 2 or 3 in questions 1 to 9, range 0 to 9). Whether a scale is counted or summed is said by which of assessment:countedItems and rdf:value a score carries, never by the code."@en .
+
+assessment:ResponseScale a owl:Class ;
+    rdfs:label "Response Scale"@en ;
+    rdfs:comment "The definition of the answers an item offers, as one instrument edition prints them: every permitted value, the label printed for each value where the edition prints one, and which end of the scale is the problem end. A SKOS concept scheme whose top concepts are its options. Carried with every serialized instrument so that a raw answer can be read without knowing which edition produced it. FHIR R4 analogue: the item's answerOption list or the ValueSet named by answerValueSet. The problem end has no FHIR element."@en ;
+    rdfs:subClassOf skos:ConceptScheme ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/questionnaire-definitions.html#Questionnaire.item.answerOption> ,
+                 <https://www.w3.org/TR/skos-reference/#schemes> .
+
+assessment:ResponseOption a owl:Class ;
+    rdfs:label "Response Option"@en ;
+    rdfs:comment "One permitted answer of a response scale, as a SKOS concept: its value is skos:notation, typed xsd:integer or xsd:decimal; the label the edition prints for that value alone, if any, is skos:prefLabel. FHIR R4 analogue: Questionnaire.item.answerOption (valueInteger or valueDecimal, with the printed label as display). A label printed once over a run of values, rather than over one value, is not represented in this version."@en ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:seeAlso <https://www.w3.org/TR/skos-reference/#notations> .
+
+assessment:instrumentVersion a owl:DatatypeProperty ;
+    rdfs:label "Instrument Version"@en ;
+    rdfs:comment "The published edition this instrument node reproduces, as the publisher identifies it: a version number where the publisher assigns one, otherwise the edition's publisher, year and any revision mark printed on the form, for example 'NICHQ 2002 first edition, revised 1102'. REQUIRED, because a raw answer cannot be read without knowing which edition asked it. It names the publisher's edition, never the producer's copy of the form (schema:version) and never the scoring software (health:algorithmVersion). A key segment: it must not contain ':'. Minted because the two version facts on one instrument node (the publisher's edition and the producer's reproduction) need two properties, and dct:isVersionOf would need an IRI for the edition that no registry assigns."@en ;
+    rdfs:domain assessment:Instrument ;
+    rdfs:range xsd:string ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/questionnaire-definitions.html#Questionnaire.derivedFrom> .
+
+assessment:usesResponseScale a owl:ObjectProperty ;
+    rdfs:label "Uses Response Scale"@en ;
+    rdfs:comment "The response scale an item offers its rater. An instrument may mix response scales; without this link a bare value has no value space and no direction. FHIR R4 analogue: Questionnaire.item.answerValueSet. Minted because no RDF vocabulary relates a question to its answer scheme."@en ;
+    rdfs:domain assessment:Item ;
+    rdfs:range assessment:ResponseScale .
+
+assessment:problemEnd a owl:DatatypeProperty ;
+    rdfs:label "Problem End"@en ;
+    rdfs:comment "Which end of the response scale the edition treats as the problem end: 'high' when higher values indicate more of a problem, 'low' when lower values do, 'unordered' when the values carry no order. Editions of one instrument can disagree (one prints 1 as the best rating, another as the worst), so the direction is recorded per edition rather than assumed from the instrument's name. It states how the edition reads its own scale; which values the scoring rules count is a scoring rule, carried on the scores. No FHIR element or W3C term carries it."@en ;
+    rdfs:domain assessment:ResponseScale ;
+    rdfs:range xsd:string .
+
+assessment:ratingWindowKind a owl:DatatypeProperty ;
+    rdfs:label "Rating Window Kind"@en ;
+    rdfs:comment "The period this edition asks a rater to think about: 'fixed-lookback' (a stated duration ending when the rater answers, given by assessment:ratingWindowDuration), 'since-school-year-start', 'since-previous-rating' (since the rater last completed the form), or 'unspecified' (the edition states no window). Structured rather than quoted, because the time-frame sentence is the publisher's wording. No FHIR Questionnaire element states a recall period."@en ;
+    rdfs:domain assessment:Instrument ;
+    rdfs:range xsd:string .
+
+assessment:ratingWindowDuration a owl:DatatypeProperty ;
+    rdfs:label "Rating Window Duration"@en ;
+    rdfs:comment "The length of a fixed look-back window, as an xsd:duration, for example 'P6M' for the past six months or 'P1W' for the past week. Present exactly when assessment:ratingWindowKind is 'fixed-lookback'. Minted because OWL-Time's time:hasXSDDuration describes a temporal entity, and an edition's window is an instruction relative to each answer, not an interval of its own."@en ;
+    rdfs:domain assessment:Instrument ;
+    rdfs:range xsd:duration ;
+    rdfs:seeAlso <https://www.w3.org/TR/owl-time/#time:hasXSDDuration> .
+
+# ============================================================================
+# Subject, raters, roles, settings
+# ============================================================================
+
+assessment:AssessmentSubject a owl:Class ;
+    rdfs:label "Assessment Subject"@en ;
+    rdfs:comment "A PROVENANCE DESCRIPTOR of the person the ratings are about, carrying only what the collecting producer was told: a display label (rdfs:label) and optional context such as a grade level. This is NOT an identity record. A consumer MUST NOT write it into cascade:PatientProfile, a Solid profile card or any other identity resource, and MUST NOT treat a label match or mismatch as an identity verdict. On import the records attach to the receiving pod's person by containment; this node preserves who the collector was told the ratings were about. FHIR R4 analogue: the referent of QuestionnaireResponse.subject, deliberately not the Patient resource itself."@en ;
+    rdfs:subClassOf prov:Entity .
+
+assessment:Rater a owl:Class ;
+    rdfs:label "Rater"@en ;
+    rdfs:comment "A person who completed, or was asked to complete, an instrument about the subject, in one invitation. FHIR R4 analogue: the RelatedPerson referenced by QuestionnaireResponse.source. Carries a display label (rdfs:label), a role and the setting observed (prov:atLocation); it carries no name, contact details or institutional identifier. IDENTITY IS PER INVITATION: the same adult invited in two waves is two Rater nodes, and this version defines no term asserting that two Rater nodes are one person. A consumer MUST NOT infer that from matching labels."@en ;
+    rdfs:subClassOf prov:Person .
+
+assessment:RaterRole a owl:Class ;
+    rdfs:label "Rater Role"@en ;
+    rdfs:comment "The role in which a rater answered: the prov:hadRole of the administration's qualified association, and assessment:raterRole on the rater. A closed value space of five individuals. Minted because no standard value set covers the five together: HL7 v3-RoleCode PRN (parent) excludes the legal guardian this role includes, and no standard code exists for a coach or for a non-parent caregiver in general. A FHIR projection writes RelatedPerson.relationship as v3-RoleCode PRN or GUARD for the parent role where it knows which, v3-RoleCode GRPRN for a caregiver known to be a grandparent, LOINC LA16871-8 (Teacher) for the teacher role, and text for the others."@en ;
+    rdfs:subClassOf prov:Role ;
+    rdfs:seeAlso <http://terminology.hl7.org/CodeSystem/v3-RoleCode> .
+
+assessment:ParentRater a assessment:RaterRole , owl:NamedIndividual ;
+    rdfs:label "Parent or guardian"@en ;
+    rdfs:comment "A parent or legal guardian of the subject."@en .
+
+assessment:CaregiverRater a assessment:RaterRole , owl:NamedIndividual ;
+    rdfs:label "Other caregiver at home"@en ;
+    rdfs:comment "An adult who cares for the subject at home without being a parent or guardian, for example a grandparent or a nanny."@en .
+
+assessment:TeacherRater a assessment:RaterRole , owl:NamedIndividual ;
+    rdfs:label "Teacher"@en ;
+    rdfs:comment "A teacher of the subject. FHIR projection code: LOINC LA16871-8 (Teacher), https://loinc.org/LA16871-8/."@en .
+
+assessment:CoachRater a assessment:RaterRole , owl:NamedIndividual ;
+    rdfs:label "Coach or activity leader"@en ;
+    rdfs:comment "An adult who leads a structured activity the subject takes part in."@en .
+
+assessment:OtherRater a assessment:RaterRole , owl:NamedIndividual ;
+    rdfs:label "Other adult"@en ;
+    rdfs:comment "Another adult who knows the subject well enough to rate them, not covered by a more specific role."@en .
+
+assessment:Setting a owl:Class ;
+    rdfs:label "Setting"@en ;
+    rdfs:comment "The setting a rater observed the subject in, recorded with prov:atLocation on the rater and on the administration. Multi-rater instruments exist because behavior differs by setting, so the setting is data. Minted as a closed value space because HL7's service delivery location types describe where care is delivered, not where a rater observed behavior."@en ;
+    rdfs:subClassOf prov:Location .
+
+assessment:HomeSetting a assessment:Setting , owl:NamedIndividual ;
+    rdfs:label "Home"@en .
+
+assessment:SchoolSetting a assessment:Setting , owl:NamedIndividual ;
+    rdfs:label "School"@en .
+
+assessment:ActivitySetting a assessment:Setting , owl:NamedIndividual ;
+    rdfs:label "Activity or team"@en .
+
+assessment:OtherSetting a assessment:Setting , owl:NamedIndividual ;
+    rdfs:label "Other"@en .
+
+assessment:gradeLevel a owl:DatatypeProperty ;
+    rdfs:label "Grade Level"@en ;
+    rdfs:comment "The subject's school grade at collection time, as free text, for example '3rd grade'. Minted because schema:educationalLevel states the level a creative work or credential is aimed at, not a person's current grade. Unrelated to checkup:gradeLevel (a recommendation grade); the per-vocabulary JSON-LD contexts keep the two apart."@en ;
+    rdfs:domain assessment:AssessmentSubject ;
+    rdfs:range xsd:string .
+
+assessment:raterRole a owl:ObjectProperty ;
+    rdfs:label "Rater Role"@en ;
+    rdfs:comment "The role in which this rater was asked to answer. Minted because prov:hadRole qualifies an influence (an activity's association), and a rater who has been invited but has not answered has no activity to qualify."@en ;
+    rdfs:domain assessment:Rater ;
+    rdfs:range assessment:RaterRole .
+
+# ============================================================================
+# Waves and assignments
+# ============================================================================
+
+assessment:Wave a owl:Class ;
+    rdfs:label "Wave"@en ;
+    rdfs:comment "One coordinated round of administrations: instruments about the same subject given to several raters at about the same time so their answers are comparable. A prov:Collection whose members (prov:hadMember) are its assignments, answered or not; its ordinal within the subject's collection is schema:position, 1 for the initial round. A rendered document made from the wave (for example the report a clinician was given) is linked with cascade:hasAttachment, and names what it was made from with prov:wasDerivedFrom. No FHIR resource models the round itself."@en ;
+    rdfs:subClassOf prov:Collection .
+
+assessment:Assignment a owl:Class ;
+    rdfs:label "Assignment"@en ;
+    rdfs:comment "One rater asked to complete one instrument in one wave. An assignment exists from the moment the rater is invited, so a wave records who was asked and has not answered. FHIR R4 analogue: Task (Task.for = subject, Task.owner = rater, Task.focus = Questionnaire, Task.status = assessment:assignmentStatus). A 'completed' assignment carries exactly one assessment:ResponseSet; any other carries none."@en ;
+    rdfs:subClassOf prov:Entity .
+
+assessment:instrumentSetId a owl:DatatypeProperty ;
+    rdfs:label "Instrument Set Id"@en ;
+    rdfs:comment "Producer-local identifier of the set of instruments a wave administered, for example 'vanderbilt_initial'. Minted rather than written as dct:identifier because it identifies the battery, not the wave."@en ;
+    rdfs:domain assessment:Wave ;
+    rdfs:range xsd:string .
+
+assessment:waveStatus a owl:DatatypeProperty ;
+    rdfs:label "Wave Status"@en ;
+    rdfs:comment "Whether the wave is still accepting responses: 'open' or 'closed'. Minted because no FHIR resource models the round."@en ;
+    rdfs:domain assessment:Wave ;
+    rdfs:range xsd:string .
+
+assessment:assignedRater a owl:ObjectProperty ;
+    rdfs:label "Assigned Rater"@en ;
+    rdfs:comment "The rater this assignment was given to. FHIR R4 analogue: Task.owner. Minted because PROV relates agents to activities that happened, not to work they were asked to do."@en ;
+    rdfs:domain assessment:Assignment ;
+    rdfs:range assessment:Rater .
+
+assessment:forInstrument a owl:ObjectProperty ;
+    rdfs:label "For Instrument"@en ;
+    rdfs:comment "The instrument edition an assignment or response set is of. FHIR R4 analogue: QuestionnaireResponse.questionnaire and Task.focus. Minted because dct:conformsTo asserts conformance to a standard, which would read as a claim that the answers are valid rather than as which form was given. Domain deliberately unstated so it applies to both classes without asserting an intersection."@en ;
+    rdfs:range assessment:Instrument .
+
+assessment:assignmentStatus a owl:DatatypeProperty ;
+    rdfs:label "Assignment Status"@en ;
+    rdfs:comment "Where this assignment stands, as a code of the HL7 FHIR R4 task-status code system: normally 'requested' (invited), 'in-progress' (started), 'completed', or 'cancelled' (withdrawn or revoked). Only a 'completed' assignment carries a response set; every other assignment is the outstanding-rater roster a consumer needs in order to read a partial wave honestly. Minted as a property because the ratified status properties carry the domains of their own record classes; the codes are FHIR's."@en ;
+    rdfs:domain assessment:Assignment ;
+    rdfs:range xsd:string ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/valueset-task-status.html> .
+
+assessment:hasResponseSet a owl:ObjectProperty ;
+    rdfs:label "Has Response Set"@en ;
+    rdfs:comment "The response set fulfilling this assignment. Present exactly when the assignment is 'completed'. FHIR R4 analogue: Task.output. Minted because no RDF vocabulary relates a request to the response that fulfilled it."@en ;
+    rdfs:domain assessment:Assignment ;
+    rdfs:range assessment:ResponseSet .
+
+assessment:fulfillsAssignment a owl:ObjectProperty ;
+    rdfs:label "Fulfills Assignment"@en ;
+    rdfs:comment "The assignment this response set answers. Inverse of assessment:hasResponseSet, stated in both directions so a consumer can traverse either way without inference."@en ;
+    rdfs:domain assessment:ResponseSet ;
+    rdfs:range assessment:Assignment .
+
+assessment:consentRecordedAt a owl:DatatypeProperty ;
+    rdfs:label "Consent Recorded At"@en ;
+    rdfs:comment "When this rater's acknowledgement of the producer's notice was recorded. A timestamp only; which text was acknowledged is assessment:consentTextVersion. FHIR R4 analogue: Consent.dateTime, a resource of its own that a rater acknowledgement does not otherwise need."@en ;
+    rdfs:domain assessment:Assignment ;
+    rdfs:range xsd:dateTime .
+
+assessment:consentTextVersion a owl:DatatypeProperty ;
+    rdfs:label "Consent Text Version"@en ;
+    rdfs:comment "The producer's version identifier of the notice or consent text the rater acknowledged at assessment:consentRecordedAt. Absent when the producer does not version that text. FHIR R4 analogue: Consent.policy, which names a policy by URI rather than a producer's text version."@en ;
+    rdfs:domain assessment:Assignment ;
+    rdfs:range xsd:string .
+
+# ============================================================================
+# Responses
+# ============================================================================
+
+assessment:ResponseSet a owl:Class ;
+    rdfs:label "Response Set"@en ;
+    rdfs:comment "One rater's completed instrument: the answers one person gave, in one sitting or several, about one subject, together with what the rater said about the period and the treatment context the answers describe. FHIR R4 analogue: QuestionnaireResponse. The period described is health:periodStart and health:periodEnd (FHIR Observation.effectivePeriod on the derived scores); the language the form was given in is dct:language. This is the instrument data; every score is a derivation from it and links back with prov:wasDerivedFrom."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/questionnaireresponse.html> .
+
+assessment:ItemResponse a owl:Class ;
+    rdfs:label "Item Response"@en ;
+    rdfs:comment "One rater's answer to one item. FHIR R4 analogue: QuestionnaireResponse.item.answer. The answer is rdf:value, exactly as the rater chose it: one of the skos:notation values of the item's response scale, never rewritten, reversed or rescaled. An answer that could not be given carries cascade:dataAbsentReason and no rdf:value; an answer that was given carries no absence reason. Absence is a property of the answer, never an empty answer node, so that the model survives the FHIR R5 tightening of answer.value[x] to 1..1."@en ;
+    rdfs:subClassOf prov:Entity .
+
+assessment:forItem a owl:ObjectProperty ;
+    rdfs:label "For Item"@en ;
+    rdfs:comment "The item this answer is to, an item of the instrument edition the response set is for. FHIR R4 analogue: QuestionnaireResponse.item.linkId. Minted because dct:references (a citation) does not say the node answers the item."@en ;
+    rdfs:domain assessment:ItemResponse ;
+    rdfs:range assessment:Item .
+
+assessment:responseSetStatus a owl:DatatypeProperty ;
+    rdfs:label "Response Set Status"@en ;
+    rdfs:comment "Status of the response set, as a code of the HL7 FHIR questionnaire-answers-status value set: 'in-progress', 'completed', 'amended', 'entered-in-error', or 'stopped'. Minted as a property for the same reason as assessment:assignmentStatus; the codes are FHIR's."@en ;
+    rdfs:domain assessment:ResponseSet ;
+    rdfs:range xsd:string ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/valueset-questionnaire-answers-status.html> .
+
+assessment:respondentComment a owl:DatatypeProperty ;
+    rdfs:label "Respondent Comment"@en ;
+    rdfs:comment "Free text the rater added alongside their answers. Rater-authored content of the response, not a description of the record (rdfs:comment, dct:description) and not producer-authored copy (cascade:notes)."@en ;
+    rdfs:domain assessment:ResponseSet ;
+    rdfs:range xsd:string .
+
+assessment:respondedItemCount a owl:DatatypeProperty ;
+    rdfs:label "Responded Item Count"@en ;
+    rdfs:comment "How many of the instrument's items this response set carries an answer node for, counting answers with an absence reason. Never more than assessment:instrumentItemCount."@en ;
+    rdfs:domain assessment:ResponseSet ;
+    rdfs:range xsd:integer .
+
+assessment:instrumentItemCount a owl:DatatypeProperty ;
+    rdfs:label "Instrument Item Count"@en ;
+    rdfs:comment "How many numbered items the instrument edition publishes. With assessment:respondedItemCount this makes blank items visible: an item left blank is simply not present as an assessment:ItemResponse."@en ;
+    rdfs:domain assessment:ResponseSet ;
+    rdfs:range xsd:integer .
+
+assessment:raterObservationLength a owl:DatatypeProperty ;
+    rdfs:label "Rater Observation Length"@en ;
+    rdfs:comment "How long the rater says they have been able to observe the behaviors they rated, as the rater stated it, for example '3 months'. Some editions ask for it on the form. Rater-authored text, not parsed and not checked; minted because it is a rater's statement, not a duration a producer may assert."@en ;
+    rdfs:domain assessment:ResponseSet ;
+    rdfs:range xsd:string .
+
+assessment:medicationStatusAtRating a owl:ObjectProperty ;
+    rdfs:label "Medication Status At Rating"@en ;
+    rdfs:comment "The RATER'S OWN ANSWER to whether the period they rated was a time when the subject was on medication, as a LOINC answer code: loinc:LA34443-4 'Was on medication', loinc:LA34444-2 'Was not on medication', or loinc:LA12693-0 'Not sure' (the answers of LOINC answer list LL6857-8). Instrument data, recorded exactly as the rater answered, whether or not it agrees with any medication record. Absent when the rater was not asked; a producer MUST NOT fill it in from a medication record or from another rater. Medication rather than treatment, because that is what the forms ask. Minted as a property because the LOINC question code that carries this answer belongs to a single panel; the values are LOINC's."@en ;
+    rdfs:domain assessment:ResponseSet ;
+    rdfs:seeAlso <https://loinc.org/LL6857-8/> .
+
+assessment:treatmentPeriod a owl:ObjectProperty ;
+    rdfs:label "Treatment Period"@en ;
+    rdfs:comment "The record of the treatment period the rated window fell in: a dated stretch during which one set of interventions (medication, non-drug treatments, or both) was in place. A link, not a description: this vocabulary defines no class for the period and states no range, and a response set stays meaningful without the link, through assessment:medicationStatusAtRating and its period. FHIR R4: the closest element is QuestionnaireResponse.basedOn naming a CarePlan, when the rating was made as part of that plan. Minted because a standard relation would presume the period record's own model: OWL-Time's interval relations (time:intervalIn, time:intervalOverlaps) need the period to be a time:ProperInterval, which is that record's decision to make."@en ;
+    rdfs:domain assessment:ResponseSet ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/questionnaireresponse-definitions.html#QuestionnaireResponse.basedOn> ,
+                 <https://www.w3.org/TR/owl-time/#time:intervalIn> .
+
+# ============================================================================
+# Administration and scoring activities (PROV-O)
+# ============================================================================
+
+assessment:AdministrationActivity a owl:Class ;
+    rdfs:label "Administration Activity"@en ;
+    rdfs:comment "The act of a rater filling out an instrument, which generated a response set. Carries the rater as a qualified association with the rater role as prov:hadRole, and the setting as prov:atLocation."@en ;
+    rdfs:subClassOf prov:Activity .
+
+assessment:ScoringActivity a owl:Class ;
+    rdfs:label "Scoring Activity"@en ;
+    rdfs:comment "The act of applying an instrument's published scoring rules to a response set, which generated the scale scores and screen outcomes. Associated with the scoring engine as a prov:SoftwareAgent, prov:used the response set, and records the algorithm version (health:algorithmVersion) and inputs hash that make the result reproducible."@en ;
+    rdfs:subClassOf prov:Activity .
+
+assessment:activeResponseSeconds a owl:DatatypeProperty ;
+    rdfs:label "Active Response Seconds"@en ;
+    rdfs:comment "Seconds the rater spent actively answering, as measured by the collecting producer. A data-quality signal, not a duration: it may differ from prov:endedAtTime minus prov:startedAtTime, because a rater can leave a form open or complete it across sittings. A producer that cannot measure it honestly omits it."@en ;
+    rdfs:domain assessment:AdministrationActivity ;
+    rdfs:range xsd:integer .
+
+assessment:inputsHash a owl:DatatypeProperty ;
+    rdfs:label "Inputs Hash"@en ;
+    rdfs:comment "Lowercase hex SHA-256 of the exact inputs a score was computed from, so a consumer can verify that a published score belongs to the responses it is shipped with. Meaningless without assessment:inputsHashMethod. Minted because the ratified file-digest terms (cascade:contentHash, spdx:checksum) state the digest of a file's bytes, and this is the digest of a defined rendering of answers. Domain deliberately unstated so it applies to the scoring activity and to each of its results."@en ;
+    rdfs:range xsd:string .
+
+assessment:inputsHashMethod a owl:DatatypeProperty ;
+    rdfs:label "Inputs Hash Method"@en ;
+    rdfs:comment """Registered token naming the exact procedure behind assessment:inputsHash. Two tokens are registered. Neither is ever redefined.
+
+'cascade-assessment-inputs-sha256-v2' (what producers emit). (1) Render each item response of the response set as {L(itemId)}:{itemId}:{L(value)}:{value}, where itemId is the dct:identifier of the item answered, value is the canonical lexical form of the answer's rdf:value, or the string 'na' when the answer carries an absence reason instead of a value, and L(s) is the byte length of the UTF-8 encoding of s written in decimal with no leading zeros. (2) Sort the rendered records by item id, comparing ids as sequences of Unicode code points. (3) Prefix their concatenation, with no separator, by {L(instrumentId)}:{instrumentId}:{L(algorithmVersion)}:{algorithmVersion}:, where instrumentId is the instrument's dct:identifier and algorithmVersion is the health:algorithmVersion of the scoring activity. (4) SHA-256 the UTF-8 bytes and write 64 lowercase hex characters. Every field is length-framed, so the preimage determines its input for any item id and any value, and two instruments or two algorithm versions never share a hash.
+
+'cascade-assessment-inputs-sha256-v1' (accepted on read; deprecated). Render each item response as {itemId}={value} (value as above, or 'na'), sort by item id, join with '|', SHA-256 the UTF-8 bytes, write lowercase hex. The instrument id and algorithm version are not hashed. DEFINED ONLY FOR ITEM IDS CONTAINING NEITHER '=' NOR '|': the delimiters are unescaped, so [a=1, b=2] and [{item 'a=1|b', value 2}] produce the same preimage 'a=1|b=2'. Hashes written under it before v1.0 stay valid and keep their meaning. Domain deliberately unstated, as for assessment:inputsHash."""@en ;
+    rdfs:range xsd:string .
+
+# ============================================================================
+# Scores and screen outcomes (published scoring rules only)
+# ============================================================================
+
+assessment:ScaleScore a owl:Class ;
+    rdfs:label "Scale Score"@en ;
+    rdfs:comment "The value the instrument's published scoring rules produce for one scored dimension, from one rater's response set: a count (assessment:countedItems) or a summed, averaged or otherwise computed value (rdf:value), never both. FHIR R4 analogue: an Observation with category 'survey' and derivedFrom the QuestionnaireResponse. Carries only what the instrument publishes."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:seeAlso <https://hl7.org/fhir/R4/observation.html> .
+
+assessment:ScreenOutcome a owl:Class ;
+    rdfs:label "Screen Outcome"@en ;
+    rdfs:comment "The verdict an instrument's own published screening rule reaches on one rater's response set: whether the rule's stated criteria are met or not met. Where the rule could not be evaluated at all, the outcome carries no verdict and instead carries cascade:dataAbsentReason plus a statement of which input was missing, exactly as an unanswerable item does. It restates the instrument's rule; it makes no clinical determination and is not a diagnosis."@en ;
+    rdfs:subClassOf prov:Entity .
+
+assessment:forScale a owl:ObjectProperty ;
+    rdfs:label "For Scale"@en ;
+    rdfs:comment "The scored dimension this score is of. FHIR R4 analogue: Observation.code, which names a terminology code where this names the instrument's own scale node, the node that carries item membership; minted for that reason."@en ;
+    rdfs:domain assessment:ScaleScore ;
+    rdfs:range assessment:Scale .
+
+assessment:countedItems a owl:DatatypeProperty ;
+    rdfs:label "Counted Items"@en ;
+    rdfs:comment "How many of the scale's items the instrument's scoring rules counted, for instruments scored by counting items at or above a stated cutoff rather than by summing. Never more than assessment:answeredItemCount. The Vanderbilt scoring page calls these 'counted behaviors'. Minted rather than written as rdf:value because a count of items meeting a cutoff is a different quantity from a scale's computed score, and publishing it as the score is the confusion LOINC's panel metadata already invites."@en ;
+    rdfs:domain assessment:ScaleScore ;
+    rdfs:range xsd:integer .
+
+assessment:countThreshold a owl:DatatypeProperty ;
+    rdfs:label "Count Threshold"@en ;
+    rdfs:comment "The cutoff the instrument publishes for this scale. Shipping the threshold alongside the count lets a consumer see how the verdict was reached. Minted because FHIR's Observation.referenceRange states a normal range of a measured value, not a published count cutoff."@en ;
+    rdfs:domain assessment:ScaleScore ;
+    rdfs:range xsd:integer .
+
+assessment:meetsThreshold a owl:DatatypeProperty ;
+    rdfs:label "Meets Threshold"@en ;
+    rdfs:comment "Whether this scale's count reached the instrument's published threshold. Minted because FHIR's Observation.interpretation codes (high, low, positive) assert a finding about the subject rather than a comparison with the instrument's printed cutoff."@en ;
+    rdfs:domain assessment:ScaleScore ;
+    rdfs:range xsd:boolean .
+
+assessment:answeredItemCount a owl:DatatypeProperty ;
+    rdfs:label "Answered Item Count"@en ;
+    rdfs:comment "How many of this scale's items carried a usable answer. Never more than assessment:scaleItemCount. A count computed over a partly answered scale is not the same fact as one computed over a complete scale."@en ;
+    rdfs:domain assessment:ScaleScore ;
+    rdfs:range xsd:integer .
+
+assessment:scaleItemCount a owl:DatatypeProperty ;
+    rdfs:label "Scale Item Count"@en ;
+    rdfs:comment "How many items the instrument edition publishes for this scale."@en ;
+    rdfs:domain assessment:ScaleScore ;
+    rdfs:range xsd:integer .
+
+assessment:screenStatus a owl:DatatypeProperty ;
+    rdfs:label "Screen Status"@en ;
+    rdfs:comment "The published rule's verdict: 'meets' when its stated criteria are met, 'does-not-meet' when they are not. Exactly two values, because those are the only two the instrument publishes. A rule that could NOT be evaluated carries no screenStatus: it carries cascade:dataAbsentReason (normally 'not-performed') and assessment:notAssessableReason instead. Minted because FHIR's interpretation codes POS and NEG assert a finding about the subject, while this reports whether a printed rule's criteria were met."@en ;
+    rdfs:domain assessment:ScreenOutcome ;
+    rdfs:range xsd:string .
+
+assessment:notAssessableReason a owl:DatatypeProperty ;
+    rdfs:label "Not Assessable Reason"@en ;
+    rdfs:comment "Which input a published rule was missing, for example 'performance-not-assessable' when every item a required gate depends on was marked not applicable. cascade:dataAbsentReason says a verdict is absent; this says what would have been needed to produce one, which no data-absent-reason code states. Required whenever a screen outcome carries no verdict."@en ;
+    rdfs:domain assessment:ScreenOutcome ;
+    rdfs:range xsd:string .
+
+# ============================================================================
+# Bundle manifest
+# ============================================================================
+# A producer that ships a wave as a file needs the reader to learn four things
+# before unpacking it: which vocabulary and version it is written in
+# (dct:conformsTo, cascade:schemaVersion), who it is about (dct:subject), how
+# complete the wave was when the file was cut (the two counts below), and
+# whether the bytes are intact (spdx:hasFile, each with an SHA-256
+# spdx:checksum). cascade:ExportManifest covers the rest (pod-structure.md
+# section 9).
+#
+# A file that is BOTH declared here and described as a cascade:Attachment
+# (the packet rendering, under attachments/sha-256/) carries its digest twice:
+# as spdx:checksum here and as cascade:contentHash on the attachment. The two
+# MUST be equal, and a reader MUST treat a mismatch as a damaged bundle. They
+# live in separate files, so no shape can check this; producers and readers
+# do. The two terms stay distinct on purpose: cascade:contentHash has the
+# domain cascade:Attachment, and most bundle files are not attachments.
+
+assessment:BundleManifest a owl:Class ;
+    rdfs:label "Bundle Manifest"@en ;
+    rdfs:comment "Manifest of an exported assessment bundle. In serialized data typed as BOTH assessment:BundleManifest and cascade:ExportManifest, so that the export-manifest requirements of pod-structure.md section 9 apply to it and the requirements below apply only to assessment bundles. Minted as the target of those requirements, which must not apply to every export manifest."@en ;
+    rdfs:subClassOf prov:Entity .
+
+assessment:completedRaterCount a owl:DatatypeProperty ;
+    rdfs:label "Completed Rater Count"@en ;
+    rdfs:comment "How many raters had submitted when this bundle was written. Never more than assessment:totalRaterCount. Together they let a consumer say 'when this file was created, 2 of 3 raters had finished'."@en ;
+    rdfs:domain assessment:BundleManifest ;
+    rdfs:range xsd:integer .
+
+assessment:totalRaterCount a owl:DatatypeProperty ;
+    rdfs:label "Total Rater Count"@en ;
+    rdfs:comment "How many raters had been asked when this bundle was written."@en ;
+    rdfs:domain assessment:BundleManifest ;
+    rdfs:range xsd:integer .
+
+assessment:isDemoData a owl:DatatypeProperty ;
+    rdfs:label "Is Demo Data"@en ;
+    rdfs:comment "True when every record in the bundle is synthetic demonstration data. A consumer SHOULD refuse to merge demo data into a real record, or label it unmistakably if it does. Minted because HL7's test-data security label (v3-ActReason HTEST) is a coding inside FHIR meta.security with no RDF predicate of its own."@en ;
+    rdfs:domain assessment:BundleManifest ;
+    rdfs:range xsd:boolean .
+
+# ============================================================================
+# Alignment with established standards (Layer 1)
+# ============================================================================
+# FHIR R4
+#   assessment:Instrument       <- Questionnaire (name, title, version, code)
+#   assessment:Item             <- Questionnaire.item (linkId, prefix, code)
+#   assessment:ResponseScale    <- Questionnaire.item.answerOption list / answerValueSet
+#   assessment:ResponseOption   <- Questionnaire.item.answerOption
+#   assessment:ResponseSet      <- QuestionnaireResponse
+#   assessment:ItemResponse     <- QuestionnaireResponse.item.answer
+#   assessment:Assignment       <- Task (for / owner / focus / status / output)
+#   assessment:ScaleScore       <- Observation (category survey, derivedFrom QR)
+#   assessment:Rater            <- RelatedPerson (QuestionnaireResponse.source)
+#   cascade:Attachment on a Wave <- DocumentReference.content.attachment
+#
+# LOINC (verified 2026-08-05 and re-checked 2026-10-16 against tx.fhir.org,
+# LOINC 2.82, and NLM's Clinical Table Search Service)
+#   106345-2  NICHQ Vanderbilt Assessment Scale - Parent Informant (panel)
+#   106402-1 .. 106409-6  its 8 computed scores
+#   106402-1  Inattention Score (defined as the COUNT of questions scored 2 or 3
+#             in Q1-9, range 0-9, despite panel metadata typing it REAL)
+#   106403-9  Hyperactivity or impulsivity score
+#   106404-7  Inattention and hyperactivity or impulsivity score
+#   106405-4  Oppositional-defiant score
+#   106406-2  Conduct Disorder Score
+#   106407-0  Anxiety or depression score
+#   106408-8  Performance Score
+#   106409-6  Average Performance Score
+#   78370-4   ADHD diagnostic rating scale interpretation [Vanderbilt ADHD]
+#   LL6857-8  Vanderbilt adhd medication (answer list): LA34443-4 Was on
+#             medication, LA34444-2 Was not on medication, LA12693-0 Not sure
+#   NO LOINC code exists for the TEACHER informant form or for either
+#   follow-up form: the NICHQ panel class contains exactly one panel.
+#   Producers of those forms emit no cascade:loincCode on the instrument; the
+#   absence is the finding.
+#
+# WARNING for implementers: for the Vanderbilt item codes, LOINC's Long Common
+# Name IS the instrument item text verbatim. Emit code and system only. Never
+# emit the code system's display string for an item code.
