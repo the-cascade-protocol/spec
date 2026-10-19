@@ -1,0 +1,3956 @@
+{
+  "format": "cascade-relay-mailbox-cases",
+  "formatVersion": 1,
+  "status": "draft, not ratified",
+  "specification": "relay-mailbox.md, draft 0.1",
+  "envelopes": "vectors/sealed-envelope/vectors.json (by id; the jwe member, exact ASCII)",
+  "conventions": {
+    "paths": "relative to the relay base URL, which has no trailing slash",
+    "placeholders": {
+      "{mbx}": "16 fresh random bytes, base64url without padding; new for every case",
+      "{token}": "32 fresh random bytes, base64url without padding; new for every case",
+      "{collectHash}": "base64url without padding of SHA-256 over the 32 decoded bytes of {token}",
+      "{otherToken}": "32 further fresh random bytes, base64url without padding",
+      "{token42}": "the first 42 characters of {token}",
+      "{now+N}": "inside a text body: the integer the relay's clock reads plus N seconds, written as decimal digits"
+    },
+    "jsonValues": {
+      "{\"$now\": N}": "the integer the relay's clock reads plus N seconds"
+    },
+    "bodies": {
+      "json": "the object serialized as JSON without whitespace, after substitution",
+      "text": "the exact characters, after placeholder substitution, as UTF-8",
+      "envelope": "the jwe member of the named sealed-envelope vector",
+      "padEnvelope": "the named vector's jwe with its fourth segment extended by repeating A until the whole text has the given length",
+      "fill": "the given character repeated to the given length"
+    },
+    "requestHeaderValues": "a string is one field line; an array is that many field lines with the same name, in order",
+    "requestHeaders": "Content-Length is sent with the body's length unless omitContentLength is true, in which case the body is sent with the chunked transfer coding (HTTP/1.1) or without Content-Length (HTTP/2)",
+    "clockHook": "how a harness sets a relay's clock is up to the implementation under test; the reference harness POSTs {\"now\": <integer seconds>} to a test-only URL. A controlled case starts with the clock set to 1792000000, which may move the clock backward between cases; every case uses fresh ids, so this is harmless",
+    "advance": "a step that moves the relay's clock forward by the given seconds; only in cases whose clock is controlled",
+    "clock": "absent: the case runs against any relay and needs no clock control, and {now+N} and $now use the harness's own clock, assumed within a few seconds of the relay's; controlled: the harness must set and advance the relay's clock, and starts it at an integer second",
+    "expect": {
+      "status": "the HTTP status code",
+      "problemType": "the problem details type member (RFC 9457); the body is application/problem+json and its status member equals the status",
+      "identical": "the problem details identical member",
+      "headers": "each named response header must be present. Matchers: \"delta-seconds\", a value of one or more digits; \"present\", any value; {mediaType}, type and subtype equal ignoring case and parameters; {methods}, the comma-separated list holds exactly these methods in any order; {bearerChallenge: \"no-error\"}, a Bearer challenge (scheme name in any case) with no error parameter; {bearerChallenge: \"invalid_token\"}, a Bearer challenge whose error parameter is invalid_token. Other parameters, such as realm, are allowed. A plain string must match exactly",
+      "bodyEquals": "the response body is byte-identical to the named body"
+    },
+    "everyResponse": "carries Cache-Control including no-store"
+  },
+  "cases": [
+    {
+      "id": "RM-001",
+      "section": "5",
+      "title": "Whole lifecycle: create, poll, deposit, collect, delete, then the mailbox stays closed.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited",
+            "headers": {
+              "Retry-After": "delta-seconds"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "headers": {
+              "Content-Type": {
+                "mediaType": "application/jose"
+              }
+            },
+            "bodyEquals": {
+              "envelope": "E-001"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "bodyEquals": {
+              "envelope": "E-001"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 204
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 410,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#closed"
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 204
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 410,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#closed"
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 412,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-002",
+      "section": "5.5",
+      "title": "The receiver closes a mailbox before anything arrives.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 204
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-002"
+            }
+          },
+          "expect": {
+            "status": 410,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#closed"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 410,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#closed"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-003",
+      "section": "5.3",
+      "title": "A second, different deposit is refused and the first envelope is kept.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-002"
+            }
+          },
+          "expect": {
+            "status": 412,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#already-deposited",
+            "identical": false
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "bodyEquals": {
+              "envelope": "E-001"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-004",
+      "section": "5.3",
+      "title": "A retried deposit of the same bytes (the first response was lost) is refused with identical true.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-002"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-002"
+            }
+          },
+          "expect": {
+            "status": 412,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#already-deposited",
+            "identical": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-005",
+      "section": "6",
+      "title": "The relay does not judge cryptography: an envelope with a tampered tag is stored as given.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "EN-006"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "bodyEquals": {
+              "envelope": "EN-006"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-006",
+      "section": "6",
+      "title": "The relay does not check alg: an envelope naming another HPKE suite is stored.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "EN-010"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-007",
+      "section": "6",
+      "title": "The relay does not check the route: a six-word (route b) envelope is stored.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "S-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-008",
+      "section": "6",
+      "title": "An envelope of exactly the maximum length is accepted and returned byte for byte.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "padEnvelope": {
+                "from": "E-002",
+                "length": 44870336
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "bodyEquals": {
+              "padEnvelope": {
+                "from": "E-002",
+                "length": 44870336
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-009",
+      "section": "5.1",
+      "title": "The authentication scheme name is case-insensitive.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "bodyEquals": {
+              "envelope": "E-001"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "BEARER {token}"
+            }
+          },
+          "expect": {
+            "status": 204
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-010",
+      "section": "5.2",
+      "title": "Unknown members of the create request are ignored.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}",
+                "note": "ignored"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-011",
+      "section": "5.2",
+      "title": "A pairing expiry 24 hours and 5 minutes ahead is the latest accepted.",
+      "clock": "controlled",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 86700
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-012",
+      "section": "7",
+      "title": "A deposit one second before exp is accepted.",
+      "clock": "controlled",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 60
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "advance": 59
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-013",
+      "section": "7",
+      "title": "A deposited envelope stays collectable after exp until one second before the retention end.",
+      "clock": "controlled",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 60
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "advance": 86459
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "bodyEquals": {
+              "envelope": "E-001"
+            }
+          }
+        },
+        {
+          "advance": 1
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#no-mailbox"
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#no-mailbox"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-014",
+      "section": "5.3",
+      "title": "After exp a retried deposit of the same bytes still reports identical true.",
+      "clock": "controlled",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 60
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "advance": 120
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 412,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#already-deposited",
+            "identical": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-015",
+      "section": "5.4",
+      "title": "A credential in the query string is not accepted; only the Authorization header counts.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope?access_token={token}",
+            "headers": {}
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank",
+            "headers": {
+              "WWW-Authenticate": {
+                "bearerChallenge": "no-error"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-016",
+      "section": "7",
+      "title": "Once the retention end has passed and the record is gone, the same id can be created again.",
+      "clock": "controlled",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 60
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "advance": 86460
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-017",
+      "section": "5.1",
+      "title": "Media types are compared without case or parameters.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "Application/JOSE; x=1",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "RM-018",
+      "section": "5.1",
+      "title": "More than one space may separate the scheme from the token.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-002"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer   {token}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "bodyEquals": {
+              "envelope": "E-002"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-001",
+      "section": "5.2",
+      "title": "Create without If-None-Match.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 428,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-002",
+      "section": "5.2",
+      "title": "Create with an entity tag in If-None-Match instead of *.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "\"x\""
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-003",
+      "section": "5.2",
+      "title": "Create with a media type other than application/json.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "text/plain",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 415,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-004",
+      "section": "4.1",
+      "title": "Create with a non-canonical mailbox id (unused bits not zero).",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/AAAAAAAAAAAAAAAAAAAAAB",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-005",
+      "section": "4.1",
+      "title": "Create with a 15-byte mailbox id.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/AAAAAAAAAAAAAAAAAAAA",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-006",
+      "section": "5.2",
+      "title": "Create with exp equal to the relay's clock.",
+      "clock": "controlled",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 0
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-007",
+      "section": "5.2",
+      "title": "Create with exp more than 24 hours and 5 minutes ahead.",
+      "clock": "controlled",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 86701
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-008",
+      "section": "5.2",
+      "title": "Create with a collectHash of 31 bytes.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-009",
+      "section": "5.2",
+      "title": "Create with exp written with a fraction.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "{\"exp\":{now+3600}.0,\"collectHash\":\"{collectHash}\"}"
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-010",
+      "section": "5.2",
+      "title": "Create with exp as a string.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": "{now+3600}",
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-011",
+      "section": "5.2",
+      "title": "Create with a duplicate member name.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "{\"exp\":{now+3600},\"collectHash\":\"{collectHash}\",\"exp\":{now+3600}}"
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-012",
+      "section": "5.2",
+      "title": "Create with a body that is not JSON.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "exp={now+3600}"
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-013",
+      "section": "5.2",
+      "title": "Create with a body over 1,024 bytes.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "{\"exp\":{now+3600},\"collectHash\":\"{collectHash}\",\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}"
+            }
+          },
+          "expect": {
+            "status": 413,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-014",
+      "section": "5.2",
+      "title": "Create twice with the same id.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 412,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-015",
+      "section": "5.2",
+      "title": "Create with exp in the past.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": -1
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-016",
+      "section": "4.2",
+      "title": "Create with a non-canonical collectHash (unused bits not zero).",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB"
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-017",
+      "section": "5.2",
+      "title": "Create with exp written with an exponent.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "{\"exp\":{now+3600}e0,\"collectHash\":\"{collectHash}\"}"
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-018",
+      "section": "5.2",
+      "title": "Create without collectHash.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                }
+              }
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-019",
+      "section": "5.1",
+      "title": "Create with a duplicate member name inside an unknown member.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "{\"exp\":{now+3600},\"collectHash\":\"{collectHash}\",\"x\":{\"a\":1,\"a\":2}}"
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-070",
+      "section": "5.1",
+      "title": "Create with a byte order mark before the JSON.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "﻿{\"exp\":{now+3600},\"collectHash\":\"{collectHash}\"}"
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-020",
+      "section": "5.3",
+      "title": "Deposit into a mailbox that was never created.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#no-mailbox"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-021",
+      "section": "5.3",
+      "title": "Deposit with a malformed mailbox id in the path.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/not-an-id/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#no-mailbox"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-022",
+      "section": "5.3",
+      "title": "Deposit without If-None-Match.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 428,
+            "problemType": "about:blank"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-023",
+      "section": "5.3",
+      "title": "Deposit with an entity tag in If-None-Match.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "\"e1\""
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-024",
+      "section": "5.3",
+      "title": "Deposit as application/octet-stream.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/octet-stream",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 415,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-025",
+      "section": "5.3",
+      "title": "Deposit with no Content-Length (chunked transfer coding).",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            },
+            "omitContentLength": true
+          },
+          "expect": {
+            "status": 411,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-026",
+      "section": "5.3",
+      "title": "Deposit one character over the maximum.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "fill": {
+                "char": "A",
+                "length": 44870337
+              }
+            }
+          },
+          "expect": {
+            "status": 413,
+            "problemType": "about:blank"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-028",
+      "section": "5.1",
+      "title": "Deposit with no Content-Type.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 415,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-029",
+      "section": "5.1",
+      "title": "Deposit with If-None-Match sent twice.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": [
+                "*",
+                "*"
+              ]
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 400,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-027",
+      "section": "7",
+      "title": "Deposit at exp.",
+      "clock": "controlled",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 60
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "advance": 60
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 410,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#expired"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 410,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#expired"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-030",
+      "section": "6",
+      "title": "Deposit of four segments (the final separator missing).",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0.BD7NFMQlpVvaDqbN8WAxvVoEzDN3Bs_es4sq-jeWe-XcQ3OkvSFfe0cyUjBe0qm4aoy0OfGGdl30g4RZscoExLg..tOZUFRgpVLeGduCCtKhM2NZgjWPQSgTaIOY2KE6MYxNKmdXV_5uZX_kip46OGM_PfN8A_jfcFsoBFWdzj-ceJ6rrWbiiOo7BIUZUK76ocZK8VxQ7C6TFOTkJO_xvfxCc3CxVojyE3in1V0nOriDmzFtEJq83uz8NTXuu1K0qHR2ADy--YTFASvlo4-J7IKp7G7cbS44GpIhuRzDIFiX8Mi4DXSLUyPXEMOiWltJweOm71qNAtRSD6jtKXQGYqBPdxLeIgooht95KxPvTh-hxMzSJ7KyzVH3c_NxZcFyALO3ggKgd7vKtFJbqVhVLRqOkL_2hrVzx8g7qjpWjDjRXDO9nD1D4BZfFJThj_zzZhTDnOosPykjju3GEHgnu2cJ-64S7gMOYPXJfJBRpLTdSRcM_xvsvN5HkN_YLHunWl-ju43cr4myeNHQySiGGRmrwSQ87YJm3L9c6OSTl6NyHTabvufMVFGXkExveUi4xuZsWtnB-MTKZXlWrc2NVmev636ICkda8duox_jlsnHtECbf7DPow7_KEc5a3DRasqxOI9EQQNn_skQzlmHEnW2nd4Hy1rUNPtjAl7qcKP0ifRP2e7kZWBMPIncsr0_cOfdtueMiK5R0cDtRD86JQiBpiavFlu4sffORlBnsYCArGYl-Ah9hAmSSuYWt7xUjRZrMCA4wPrFvWvbrJOh8ZhrP3kmE7xvXCdQHdsHbApxBzmjyzKeTpvcy_WruL3I6AyLnN2ERI85y8wJTNNsqRfoe7HgkGjJvLX-NLvyvj1xASoVNtqLz-dlGRbZW5FcIDOCyGwn8QQO8gPW0CxO7PvaHbG5kE3BvJQxw10Vy6pWDL_Q3DRDUt7kASL-NAXRpLWwbo92C57QpJekdhTvdl0lln6TWj6uxY1iZHD-vynG2WbcXkgKoYdJgn9eXLv9V4z2FBDhheo22drCs-Ydw10zlLusqtUoqu-WLhRq2xLmdrBrVEaeZmAGV5RZbs3TFxxgn6kqDKe-zDptvNU4L6zJDx1bExATo7iboaApkUujPuZMJhd62BqrumIhmyZkX-lm7bv2vxOqKNtxxS8HVpgDMvCXK3FOrjMcLqNsyqkHItNr55ELMa-uTqP9jB_WYBx-9lnfXS3NjqPo4_Gb7KyaIFn-Uv0t6MVRVBzzRsrGgwCQQFcOOqisHMyjm-EzfK6fVLigDJGRrfsNVXGwVm_coJcOJKbIG-93LpB42SWOb6UQSPdjMEZ5sP5obw-khBgCZ_Tn9gxl7tnoobCh2XseOK-hCCg0PRpR_5HnXTg5ZXA_t2eSW_qfVwkiLxNoegiXKAK7_nkYHAbtU_6q5_QAuA-NGFuSJg9KlRvJ9inyROvG3NGTJaXmIpiWAEb29JeQCczWBZ18H8VqwSFGqXIZopAjpdDh4xoietpHbREemATA5NJZ-ETmaSsF60G8E0RBMQTCwaHDGL4pUzI9duvPapzVBBxZRJSyBjQQyh043CYN8XXAGzJ4cWYuokUElBIQhsAs15H-upktbpCqwXb0o8A8kw26VuX4FXm5UwtGZ8JELSh_48MJHflU2yym6I2NZHXH6BP-RIw8dYdfyLDAxihcFXjkt-ADjT3mQncjpkYq0CCytpSGLVK0Bt9xdNqWvjykP4B7lHZNsQtmpx7o2qZSYhexEytmipy4r1uGhcfYzoFj90New8GBIlrp-RXcSOlXJ_hD8ZGGM2vAC3TYc_Z5BHjmDYNcFBLmp1TKUyCnIDvaqEaWkS8Q984tEb_t32Q24WcgXXq4UPHar_SgioLK1vhYsP4R64ggbJkThkt3NL-YFG_SfJamrw3_QZ-mVbCErRKoDPAJHZvON4BQYKPq8bwgthxKvthBPB05S5kbSKKroi4FOlJ8DtXmg1iAOk02ufEyw99V1PAXxoZwVXRkN3sziJTE3Tk6VmFUaRsn33gNivy4B_0msaS2eAudtjNAyim6xFHnNm4Evvrf46Ie6ZaOmhST4pm9OfntP0cNgokMOYVqUjTkSTmcXJe9QN45Y8UKiZEqX5xag0BH30yp9cD5rAKM9OwHC1UKHL8sJX5LXDWiq8_xJiwCtrgEHjlS7t_vSc5n1gELynDhwAdOakne7AM3JH9p-HcTCmWI-aUi2cfGLOPKqoptPfXBi_5VdSMoag6ReoCxSTx1Yk5GqJSbK9f0bS5mQcz7y7CHDMT9TqcFnJEz7Z7eUKZUno145yzd_n2tVf8HwOCZ7MNMAqAT3X3S7DKgvyiLK33sAWwzoOhyNWGqprdytaATye16e7dvuEQZkSsKsrn_0ixcaUHasv6hNz5JJGf4NCWj3sf8jeYhvTSp0J8_38vfcJAqdGEHFbIuc8YxC-rXP-b0K2liID1RCN-2h3Gm5GGkGFJFmTOCJeqxnJBi23jYMkr5Ok8RmCK4gorrot2c3t1YR1mQn_0DMCQjyBAvcdcqeaIyN19Uo05y6TTaXbKMx9cpen6mf6u_bXdebh68NB9fnAzie9glhJGRiJinZ2FpPAhpydXvyggxrcqFGG8PibpbzsUF0FGQqRLljkVZIpHRIbt_752A6_hgpNpfMozUnnOR9jDV3PjSoRPF0s8W_POPP6kAxTiuXAF4k"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-031",
+      "section": "6",
+      "title": "Deposit of an unknown typ.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJ0eXAiOiJvdGhlcitqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0.BD7NFMQlpVvaDqbN8WAxvVoEzDN3Bs_es4sq-jeWe-XcQ3OkvSFfe0cyUjBe0qm4aoy0OfGGdl30g4RZscoExLg..tOZUFRgpVLeGduCCtKhM2NZgjWPQSgTaIOY2KE6MYxNKmdXV_5uZX_kip46OGM_PfN8A_jfcFsoBFWdzj-ceJ6rrWbiiOo7BIUZUK76ocZK8VxQ7C6TFOTkJO_xvfxCc3CxVojyE3in1V0nOriDmzFtEJq83uz8NTXuu1K0qHR2ADy--YTFASvlo4-J7IKp7G7cbS44GpIhuRzDIFiX8Mi4DXSLUyPXEMOiWltJweOm71qNAtRSD6jtKXQGYqBPdxLeIgooht95KxPvTh-hxMzSJ7KyzVH3c_NxZcFyALO3ggKgd7vKtFJbqVhVLRqOkL_2hrVzx8g7qjpWjDjRXDO9nD1D4BZfFJThj_zzZhTDnOosPykjju3GEHgnu2cJ-64S7gMOYPXJfJBRpLTdSRcM_xvsvN5HkN_YLHunWl-ju43cr4myeNHQySiGGRmrwSQ87YJm3L9c6OSTl6NyHTabvufMVFGXkExveUi4xuZsWtnB-MTKZXlWrc2NVmev636ICkda8duox_jlsnHtECbf7DPow7_KEc5a3DRasqxOI9EQQNn_skQzlmHEnW2nd4Hy1rUNPtjAl7qcKP0ifRP2e7kZWBMPIncsr0_cOfdtueMiK5R0cDtRD86JQiBpiavFlu4sffORlBnsYCArGYl-Ah9hAmSSuYWt7xUjRZrMCA4wPrFvWvbrJOh8ZhrP3kmE7xvXCdQHdsHbApxBzmjyzKeTpvcy_WruL3I6AyLnN2ERI85y8wJTNNsqRfoe7HgkGjJvLX-NLvyvj1xASoVNtqLz-dlGRbZW5FcIDOCyGwn8QQO8gPW0CxO7PvaHbG5kE3BvJQxw10Vy6pWDL_Q3DRDUt7kASL-NAXRpLWwbo92C57QpJekdhTvdl0lln6TWj6uxY1iZHD-vynG2WbcXkgKoYdJgn9eXLv9V4z2FBDhheo22drCs-Ydw10zlLusqtUoqu-WLhRq2xLmdrBrVEaeZmAGV5RZbs3TFxxgn6kqDKe-zDptvNU4L6zJDx1bExATo7iboaApkUujPuZMJhd62BqrumIhmyZkX-lm7bv2vxOqKNtxxS8HVpgDMvCXK3FOrjMcLqNsyqkHItNr55ELMa-uTqP9jB_WYBx-9lnfXS3NjqPo4_Gb7KyaIFn-Uv0t6MVRVBzzRsrGgwCQQFcOOqisHMyjm-EzfK6fVLigDJGRrfsNVXGwVm_coJcOJKbIG-93LpB42SWOb6UQSPdjMEZ5sP5obw-khBgCZ_Tn9gxl7tnoobCh2XseOK-hCCg0PRpR_5HnXTg5ZXA_t2eSW_qfVwkiLxNoegiXKAK7_nkYHAbtU_6q5_QAuA-NGFuSJg9KlRvJ9inyROvG3NGTJaXmIpiWAEb29JeQCczWBZ18H8VqwSFGqXIZopAjpdDh4xoietpHbREemATA5NJZ-ETmaSsF60G8E0RBMQTCwaHDGL4pUzI9duvPapzVBBxZRJSyBjQQyh043CYN8XXAGzJ4cWYuokUElBIQhsAs15H-upktbpCqwXb0o8A8kw26VuX4FXm5UwtGZ8JELSh_48MJHflU2yym6I2NZHXH6BP-RIw8dYdfyLDAxihcFXjkt-ADjT3mQncjpkYq0CCytpSGLVK0Bt9xdNqWvjykP4B7lHZNsQtmpx7o2qZSYhexEytmipy4r1uGhcfYzoFj90New8GBIlrp-RXcSOlXJ_hD8ZGGM2vAC3TYc_Z5BHjmDYNcFBLmp1TKUyCnIDvaqEaWkS8Q984tEb_t32Q24WcgXXq4UPHar_SgioLK1vhYsP4R64ggbJkThkt3NL-YFG_SfJamrw3_QZ-mVbCErRKoDPAJHZvON4BQYKPq8bwgthxKvthBPB05S5kbSKKroi4FOlJ8DtXmg1iAOk02ufEyw99V1PAXxoZwVXRkN3sziJTE3Tk6VmFUaRsn33gNivy4B_0msaS2eAudtjNAyim6xFHnNm4Evvrf46Ie6ZaOmhST4pm9OfntP0cNgokMOYVqUjTkSTmcXJe9QN45Y8UKiZEqX5xag0BH30yp9cD5rAKM9OwHC1UKHL8sJX5LXDWiq8_xJiwCtrgEHjlS7t_vSc5n1gELynDhwAdOakne7AM3JH9p-HcTCmWI-aUi2cfGLOPKqoptPfXBi_5VdSMoag6ReoCxSTx1Yk5GqJSbK9f0bS5mQcz7y7CHDMT9TqcFnJEz7Z7eUKZUno145yzd_n2tVf8HwOCZ7MNMAqAT3X3S7DKgvyiLK33sAWwzoOhyNWGqprdytaATye16e7dvuEQZkSsKsrn_0ixcaUHasv6hNz5JJGf4NCWj3sf8jeYhvTSp0J8_38vfcJAqdGEHFbIuc8YxC-rXP-b0K2liID1RCN-2h3Gm5GGkGFJFmTOCJeqxnJBi23jYMkr5Ok8RmCK4gorrot2c3t1YR1mQn_0DMCQjyBAvcdcqeaIyN19Uo05y6TTaXbKMx9cpen6mf6u_bXdebh68NB9fnAzie9glhJGRiJinZ2FpPAhpydXvyggxrcqFGG8PibpbzsUF0FGQqRLljkVZIpHRIbt_752A6_hgpNpfMozUnnOR9jDV3PjSoRPA9N2Gj6FNYW0jCD5wbvgeY."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-032",
+      "section": "6",
+      "title": "Deposit of a duplicate member name in the protected header.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJhbGciOiJIUEtFLTciLCJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0.BD7NFMQlpVvaDqbN8WAxvVoEzDN3Bs_es4sq-jeWe-XcQ3OkvSFfe0cyUjBe0qm4aoy0OfGGdl30g4RZscoExLg..tOZUFRgpVLeGduCCtKhM2NZgjWPQSgTaIOY2KE6MYxNKmdXV_5uZX_kip46OGM_PfN8A_jfcFsoBFWdzj-ceJ6rrWbiiOo7BIUZUK76ocZK8VxQ7C6TFOTkJO_xvfxCc3CxVojyE3in1V0nOriDmzFtEJq83uz8NTXuu1K0qHR2ADy--YTFASvlo4-J7IKp7G7cbS44GpIhuRzDIFiX8Mi4DXSLUyPXEMOiWltJweOm71qNAtRSD6jtKXQGYqBPdxLeIgooht95KxPvTh-hxMzSJ7KyzVH3c_NxZcFyALO3ggKgd7vKtFJbqVhVLRqOkL_2hrVzx8g7qjpWjDjRXDO9nD1D4BZfFJThj_zzZhTDnOosPykjju3GEHgnu2cJ-64S7gMOYPXJfJBRpLTdSRcM_xvsvN5HkN_YLHunWl-ju43cr4myeNHQySiGGRmrwSQ87YJm3L9c6OSTl6NyHTabvufMVFGXkExveUi4xuZsWtnB-MTKZXlWrc2NVmev636ICkda8duox_jlsnHtECbf7DPow7_KEc5a3DRasqxOI9EQQNn_skQzlmHEnW2nd4Hy1rUNPtjAl7qcKP0ifRP2e7kZWBMPIncsr0_cOfdtueMiK5R0cDtRD86JQiBpiavFlu4sffORlBnsYCArGYl-Ah9hAmSSuYWt7xUjRZrMCA4wPrFvWvbrJOh8ZhrP3kmE7xvXCdQHdsHbApxBzmjyzKeTpvcy_WruL3I6AyLnN2ERI85y8wJTNNsqRfoe7HgkGjJvLX-NLvyvj1xASoVNtqLz-dlGRbZW5FcIDOCyGwn8QQO8gPW0CxO7PvaHbG5kE3BvJQxw10Vy6pWDL_Q3DRDUt7kASL-NAXRpLWwbo92C57QpJekdhTvdl0lln6TWj6uxY1iZHD-vynG2WbcXkgKoYdJgn9eXLv9V4z2FBDhheo22drCs-Ydw10zlLusqtUoqu-WLhRq2xLmdrBrVEaeZmAGV5RZbs3TFxxgn6kqDKe-zDptvNU4L6zJDx1bExATo7iboaApkUujPuZMJhd62BqrumIhmyZkX-lm7bv2vxOqKNtxxS8HVpgDMvCXK3FOrjMcLqNsyqkHItNr55ELMa-uTqP9jB_WYBx-9lnfXS3NjqPo4_Gb7KyaIFn-Uv0t6MVRVBzzRsrGgwCQQFcOOqisHMyjm-EzfK6fVLigDJGRrfsNVXGwVm_coJcOJKbIG-93LpB42SWOb6UQSPdjMEZ5sP5obw-khBgCZ_Tn9gxl7tnoobCh2XseOK-hCCg0PRpR_5HnXTg5ZXA_t2eSW_qfVwkiLxNoegiXKAK7_nkYHAbtU_6q5_QAuA-NGFuSJg9KlRvJ9inyROvG3NGTJaXmIpiWAEb29JeQCczWBZ18H8VqwSFGqXIZopAjpdDh4xoietpHbREemATA5NJZ-ETmaSsF60G8E0RBMQTCwaHDGL4pUzI9duvPapzVBBxZRJSyBjQQyh043CYN8XXAGzJ4cWYuokUElBIQhsAs15H-upktbpCqwXb0o8A8kw26VuX4FXm5UwtGZ8JELSh_48MJHflU2yym6I2NZHXH6BP-RIw8dYdfyLDAxihcFXjkt-ADjT3mQncjpkYq0CCytpSGLVK0Bt9xdNqWvjykP4B7lHZNsQtmpx7o2qZSYhexEytmipy4r1uGhcfYzoFj90New8GBIlrp-RXcSOlXJ_hD8ZGGM2vAC3TYc_Z5BHjmDYNcFBLmp1TKUyCnIDvaqEaWkS8Q984tEb_t32Q24WcgXXq4UPHar_SgioLK1vhYsP4R64ggbJkThkt3NL-YFG_SfJamrw3_QZ-mVbCErRKoDPAJHZvON4BQYKPq8bwgthxKvthBPB05S5kbSKKroi4FOlJ8DtXmg1iAOk02ufEyw99V1PAXxoZwVXRkN3sziJTE3Tk6VmFUaRsn33gNivy4B_0msaS2eAudtjNAyim6xFHnNm4Evvrf46Ie6ZaOmhST4pm9OfntP0cNgokMOYVqUjTkSTmcXJe9QN45Y8UKiZEqX5xag0BH30yp9cD5rAKM9OwHC1UKHL8sJX5LXDWiq8_xJiwCtrgEHjlS7t_vSc5n1gELynDhwAdOakne7AM3JH9p-HcTCmWI-aUi2cfGLOPKqoptPfXBi_5VdSMoag6ReoCxSTx1Yk5GqJSbK9f0bS5mQcz7y7CHDMT9TqcFnJEz7Z7eUKZUno145yzd_n2tVf8HwOCZ7MNMAqAT3X3S7DKgvyiLK33sAWwzoOhyNWGqprdytaATye16e7dvuEQZkSsKsrn_0ixcaUHasv6hNz5JJGf4NCWj3sf8jeYhvTSp0J8_38vfcJAqdGEHFbIuc8YxC-rXP-b0K2liID1RCN-2h3Gm5GGkGFJFmTOCJeqxnJBi23jYMkr5Ok8RmCK4gorrot2c3t1YR1mQn_0DMCQjyBAvcdcqeaIyN19Uo05y6TTaXbKMx9cpen6mf6u_bXdebh68NB9fnAzie9glhJGRiJinZ2FpPAhpydXvyggxrcqFGG8PibpbzsUF0FGQqRLljkVZIpHRIbt_752A6_hgpNpfMozUnnOR9jDV3PjSoRPCK46ouaYZH2avZlqHGPzSw."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-033",
+      "section": "6",
+      "title": "Deposit of six segments.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP..AA"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-034",
+      "section": "6",
+      "title": "Deposit of a line feed at the end.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP.\n"
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-035",
+      "section": "6",
+      "title": "Deposit of a space inside.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTci LCJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-036",
+      "section": "6",
+      "title": "Deposit of a character outside the base64url alphabet.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0+.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-037",
+      "section": "6",
+      "title": "Deposit of an empty protected header segment.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": ".BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-038",
+      "section": "6",
+      "title": "Deposit of a protected header that is not JSON.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "bm90IGpzb24.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-039",
+      "section": "6",
+      "title": "Deposit of a protected header that is a JSON array.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "WyJ0eXAiXQ.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-040",
+      "section": "6",
+      "title": "Deposit of a protected header without typ.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-041",
+      "section": "6",
+      "title": "Deposit of a protected header without alg.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-042",
+      "section": "6",
+      "title": "Deposit of a protected header whose alg is not a string.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOjcsInR5cCI6ImNhc2NhZGUtc2VhbGVkLWVudmVsb3BlK2p3ZSIsImN0eSI6InppcCIsImtpZCI6InFCenhCM29oOFJ4cWw5TEhHOXZxM3pzbUQxa1o2VG9wVENPUDFWRkhPcjAifQ.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-043",
+      "section": "6",
+      "title": "Deposit of a non-canonical protected header encoding (unused bits set).",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn1.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-044",
+      "section": "6",
+      "title": "Deposit of an empty ciphertext segment.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIn0.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-045",
+      "section": "6",
+      "title": "Deposit of a protected header that is not UTF-8.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "e_99.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-046",
+      "section": "6",
+      "title": "Deposit of a protected header segment over 16,384 characters.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "text": "eyJhbGciOiJIUEtFLTciLCJ0eXAiOiJjYXNjYWRlLXNlYWxlZC1lbnZlbG9wZStqd2UiLCJjdHkiOiJ6aXAiLCJraWQiOiJxQnp4QjNvaDhSeHFsOUxIRzl2cTN6c21EMWtaNlRvcFRDT1AxVkZIT3IwIiwicGFkIjoieHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4In0.BEW_Ztw93wTneFF-7olujh6Ydv8OdBkQbVz3rW8DbPnVjfgqVFvuLhp9mdY2FeeSC4kH_9ml1qf8ZaOGh0NRHGw..1ns-1xpyOSvzepbVbklRIsCikeMaN7zCXmYE4yDliLycSyV2WbTujTvAuYqxRiY-h58R3QMCDNdaSPIxqlsTimSTKWzocD7Iv0475SLmME6rSJNhs5rIclgaV8PNAF7-jGrU7Nq48VNT6HcQtq_1MUrU-zVNjm998T41y8WDIZrdvM5oRmtP."
+            }
+          },
+          "expect": {
+            "status": 422,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#malformed-envelope"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#not-deposited"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-050",
+      "section": "5.4",
+      "title": "Collect without Authorization.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {}
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank",
+            "headers": {
+              "WWW-Authenticate": {
+                "bearerChallenge": "no-error"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-051",
+      "section": "5.4",
+      "title": "Collect with another token.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {otherToken}"
+            }
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank",
+            "headers": {
+              "WWW-Authenticate": {
+                "bearerChallenge": "invalid_token"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-052",
+      "section": "5.4",
+      "title": "Collect with the Basic scheme.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Basic {token}"
+            }
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank",
+            "headers": {
+              "WWW-Authenticate": {
+                "bearerChallenge": "invalid_token"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-053",
+      "section": "5.4",
+      "title": "Collect with the collectHash itself as the bearer.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {collectHash}"
+            }
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-054",
+      "section": "5.4",
+      "title": "Collect from a mailbox that was never created.",
+      "steps": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#no-mailbox"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-055",
+      "section": "5.5",
+      "title": "Delete without Authorization, then with another token; the envelope stays.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Content-Type": "application/jose",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "envelope": "E-001"
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {}
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank",
+            "headers": {
+              "WWW-Authenticate": {
+                "bearerChallenge": "no-error"
+              }
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "Bearer {otherToken}"
+            }
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 200,
+            "bodyEquals": {
+              "envelope": "E-001"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-056",
+      "section": "5.5",
+      "title": "Delete a mailbox that was never created.",
+      "steps": [
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "https://cascadeprotocol.org/docs/spec/relay-mailbox#no-mailbox"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-058",
+      "section": "5.1",
+      "title": "Collect with a bearer of 42 characters.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token42}"
+            }
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank",
+            "headers": {
+              "WWW-Authenticate": {
+                "bearerChallenge": "invalid_token"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-059",
+      "section": "5.1",
+      "title": "Collect with an empty Authorization header.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": ""
+            }
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank",
+            "headers": {
+              "WWW-Authenticate": {
+                "bearerChallenge": "invalid_token"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-066",
+      "section": "5.1",
+      "title": "Collect with the Authorization field sent twice, both times right.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": [
+                "Bearer {token}",
+                "Bearer {token}"
+              ]
+            }
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank",
+            "headers": {
+              "WWW-Authenticate": {
+                "bearerChallenge": "invalid_token"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-057",
+      "section": "5.4",
+      "title": "A closed mailbox still checks the credential.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 204
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {otherToken}"
+            }
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank"
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "Bearer {otherToken}"
+            }
+          },
+          "expect": {
+            "status": 401,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-060",
+      "section": "5.1",
+      "title": "POST on a mailbox is not allowed.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/mailboxes/{mbx}",
+            "headers": {}
+          },
+          "expect": {
+            "status": 405,
+            "problemType": "about:blank",
+            "headers": {
+              "Allow": {
+                "methods": [
+                  "PUT",
+                  "DELETE"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-061",
+      "section": "5.1",
+      "title": "DELETE on the envelope is not allowed (the receiver deletes the mailbox).",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "DELETE",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 405,
+            "problemType": "about:blank",
+            "headers": {
+              "Allow": {
+                "methods": [
+                  "GET",
+                  "PUT"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-062",
+      "section": "5.1",
+      "title": "GET on a mailbox is not allowed: there is nothing to list or describe.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 405,
+            "problemType": "about:blank",
+            "headers": {
+              "Allow": {
+                "methods": [
+                  "PUT",
+                  "DELETE"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-063",
+      "section": "5.1",
+      "title": "HEAD on the envelope is not allowed.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "HEAD",
+            "path": "/mailboxes/{mbx}/envelope",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 405,
+            "headers": {
+              "Allow": {
+                "methods": [
+                  "GET",
+                  "PUT"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-064",
+      "section": "5.1",
+      "title": "A path with a trailing slash is neither template.",
+      "steps": [
+        {
+          "request": {
+            "method": "PUT",
+            "path": "/mailboxes/{mbx}",
+            "headers": {
+              "Content-Type": "application/json",
+              "If-None-Match": "*"
+            },
+            "body": {
+              "json": {
+                "exp": {
+                  "$now": 3600
+                },
+                "collectHash": "{collectHash}"
+              }
+            }
+          },
+          "expect": {
+            "status": 201
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes/{mbx}/envelope/",
+            "headers": {
+              "Authorization": "Bearer {token}"
+            }
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RN-065",
+      "section": "5.1",
+      "title": "A path that names the collection is neither template.",
+      "steps": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/mailboxes",
+            "headers": {}
+          },
+          "expect": {
+            "status": 404,
+            "problemType": "about:blank"
+          }
+        }
+      ]
+    }
+  ]
+}
