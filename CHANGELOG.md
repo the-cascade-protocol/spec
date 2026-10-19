@@ -10,6 +10,10 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 `sealed-envelope.md` draft 0.3. The bundle manifest no longer depends on a content vocabulary: it is a `cascade:ExportManifest` named by its own `dct:identifier`, its kind given by `dct:conformsTo`, and its attachment rule covers FHIR `Attachment.hash` too, so a bundle may carry FHIR JSON as easily as Turtle. The HPKE `info` is empty, the JOSE HPKE draft's default. The fingerprint is 80 bits (16 characters). `exp` is checked as written. Positive vector bytes change; 1 new positive and 2 new pairing negative vectors. No vocabulary, shape or context change.
 
+## 2026-10-19: relay mailbox, draft 0.2 (proposed, not ratified)
+
+`relay-mailbox.md` draft 0.2 settles message framing (`400` and the connection closed, `501` for a transfer coding other than `chunked`), a `405` to `HEAD` without content, `about:blank` titles, and which check wins when a mailbox changes during a deposit, with 11 new negative cases (93 in all).
+
 ## 2026-10-19: relay mailbox, draft 0.1 (proposed, not ratified)
 
 New top-level document `relay-mailbox.md`, with a proposed decision record (D-RELAY-1, `decisions/2026-10-19-relay-mailbox.md`) and request and response cases in `vectors/relay-mailbox/cases.json`. It specifies the relay that carries one sealed envelope for route a of `sealed-envelope.md`: the receiver creates a mailbox with a create-only `PUT` and the hash of a collect token it keeps; the sender deposits once, with a second deposit refused and told whether it was byte for byte the first; the receiver collects with the token as a bearer and then deletes. Envelopes are kept until the pairing's expiry plus 24 hours at most, every copy gone within a further 24 hours, and no log holds an identifier or anything from an envelope. Errors are RFC 9457 problem details. No vocabulary, shape or context change.

@@ -1,11 +1,11 @@
 # Cascade Protocol Relay Mailbox Specification
 
 **Status:** Draft, proposed (see [`decisions/2026-10-19-relay-mailbox.md`](decisions/2026-10-19-relay-mailbox.md)); not ratified
-**Version:** 0.1
+**Version:** 0.2
 **Date:** 2026-10-19
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
-**Depends on:** [`sealed-envelope.md`](sealed-envelope.md) draft 0.1 (the pairing, `mbx`, the envelope and its size limit)
+**Depends on:** [`sealed-envelope.md`](sealed-envelope.md) draft 0.2 (the pairing, `mbx`, the envelope and its size limit)
 
 This document specifies the relay mailbox that carries one sealed envelope from a sender to a receiver for route a of [`sealed-envelope.md`](sealed-envelope.md): how the receiver opens a mailbox, how the sender deposits an envelope in it, how the receiver collects and deletes it, what the relay stores, for how long, and what it may write to a log.
 
@@ -167,7 +167,7 @@ The retention end is fixed at creation as `exp` plus 86,400 seconds, whatever th
 | `GET /mailboxes/{mbx}/envelope` | receiver, bearer | 5.4 collect |
 | `DELETE /mailboxes/{mbx}` | receiver, bearer | 5.5 delete |
 
-`{mbx}` stands for any one non-empty path segment, matched as sent (not percent-decoded); whether it is a valid id is a route's own check. A request whose path is neither template (including a trailing `/` or an empty segment) is answered `404` with type `about:blank`. On a matching path, any other method is answered `405 Method Not Allowed` with `Allow: PUT, DELETE` for the mailbox and `Allow: GET, PUT` for the envelope; that includes `HEAD`, since a relay is not a general-purpose server (RFC 9110 section 9.1), and `OPTIONS` other than a CORS preflight the relay chooses to answer (below). There is no route that lists mailboxes or describes one.
+`{mbx}` stands for any one non-empty path segment, matched as sent (not percent-decoded); whether it is a valid id is a route's own check. A request whose path is neither template (including a trailing `/` or an empty segment) is answered `404` with type `about:blank`. On a matching path, any other method is answered `405 Method Not Allowed` with `Allow: PUT, DELETE` for the mailbox and `Allow: GET, PUT` for the envelope; that includes `HEAD`, since a relay is not a general-purpose server (RFC 9110 section 9.1), and `OPTIONS` other than a CORS preflight the relay chooses to answer (below). A `405` answered to `HEAD` carries header fields only and no content (RFC 9110 section 9.3.2). There is no route that lists mailboxes or describes one.
 
 **Credentials.** Collect and delete take the collect token as a bearer token in the `Authorization` header (RFC 6750 section 2.1); the scheme name is case-insensitive (RFC 9110 section 11.1) and is followed by one or more spaces and the token (RFC 6750 section 2.1). A relay MUST NOT accept the token from the query string or the body (RFC 6750 sections 2.2 and 2.3) and MUST ignore a query string. A relay checks a token by hashing the presented bytes and comparing the result with `collectHash` in constant time, and treats a bearer that is not 43 canonical base64url characters as a wrong token without a shorter code path. A request with no `Authorization` header is answered `401` with `WWW-Authenticate: Bearer`, carrying no error code (RFC 6750 section 3.1); any other failure, including an empty header, more than one header or another scheme, is answered `401` with `WWW-Authenticate: Bearer error="invalid_token"` (RFC 6750 section 3.1). Relays never use cookies.
 
@@ -175,9 +175,9 @@ The retention end is fixed at creation as `exp` plus 86,400 seconds, whatever th
 
 **Refusals** carry an RFC 9457 problem details body (`application/problem+json`) with `type`, `title` and `status`, and nothing that repeats or describes the request (no `detail` built from input, no `instance` naming the mailbox). `type` is one of the six URIs of section 10 where the status code alone is ambiguous, and `about:blank` otherwise.
 
-**Order.** A relay checks the path, then the method, then its rate limits (section 9), then the route's own conditions in the order listed, and answers with the first that fails.
+**Order.** A relay checks the message framing (below), then the path, then the method, then its rate limits (section 9), then the route's own conditions in the order listed, and answers with the first that fails. When more than one condition fails, including one that changed while the body was being read, the earlier in this order and in the route's list wins (section 5.3 step 9).
 
-**Media types and framing.** A media type is compared by type and subtype, ignoring case and parameters (RFC 9110 section 8.3.1); a missing `Content-Type` is answered `415`. A precondition is satisfied only by exactly one `If-None-Match` field whose value is `*`; a list, an entity tag or a repeated field is answered `400`. Message framing is HTTP's own ([RFC 9112](https://www.rfc-editor.org/rfc/rfc9112), [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113)): an incomplete or misframed body is a failed request that changes nothing. JSON is [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259) UTF-8 without a byte order mark, and a JSON object holding the same member name twice, at any depth, is malformed, as in [`pod-encryption.md`](pod-encryption.md) section 4.1.
+**Media types and framing.** A media type is compared by type and subtype, ignoring case and parameters (RFC 9110 section 8.3.1); a missing `Content-Type` is answered `415`. A precondition is satisfied only by exactly one `If-None-Match` field whose value is `*`; a list, an entity tag or a repeated field is answered `400`. Message framing is HTTP's own ([RFC 9112](https://www.rfc-editor.org/rfc/rfc9112), [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113)): an incomplete or misframed body is a failed request that changes nothing. A request with an invalid `Content-Length`, a `Content-Length` field repeated (even with the same value), a `Content-Length` together with a `Transfer-Encoding`, a `Transfer-Encoding` whose final coding is not `chunked` (RFC 9112 section 6.3), broken chunked framing, or a body that ends before its framing says it is complete, is answered `400` (`about:blank`) if the relay has not yet answered it, and the relay then closes the connection. A request whose `Transfer-Encoding` lists any coding other than `chunked` before its final `chunked` is answered `501 Not Implemented` (RFC 9112 section 6.1). A body sent with the `chunked` coding alone is read as any other body (section 5.3 step 5 still requires `Content-Length` for a deposit). JSON is [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259) UTF-8 without a byte order mark, and a JSON object holding the same member name twice, at any depth, is malformed, as in [`pod-encryption.md`](pod-encryption.md) section 4.1.
 
 **Cross-origin use.** A relay MAY answer CORS preflight requests so a sender or receiver running in a web page on another origin can call it. If it does, it MUST NOT send `Access-Control-Allow-Credentials: true`, and it lists `Authorization`, `Content-Type` and `If-None-Match` in `Access-Control-Allow-Headers` explicitly.
 
@@ -232,7 +232,7 @@ No credential: knowing `mbx` is what allows a deposit ([`sealed-envelope.md`](se
 6. `412` `already-deposited` if an envelope is already stored (below);
 7. `410` `expired` if the relay's clock reads `exp` or later;
 8. `422` `malformed-envelope` if the body breaks section 6;
-9. `201 Created`, empty body, once the envelope is stored durably. The store is the atomic step below; if, at that step, another deposit has been stored, the answer is `412` `already-deposited` as in step 6, and if the mailbox has been closed or its retention end reached while the body was read, the answer is that of step 2 or step 1. `exp` is not checked again: a deposit that passed step 7 is accepted.
+9. `201 Created`, empty body, once the envelope is stored durably. The store is the atomic step below, and it repeats steps 1, 2 and 6 in that order, the earlier winning: if the relay's clock has reached the mailbox's retention end while the body was read, the answer is `404` `no-mailbox`, even if the mailbox has also been closed; else, if the mailbox has been closed, `410` `closed`; else, if another deposit has been stored, `412` `already-deposited`. `exp` is not checked again: a deposit that passed step 7 is accepted.
 
 **One deposit per mailbox.** Storing an envelope and checking that none is stored is one atomic step. A stored envelope is never replaced, by a deposit or by anything else. A deposit refused at any step other than 9 leaves the mailbox as it was: a refused body never fills the mailbox.
 
@@ -355,7 +355,7 @@ Rate limits are a deployment's own policy and are not conformance requirements, 
 
 ## 10. Outcomes
 
-Every request ends in exactly one of these. "Type" is the problem details `type`; the six Cascade types are `https://cascadeprotocol.org/docs/spec/relay-mailbox#` followed by the code shown, and their `title` members are: `no-mailbox` "No such mailbox", `not-deposited` "Nothing deposited yet", `already-deposited` "An envelope is already deposited", `expired` "The mailbox no longer accepts deposits", `closed` "The mailbox is closed", `malformed-envelope` "Not a sealed envelope". For `about:blank` the title is the status code's reason phrase (RFC 9457 section 4.2.1).
+Every request ends in exactly one of these. "Type" is the problem details `type`; the six Cascade types are `https://cascadeprotocol.org/docs/spec/relay-mailbox#` followed by the code shown, and their `title` members are: `no-mailbox` "No such mailbox", `not-deposited` "Nothing deposited yet", `already-deposited` "An envelope is already deposited", `expired` "The mailbox no longer accepts deposits", `closed` "The mailbox is closed", `malformed-envelope` "Not a sealed envelope". For `about:blank` the title is the reason phrase that [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110) section 15 gives the status code (RFC 6585 sections 3 and 4 for `428` and `429`), for example `Content Too Large` for `413` and `Not Implemented` for `501` (RFC 9457 section 4.2.1).
 
 | Status | Type | Routes | When | The caller |
 |---|---|---|---|---|
@@ -369,15 +369,17 @@ Every request ends in exactly one of these. "Type" is the problem details `type`
 | 412 | `already-deposited` | deposit | an envelope is already stored; `identical` says whether it is this one | `true`: delivered; `false`: the code was used by something else, start again |
 | 422 | `malformed-envelope` | deposit | the body is not an envelope (section 6) | a bug in the sender; nothing was stored |
 | 400 | `about:blank` | create, deposit | a malformed request, or `exp` out of range | a bug |
+| 400 | `about:blank` | any | the message cannot be framed (section 5.1); the relay closes the connection | resend on a new connection |
 | 401 | `about:blank` | collect, delete | missing or wrong bearer | a bug, or not this receiver |
 | 404 | `about:blank` | none | a path that is neither template | a bug |
-| 405 | `about:blank` | any | method not allowed (`Allow` given) | a bug |
+| 405 | `about:blank` | any | method not allowed (`Allow` given; to `HEAD`, header fields only) | a bug |
 | 411 | `about:blank` | deposit | no `Content-Length` | resend with it |
 | 412 | `about:blank` | create | the id is taken | mint a new id and token |
 | 413 | `about:blank` | create, deposit | too large | the bundle is too big for this route; use a saved file |
 | 415 | `about:blank` | create, deposit | wrong media type | a bug |
 | 428 | `about:blank` | create, deposit | no `If-None-Match: *` | a bug |
 | 429 | `about:blank` | any | over a rate limit; `Retry-After` given | waits |
+| 501 | `about:blank` | any | a transfer coding other than `chunked` (section 5.1) | resend without it |
 | 503 | `about:blank` | any | the relay is at capacity or down; `Retry-After` given when known | waits |
 
 ---
@@ -450,6 +452,6 @@ Storing only ciphertext does not by itself change who must comply with health pr
 
 ## 14. Conformance
 
-Request and response cases are in [`vectors/relay-mailbox/cases.json`](vectors/relay-mailbox/cases.json): 18 positive cases (the whole lifecycle; cancel before deposit; a second deposit refused with `identical` `false`; a retry with `identical` `true`; envelopes the relay must store without judging them, including one with a tampered tag, one naming another suite, a six-word envelope and one of exactly the maximum length; the bearer scheme in any case and with more than one space; media type parameters; unknown members; the expiry and retention boundaries) and 64 negative cases (every refusal of sections 5.1 to 5.5, seventeen shape failures of section 6, other paths, and the methods that are not allowed). Envelopes are taken by id from [`vectors/sealed-envelope/vectors.json`](vectors/sealed-envelope/vectors.json). Each case runs against a fresh mailbox id and token; the 8 cases marked with a controlled clock need a relay whose clock a test harness can set and advance, and the other 74 run against any relay.
+Request and response cases are in [`vectors/relay-mailbox/cases.json`](vectors/relay-mailbox/cases.json): 18 positive cases (the whole lifecycle; cancel before deposit; a second deposit refused with `identical` `false`; a retry with `identical` `true`; envelopes the relay must store without judging them, including one with a tampered tag, one naming another suite, a six-word envelope and one of exactly the maximum length; the bearer scheme in any case and with more than one space; media type parameters; unknown members; the expiry and retention boundaries) and 75 negative cases (every refusal of sections 5.1 to 5.5, seventeen shape failures of section 6, other paths, the methods that are not allowed, a `405` to `HEAD` with no content, requests that cannot be framed, a transfer coding other than `chunked`, and a mailbox closed, or closed and past its retention end, while a deposit's body is arriving). Every problem details body is checked for its `type` and `title`. Envelopes are taken by id from [`vectors/sealed-envelope/vectors.json`](vectors/sealed-envelope/vectors.json). Each case runs against a fresh mailbox id and token; the 10 cases marked with a controlled clock need a relay whose clock a test harness can set and advance, and the other 83 run against any relay. The 11 cases marked `http/1.1` send their requests byte for byte and run against a relay that serves HTTP/1.1.
 
 A conforming relay produces the stated status, problem `type`, `identical` member and headers for every case, and returns collected envelopes byte for byte. Two of this document's requirements cannot be seen through the routes and are left to an implementation's own tests: that a deleted envelope's bytes are gone from storage (section 7), and that nothing of section 8.1 reaches a log. The cases move to the conformance repository when this document is ratified.

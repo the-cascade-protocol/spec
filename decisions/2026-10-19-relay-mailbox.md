@@ -1,6 +1,6 @@
 # D-RELAY-1: A relay mailbox that holds one sealed envelope for hours, and never a key
 
-**Status:** Proposed. Not ratified. Normative text, once ratified: [`relay-mailbox.md`](../relay-mailbox.md) (draft 0.1).
+**Status:** Proposed. Not ratified. Normative text, once ratified: [`relay-mailbox.md`](../relay-mailbox.md) (draft 0.2).
 **Date:** 2026-10-19
 **Proposed by:** the specification maintainer
 **Prompted by:** route a of the sealed delivery envelope ([`sealed-envelope.md`](../sealed-envelope.md), D-PAIR-1, proposed), which hands an envelope from a sender to a receiver through a relay and specifies only three things about it: one deposit per mailbox, opaque storage, and a collect and delete credential that is not in the pairing. Everything else about the relay (its routes, what it stores, for how long, what it logs) was left to a separate document. This is that document. The routes, the token hashing, the rate limiting and the logging rules follow an existing sealed mailbox, already built and deployed, that carries encrypted answers between browsers, generalized from many deposits per request to one envelope per pairing.
@@ -45,7 +45,11 @@
 
 ## Conformance
 
-Request and response cases are in [`vectors/relay-mailbox/cases.json`](../vectors/relay-mailbox/cases.json): 18 positive and 64 negative, 8 of them needing a relay whose clock a harness can set. Envelopes come by id from [`vectors/sealed-envelope/vectors.json`](../vectors/sealed-envelope/vectors.json). Before publication the cases were replayed against two implementations written separately: a reference relay in JavaScript on Node, and a relay in Python written from this document's text without reading the first (both pass all 82 cases). Deleting stored bytes and keeping identifiers out of logs cannot be seen through the routes; implementations test them themselves.
+Request and response cases are in [`vectors/relay-mailbox/cases.json`](../vectors/relay-mailbox/cases.json): 18 positive and 75 negative, 10 of them needing a relay whose clock a harness can set and 11 sent byte for byte over HTTP/1.1. Envelopes come by id from [`vectors/sealed-envelope/vectors.json`](../vectors/sealed-envelope/vectors.json). Before publication the cases were replayed against two implementations written separately: a reference relay in JavaScript on Node, and a relay in Python written from this document's text without reading the first (both pass all 93 cases). Deleting stored bytes and keeping identifiers out of logs cannot be seen through the routes; implementations test them themselves.
+
+## Draft 0.2 (2026-10-19)
+
+Draft 0.2 changes no decision above. It settles five points the second implementation read from the text alone: a request that cannot be framed is answered `400` and the connection closed; a transfer coding other than `chunked` is answered `501`; a `405` to `HEAD` carries no content; an `about:blank` title is the status code's reason phrase; and when a mailbox is closed, or closed and past its retention end, while a deposit's body arrives, the earlier check wins. Eleven negative cases were added and every problem title is now checked.
 
 ## Questions for the ruling
 
