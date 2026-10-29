@@ -62,7 +62,7 @@ The owner must wrap to the right public key. A storage host that can swap the pu
 
 1. The owner's app creates an invite: a random 32-byte **link key**, carried only in a URL fragment (`#...`), so the host never receives it.
 2. The recipient opens the link, creates or unlocks their personal keyring, and returns their public JWK sealed with AES-256-GCM under `HKDF-SHA256(link key, info = "cascade-pod-key/invite-response/v1")`, with AAD = UTF-8 of the invite identifier.
-3. The owner's app opens the response, shows a short confirmation code derived from the thumbprint (the first 6 decimal digits of the thumbprint read as a big-endian integer, mod 10^6) that the two people MAY compare, then adds the `hpke-recipient` wrap.
+3. The owner's app opens the response, shows a short confirmation code derived from the thumbprint (the first 4 bytes of the 32-byte thumbprint digest read as a big-endian unsigned integer, mod 10^6, written as 6 digits with leading zeros) that the two people MAY compare, then adds the `hpke-recipient` wrap.
 4. The invite is single-use. The host deletes it once the response is collected or after a fixed expiry.
 
 The security of step 2 rests on the link reaching the recipient over a channel the host does not control (a text message, in person). The confirmation code exists for the case where that channel is in doubt.
