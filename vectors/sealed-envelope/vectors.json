@@ -27,7 +27,7 @@
         "d": "fEmmpgZRSne0j66PS-cV1d-hqAQLbt3CW7fcr2oIPmo"
       },
       "kid": "qBzxB3oh8Rxql9LHG9vq3zsmD1kZ6TopTCOP1VFHOr0",
-      "fingerprint": "VAOP-CB32"
+      "fingerprint": "VAOP-CB32-EHYR-Y2UX"
     },
     "B": {
       "description": "RFC 9180 DeriveKeyPair(ikm); privateJwk is the key as stored",
@@ -41,7 +41,7 @@
         "d": "qlTUCz0RBsK7RcfzF7Hl93PG7882Gcfe4nlXLOlJiSE"
       },
       "kid": "8wlsjf8s5vAwUtJD8Vxw-_ySpYwC4zTrGYQTJ58NZEo",
-      "fingerprint": "6MEW-ZDP7"
+      "fingerprint": "6MEW-ZDP7-FTTP-AMCS"
     }
   },
   "pairings": [
@@ -53,7 +53,7 @@
       "now": 1791999400,
       "expect": "usable",
       "kid": "qBzxB3oh8Rxql9LHG9vq3zsmD1kZ6TopTCOP1VFHOr0",
-      "fingerprint": "VAOP-CB32"
+      "fingerprint": "VAOP-CB32-EHYR-Y2UX"
     },
     {
       "id": "P-002",
@@ -63,7 +63,7 @@
       "now": 1791999400,
       "expect": "usable",
       "kid": "8wlsjf8s5vAwUtJD8Vxw-_ySpYwC4zTrGYQTJ58NZEo",
-      "fingerprint": "6MEW-ZDP7"
+      "fingerprint": "6MEW-ZDP7-FTTP-AMCS"
     }
   ],
   "pairingNegatives": [

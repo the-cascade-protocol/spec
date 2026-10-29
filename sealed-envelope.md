@@ -87,7 +87,7 @@ A construct in this document is new only when no ratified standard defines it. S
 | Pairing version | `v` as in the SMART Health Links payload (section 12); no JWT claim carries a format version | none |
 | Mailbox id, Pod reference | none found | members `mbx`, `pod`: a relay mailbox and a Pod reference are Cascade concepts no registry defines |
 | Key identifier | `kid` = JWK Thumbprint, [RFC 7638](https://www.rfc-editor.org/rfc/rfc7638) (Proposed Standard) | none |
-| Fingerprint for people to compare | RFC 7638 thumbprint, rendered in base32, [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648) section 6 | the truncation to 40 bits and the `XXXX-XXXX` grouping: no standard defines a short human comparison string for a JWK |
+| Fingerprint for people to compare | RFC 7638 thumbprint, rendered in base32, [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648) section 6 | the truncation to 80 bits and the `XXXX-XXXX-XXXX-XXXX` grouping: no standard defines a short human comparison string for a JWK |
 | Binary-to-text in links and envelopes | base64url without padding, RFC 4648 section 5, as RFC 7515 section 2 uses it | none |
 | Link carrying the pairing | URI fragment, [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) section 3.5 | the `pair.` prefix, so a page that reads other fragments can tell this one apart |
 | Receiver private key storage | JWK with `d`, `x`, `y`, RFC 7518 section 6.2.2 | none |
@@ -144,7 +144,7 @@ The same URI is shown as a QR code and offered as a link to copy. With an origin
 
 ### 4.3 The fingerprint
 
-The **kid** of a pairing is the JWK Thumbprint (RFC 7638, SHA-256) of `cnf.jwk`, base64url without padding. The **fingerprint** is the first 5 bytes of that thumbprint encoded in base32 (RFC 4648 section 6, alphabet `A`-`Z` `2`-`7`, no padding), 8 characters, shown as two groups of four separated by a hyphen, for example `K7QM-2XRD`.
+The **kid** of a pairing is the JWK Thumbprint (RFC 7638, SHA-256) of `cnf.jwk`, base64url without padding. The **fingerprint** is the first 10 bytes (80 bits) of that thumbprint encoded in base32 (RFC 4648 section 6, alphabet `A`-`Z` `2`-`7`, no padding), 16 characters, shown as four groups of four separated by hyphens, for example `K7QM-2XRD-W4NB-H6TF`.
 
 A receiver MUST show the fingerprint beside the QR code and beside the link.
 
@@ -374,7 +374,9 @@ An envelope sealed to one pairing is refused by every other pairing (its `kid` a
 
 Someone who photographs the QR code learns the public key and the mailbox. They cannot read anything sealed to it. They can deposit their own envelope first, which the single-deposit rule then lets through and which blocks the real one. A receiver MUST show what arrived (who and what the bundle says it is) before writing it into the Pod and let the person refuse it; a real sender whose deposit is refused tells the person to start again with a new code.
 
-Someone who substitutes the code (a doctored link, a forwarded message) can make the sender seal to their key. Scanning the receiver's own screen with the sender's camera is the strong channel: what the camera reads is what the receiver drew. Any other route (a copied link, pasted text, a message) passes through something that could change it, which is why section 4.3 requires the receiver always to show the fingerprint and requires the sender, on any route but its own camera, to show it and wait for the person to confirm the match before sealing. After a camera scan the comparison remains recommended, not required. The 40-bit fingerprint is fresh for every pairing, so an attacker would have to find a key matching it within the pairing's lifetime (1 hour recommended, 24 hours at most, section 4.6).
+Someone who substitutes the code (a doctored link, a forwarded message) can make the sender seal to their key. Scanning the receiver's own screen with the sender's camera is the strong channel: what the camera reads is what the receiver drew. Any other route (a copied link, pasted text, a message) passes through something that could change it, which is why section 4.3 requires the receiver always to show the fingerprint and requires the sender, on any route but its own camera, to show it and wait for the person to confirm the match before sealing. After a camera scan the comparison remains recommended, not required, so the fingerprint carries the weight exactly where an attacker is already in the path and has reason to spend effort.
+
+The fingerprint is 80 bits. To pass the comparison, a substituted code must carry a key whose fingerprint equals the one the receiver shows: a search over key pairs for a match on 80 bits of SHA-256, about 2^80 key generations. The pairing's short life does not limit that work, because the work need not wait for the pairing: a table of keys indexed by fingerprint, built once in advance, answers any fingerprint at once. At 40 bits such a table (2^40 keys) is within reach of a well-funded attacker; at 64 bits it is not; 80 bits also puts a search made after seeing one particular fingerprint out of reach. The cost is eight more characters to compare.
 
 ### 11.5 Key lifetime and forward secrecy
 
