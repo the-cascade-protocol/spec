@@ -1,6 +1,6 @@
 # D-KEY-3: Share a Pod with a person by wrapping its data key to that person's public key
 
-**Status:** Proposed, 2026-10-28. Awaiting ruling by the specification maintainer. Not normative: nothing here changes [`pod-encryption.md`](../pod-encryption.md) until a revision of that document adopts it.
+**Status:** Proposed, 2026-10-28. Being prototyped in Cascade Appeal under the draft wrap kind `x-draft-hpke-recipient`. Not eligible for ruling until the evaluation below is complete and its results are recorded in this document. Not normative: nothing here changes [`pod-encryption.md`](../pod-encryption.md) until a revision of that document adopts it.
 **Date:** 2026-10-28
 **Prompted by:** an application in which a patient shares an insurance-appeal case with an advocate or a family member, each signing in with their own passkey, and the patient needs to be able to remove one of them later. The ratified rule for sharing a Pod is to hand over its recovery sheet (D-KEY-2, 2026-09-24). D-KEY-2 left the door open on purpose ("the file format keeps allowing several wraps, so they can be added later without migrating any pod"). This document is the design for walking through it.
 **Depends on:** the `webauthn-prf` wrap kind (root backlog 3.548, decision accepted 2026-10-06, revised 2026-10-07), which this document assumes is specified.
@@ -94,6 +94,22 @@ D-KEY-2 stays the rule for a Pod held by one person on their own devices (the Wo
 | A one-time link-key wrap of the data key that the recipient converts into their own `webauthn-prf` wrap | Works without a personal key pair, but the owner can only re-key for everyone by sending new links to every remaining person. The data key also sits under a link secret until it is redeemed. |
 | JWE (RFC 7516) as the header format now | The same cryptography in a different envelope. Worth doing when D-PAIR-1's sealed envelope lands; not a reason to fork the header format today. |
 | X25519 | Not importable in every browser engine at the time of the 2026-10-06 spike. |
+
+## Evaluation before ratification
+
+The specification maintainer ruled on 2026-10-28 that this design must be built, tested and evaluated before it is considered for ratification. The prototype writes the draft kind `x-draft-hpke-recipient` (same members as section 2), so that no stored data claims the final name before its members are settled. Readers skip it as an unknown kind (section 4.3 of `pod-encryption.md`). It renames to `hpke-recipient` only after a ruling.
+
+The evaluation passes when each item below has a recorded result (pass, fail, or changed design) with evidence:
+
+1. **Grant without presence.** The owner adds a person through the invite of section 4; the person opens the Pod with their own passkey on their own device; the owner was not online when the person first opened it.
+2. **Removal without the others.** The owner removes one of at least two people; a re-key re-wraps to everyone who stays from the header alone; the people who stay open the Pod with no action; the removed person's keyring no longer opens it.
+3. **Key substitution.** A storage host that replaces the public key in the invite response is detected (the response fails to open), and the confirmation code differs when keys differ.
+4. **One prompt, many Pods.** A person with access to several Pods opens all of them with one passkey prompt, through their own-key wrap (section 3), with no PRF salt reused across headers.
+5. **New device.** A person recovers access on a second device through a synced passkey, and through six words alone.
+6. **Validation.** Every rule in section 2's reader validation has a negative test; a reader that does not implement the kind skips it and still opens the Pod with the owner's wrap.
+7. **Vectors.** Fixed-ephemeral-key vectors (RFC 9180 Appendix A method) produced by one implementation are reproduced by a second, independent one.
+8. **People in the loop.** At least one real invite and one removal done by people other than the builder, with notes on where they hesitated, including whether the confirmation code was read.
+9. **Open questions** below each have an answer drawn from the prototype.
 
 ## Open questions for the ruling
 
