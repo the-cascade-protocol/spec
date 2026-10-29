@@ -6,6 +6,10 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-10-29: sealed delivery envelope, draft 0.3 (proposed, not ratified)
+
+`sealed-envelope.md` draft 0.3. The bundle manifest no longer depends on a content vocabulary: it is a `cascade:ExportManifest` named by its own `dct:identifier`, its kind given by `dct:conformsTo`, and its attachment rule covers FHIR `Attachment.hash` too, so a bundle may carry FHIR JSON as easily as Turtle. The HPKE `info` is empty, the JOSE HPKE draft's default. The fingerprint is 80 bits (16 characters). `exp` is checked as written. Positive vector bytes change; 1 new positive and 2 new pairing negative vectors. No vocabulary, shape or context change.
+
 ## 2026-10-19: sealed delivery envelope, draft 0.2 (proposed, not ratified)
 
 `sealed-envelope.md` draft 0.2 settles reader rules two implementations read differently (pairing key members, `v` as written, empty archives, the central version needed, missing `kid` and `enc`, `cascade-header` versions, key deletion on authentication, the stored-key rule and section 7.4's completeness wording), with 13 new negative vectors and no positive vector changed.

@@ -185,6 +185,20 @@
       "fragment": "#pair.eyJ2IjoxZTAsImV4cCI6MTc5MjAwMDAwMCwiY25mIjp7Imp3ayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6IjFIWS1QOG5vWGZKSkpsNXA0Vy1yT2I1Vnh5X0YyS3Q2cEVJczFMX2JyXzQiLCJ5IjoibUcyTFpueFJpQ0QyNUZHMHdySjdEZGJNS0Z6SGRoMU4xdWsySGpsTk1vMCJ9fSwibWJ4IjoiSUNFaUl5UWxKaWNvS1NvckxDMHVMdyIsInBvZCI6Ik1ERXlNelExTmpjNE9UbzdQRDAtUHcifQ",
       "now": 1791999400,
       "expect": "malformed"
+    },
+    {
+      "id": "PN-018",
+      "description": "exp written as 1792000000.0 (an integer value, not written as plain digits).",
+      "fragment": "#pair.eyJ2IjoxLCJleHAiOjE3OTIwMDAwMDAuMCwiY25mIjp7Imp3ayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6IjFIWS1QOG5vWGZKSkpsNXA0Vy1yT2I1Vnh5X0YyS3Q2cEVJczFMX2JyXzQiLCJ5IjoibUcyTFpueFJpQ0QyNUZHMHdySjdEZGJNS0Z6SGRoMU4xdWsySGpsTk1vMCJ9fSwibWJ4IjoiSUNFaUl5UWxKaWNvS1NvckxDMHVMdyIsInBvZCI6Ik1ERXlNelExTmpjNE9UbzdQRDAtUHcifQ",
+      "now": 1791999400,
+      "expect": "malformed"
+    },
+    {
+      "id": "PN-019",
+      "description": "exp written as 1.792e9.",
+      "fragment": "#pair.eyJ2IjoxLCJleHAiOjEuNzkyZTksImNuZiI6eyJqd2siOnsia3R5IjoiRUMiLCJjcnYiOiJQLTI1NiIsIngiOiIxSFktUDhub1hmSkpKbDVwNFctck9iNVZ4eV9GMkt0NnBFSXMxTF9icl80IiwieSI6Im1HMkxabnhSaUNEMjVGRzB3cko3RGRiTUtGekhkaDFOMXVrMkhqbE5NbzAifX0sIm1ieCI6IklDRWlJeVFsSmljb0tTb3JMQzB1THciLCJwb2QiOiJNREV5TXpRMU5qYzRPVG83UEQwLVB3In0",
+      "now": 1791999400,
+      "expect": "malformed"
     }
   ],
   "positive": [

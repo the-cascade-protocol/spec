@@ -1,8 +1,8 @@
 # Cascade Protocol Sealed Delivery Envelope Specification
 
 **Status:** Draft, proposed (see [`decisions/2026-10-16-sealed-delivery-envelope.md`](decisions/2026-10-16-sealed-delivery-envelope.md)); not ratified
-**Version:** 0.2
-**Date:** 2026-10-19
+**Version:** 0.3
+**Date:** 2026-10-29
 **Authors:** Cascade Agentic Labs LLC
 **Website:** https://cascadeprotocol.org
 **Formats specified:** pairing payload `v` 1, sealed envelope `typ` `cascade-sealed-envelope+jwe` (one version)
@@ -100,7 +100,7 @@ A construct in this document is new only when no ratified standard defines it. S
 | Duplicate JSON member names | refused, as [`pod-encryption.md`](pod-encryption.md) section 4.1 does; [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259) section 4 leaves them undefined | none |
 | Saved file name extension | none registered for a JWE | `.cpseal`: an operating system needs a distinctive extension to hand the file to the right application |
 
-Considered and not used: COSE with HPKE ([draft-ietf-cose-hpke](https://datatracker.ietf.org/doc/draft-ietf-cose-hpke/), in IETF Last Call, its code points still unassigned), which would also need a CBOR library in every implementation; OpenPGP ([RFC 9580](https://www.rfc-editor.org/rfc/rfc9580)), which covers both routes but brings its own key formats and is not available natively in the target platforms; CMS ([RFC 5652](https://www.rfc-editor.org/rfc/rfc5652)); tar and MIME multipart for the bundle, rejected for ZIP because ZIP has a registered media type, an ISO profile and an existing deterministic writer in this ecosystem.
+Considered and not used: COSE with HPKE ([draft-ietf-cose-hpke](https://datatracker.ietf.org/doc/draft-ietf-cose-hpke/), version 27, past IETF Last Call and in the state "Waiting for AD Go-Ahead", its code points still unassigned), which would also need a CBOR library in every implementation; OpenPGP ([RFC 9580](https://www.rfc-editor.org/rfc/rfc9580)), which covers both routes but brings its own key formats and is not available natively in the target platforms; CMS ([RFC 5652](https://www.rfc-editor.org/rfc/rfc5652)); tar and MIME multipart for the bundle, rejected for ZIP because ZIP has a registered media type, an ISO profile and an existing deterministic writer in this ecosystem; IHE Cross-Enterprise Document Media Interchange (XDM, [IHE IT Infrastructure Technical Framework](https://profiles.ihe.net/ITI/TF/Volume1/ch-16.html), transaction ITI-32, Final Text), the standard for a set of documents on media or in a ZIP, which describes them with ebXML registry metadata, protects them in email with S/MIME, and leaves media unencrypted because its creator "in most cases does not know who the ultimate Importer will be", so it can neither be the sealed bundle nor be read as one without an ebXML reader (its Document Encryption supplement uses CMS, considered above); Direct (the Direct Project's Applicability Statement for Secure Health Transport: S/MIME over SMTP between addresses whose certificates a health information service provider issues, trusted through provider trust bundles), which needs an account and a certificate at such a provider on both sides and has no path from a person's own browser or phone to their own desktop application.
 
 ---
 
@@ -123,7 +123,7 @@ A pairing is a JSON object ([RFC 8259](https://www.rfc-editor.org/rfc/rfc8259)) 
 | Member | Rule |
 |---|---|
 | `v` | The pairing format version: the JSON number `1`, which writers write as the single character `1`. A reader checks the number as written, not its value: it MUST refuse any other number written as plain decimal digits (`0`, or a digit `1` to `9` followed by digits, for example `2`) as **unsupported**, and a missing `v` or any other value as **malformed**, including `1.0`, `1e0`, `-1` and the string `"1"`. |
-| `exp` | When the pairing stops being usable, as a NumericDate (RFC 7519 section 2): integer seconds since 1970-01-01T00:00:00Z. |
+| `exp` | When the pairing stops being usable, as a NumericDate (RFC 7519 section 2): integer seconds since 1970-01-01T00:00:00Z, written as plain decimal digits (no sign, fraction or exponent). A reader checks it as written, as for `v`: `1792000000.0` and `1.792e9` are **malformed**, although each has an integer value. |
 | `cnf` | An object holding `jwk` (RFC 7800 section 3.2): the pairing key's public half as a P-256 JWK whose members are exactly `kty` (`EC`), `crv` (`P-256`), `x` and `y`. A `jwk` with any other member, including `d`, `alg`, `use` or `kid`, is **malformed**. |
 | `mbx` | The mailbox id (section 9): 16 random bytes, base64url without padding. |
 | `pod` | The Pod reference (section 4.4): 16 bytes, base64url without padding. |
@@ -165,7 +165,7 @@ Before sealing, a sender MUST:
 
 1. strip `#pair.`, decode the base64url strictly (only the RFC 4648 section 5 alphabet, no padding, no whitespace, unused bits zero; decoding and re-encoding reproduces the text) and the bytes as UTF-8;
 2. parse the JSON, refusing duplicate member names;
-3. check `v` as written (section 4.1), then that `exp` is an integer, `cnf.jwk` is a P-256 public JWK with exactly the members `kty`, `crv`, `x` and `y`, whose `x` and `y` decode to 32 bytes each and name a point on the curve, and `mbx` and `pod` decode to 16 bytes each;
+3. check `v` as written (section 4.1), then that `exp` is written as plain decimal digits (section 4.1) and is a positive integer, `cnf.jwk` is a P-256 public JWK with exactly the members `kty`, `crv`, `x` and `y`, whose `x` and `y` decode to 32 bytes each and name a point on the curve, and `mbx` and `pod` decode to 16 bytes each;
 4. refuse the pairing as **expired** when its clock reads `exp` or later, and as **malformed** when `exp` is more than 86,400 seconds (24 hours) after its clock.
 
 ### 4.6 What the receiver does
@@ -195,6 +195,8 @@ An envelope is the JWE Compact Serialization of RFC 7516 section 7.1: five base6
 | `alg` | `HPKE-7` (route a) or `dir` (route b). |
 | `typ` | Exactly `cascade-sealed-envelope+jwe`. Another string is **unsupported**; a missing `typ` is **malformed**. |
 | `cty` | Exactly `zip` (the payload is `application/zip`, section 7). |
+
+The `cty` value `zip` names the payload's media type `application/zip` (RFC 7515 section 4.1.10 lets the `application/` prefix be left out). It is unrelated to the JWE `zip` header parameter (RFC 7516 section 4.1.3), which compresses the plaintext and MUST NOT appear in an envelope's header.
 
 Writers MUST put `alg` first, then `typ`, so that every envelope begins with the same characters; this is the envelope's signature for tools that sniff content (section 8). Writers MUST NOT use the JWE JSON Serialization, a JWE AAD, or unprotected headers. The Additional Authenticated Data of the content encryption is ASCII of the first segment as written (RFC 7516 section 5.1 step 14), so a header re-encoded in any way, even with the same members in another order, no longer opens.
 
@@ -252,7 +254,7 @@ JWE with `alg` `dir` and `enc` `A256GCM` (RFC 7518 sections 4.5 and 5.3). The 32
 
 - `enc` is REQUIRED. A missing `enc`, or one that is not a string, is **malformed**; a string other than `A256GCM` is **unsupported**.
 - `crit` MUST be exactly `["cascade-header"]`, so a generic JOSE library that does not know the parameter refuses the envelope rather than looking for a shared key elsewhere.
-- The `version` of `cascade-header` MUST be `"1.1"`. A version `1.0` header, or a missing or non-string `version`, is **malformed**; any other string is **unsupported**, as `pod-encryption.md` treats a header version it does not know.
+- The `version` of `cascade-header` MUST be `"1.1"`. A version `1.0` header, or a missing or non-string `version`, is **malformed**; any other string is **unsupported**, as `pod-encryption.md` treats a header version it does not know. That includes `1.2`, the header version the sealed resource binding decision ([`decisions/2026-09-26-sealed-resource-binding.md`](decisions/2026-09-26-sealed-resource-binding.md), D-SEAL-1) defines for when `pod-encryption.md` adopts it: carrying a `1.2` header here will need a revision of this document.
 - `cascade-header` is read under every rule of [`pod-encryption.md`](pod-encryption.md) sections 4 and 5 (version, limits, lexical rules, unknown wrap kinds skipped, validation before any derivation), and opened as section 5.5 says: the KEK is Argon2id (RFC 9106) over the six words with the wrap's own parameters; the unwrapped value is the content encryption key. The six words are used exactly as entered, with no trimming or normalization (`pod-encryption.md` section 2).
 - A writer MUST include at least one `passphrase` wrap. It MAY include other wrap kinds a sender's own application uses (for example a passkey wrap); a receiver skips kinds it does not implement. An envelope with no `passphrase` wrap is **cannot open** for a reader that implements only `passphrase`.
 - The content encryption key is either a fresh random 32-byte key with a new wrap (fresh salt, default parameters), or a data key the writer already holds together with its existing wraps, carried unchanged. It MUST NOT be a Pod's data key (section 11.8).
@@ -424,6 +426,6 @@ SMART Health Links members with no counterpart here are not used: `url` (a pairi
 
 ## 13. Conformance
 
-Deterministic vectors are in [`vectors/sealed-envelope/vectors.json`](vectors/sealed-envelope/vectors.json): two receivers (fixed `ikm`, RFC 9180 `DeriveKeyPair`, the stored JWK, `kid`, fingerprint); two pairings; four positive envelopes (route a with a fixed ephemeral `ikm`, and route b with fixed salt, nonces and keys), each with its bundle files and ZIP bytes (two three-file bundles, each with a manifest in the form of section 7.4 and a PDF at its content-addressed path, every digest consistent: in one the PDF is described by a `cascade:Attachment` in a Turtle file, in the other by a FHIR `DocumentReference` in a FHIR JSON Bundle); and negative vectors with their expected outcome (section 10): pairing negatives `PN-001` to `PN-017` (version, a version written as `1.0` or `1e0`, curve, off-curve point, a private key or any other extra member in the pairing key, expiry, encoding, duplicate members) and envelope negatives `EN-001` to `EN-026` (route a) and `SN-001` to `SN-013` (route b): wrong AAD, wrong `info`, truncation, tampered tag and encapsulated key, replay into another mailbox, a different key under the same `kid`, a missing or non-string `kid`, unsupported `alg` and `typ`, IV and header rules, every ZIP profile rule including an archive with no entries and the central directory's version needed, wrong and untrimmed six words, an edited wrap, no `passphrase` wrap, a missing `crit`, a missing or unknown `enc`, and `cascade-header` versions `1.0` and unknown.
+Deterministic vectors are in [`vectors/sealed-envelope/vectors.json`](vectors/sealed-envelope/vectors.json): two receivers (fixed `ikm`, RFC 9180 `DeriveKeyPair`, the stored JWK, `kid`, fingerprint); two pairings; four positive envelopes (route a with a fixed ephemeral `ikm`, and route b with fixed salt, nonces and keys), each with its bundle files and ZIP bytes (two three-file bundles, each with a manifest in the form of section 7.4 and a PDF at its content-addressed path, every digest consistent: in one the PDF is described by a `cascade:Attachment` in a Turtle file, in the other by a FHIR `DocumentReference` in a FHIR JSON Bundle); and negative vectors with their expected outcome (section 10): pairing negatives `PN-001` to `PN-019` (version, a version written as `1.0` or `1e0`, an expiry written as `1792000000.0` or `1.792e9`, curve, off-curve point, a private key or any other extra member in the pairing key, expiry, encoding, duplicate members) and envelope negatives `EN-001` to `EN-026` (route a) and `SN-001` to `SN-013` (route b): wrong AAD, wrong `info`, truncation, tampered tag and encapsulated key, replay into another mailbox, a different key under the same `kid`, a missing or non-string `kid`, unsupported `alg` and `typ`, IV and header rules, every ZIP profile rule including an archive with no entries and the central directory's version needed, wrong and untrimmed six words, an edited wrap, no `passphrase` wrap, a missing `crit`, a missing or unknown `enc`, and `cascade-header` versions `1.0` and unknown.
 
 A conforming implementation re-seals each positive vector from its inputs where its HPKE library accepts a fixed ephemeral key, opens every positive vector to the stated files, and refuses every negative vector with the stated outcome. The vectors were cross-checked by independent implementations before publication; the decision record names them. They move to the conformance repository when this document is ratified.
