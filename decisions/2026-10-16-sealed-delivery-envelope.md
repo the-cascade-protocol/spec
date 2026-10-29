@@ -14,7 +14,7 @@
 3. **Route b uses `dir` with `A256GCM`** ([RFC 7518](https://www.rfc-editor.org/rfc/rfc7518)), the content key carried as a [`pod-encryption.md`](../pod-encryption.md) version 1.1 header in the critical protected header parameter `cascade-header`. The six-word key derivation is the Pod's own `passphrase` wrap (Argon2id, t = 3, m = 64 MiB, p = 1), not a second one.
 4. **The pairing is a small JSON object** carried after `#` in a link and shown as a QR code: `v`, `exp` (RFC 7519 NumericDate), `cnf.jwk` (RFC 7800, a P-256 public JWK), `mbx` (16-byte mailbox id), `pod` (16-byte Pod reference, minted once per Pod and reused in every pairing for it, never the Pod identifier and never derived from it). People compare an 8-character fingerprint taken from the key's thumbprint: the receiver always shows it, and a sender must show it and have the person confirm the match before sealing whenever the pairing reached it by any route other than its own camera scanning the receiver's screen.
 5. **The receiver's key is one-time** and stored as a JWK with `d`, `x` and `y`. It is deleted as soon as one envelope authenticates, or 24 hours after expiry.
-6. **The bundle is a store-only ZIP** under ISO/IEC 21320-1 with further restrictions that remove every option a reader could interpret two ways. Completeness is the bundle manifest's job (for an assessment bundle, SPDX file declarations with SHA-256 checksums, and an attachment's `cascade:contentHash` equal to its file's checksum); the envelope adds no digests.
+6. **The bundle is a store-only ZIP** under ISO/IEC 21320-1 with further restrictions that remove every option a reader could interpret two ways. Completeness is the bundle manifest's job, and the manifest does not depend on the content: one `cascade:ExportManifest` named by its own random export identifier, its kind given by `dct:conformsTo`, SPDX file declarations with SHA-256 checksums, and every attachment description's digest the digest of its file (a `cascade:contentHash`, or a FHIR `Attachment.hash`). The records may be Turtle or FHIR JSON. The envelope adds no digests.
 7. **Related to SMART Health Links, not built on it.** The saved file uses the SMART Health Links JWE file profile (`dir`, `A256GCM`) and the pairing link shares its payload shape and its `exp` and `v`. Route a is not a SMART Health Link, because that format puts the decryption key in the link, runs in the opposite direction and has no content type for a Turtle bundle. SMART Health Links is the intended route for sharing with clinicians and outside tools, specified separately.
 8. **Room for signing.** A later revision may carry a signature inside the bundle (sign, then seal) without changing the envelope format. This version specifies none.
 
@@ -32,6 +32,8 @@
 
 **The Pod's own six-word wrap for route b.** JOSE's only password-based mechanism is PBES2 (PBKDF2). With a 77-bit six-word secret PBKDF2 would be adequate, but it would give the protocol two derivations from one secret, and every implementation already has the Argon2id wrap with conformance vectors.
 
+**A manifest that does not depend on the content.** Typing the manifest with a class from the content's own vocabulary would tie the envelope to that vocabulary and give it one more format to follow. The core export manifest already exists for the job, and naming it by its export identifier keeps two exports of the same records from merging into one manifest with two identifiers. `dct:conformsTo` names the content's specification, so the same envelope carries Turtle records or a FHIR Bundle.
+
 **ZIP over tar or MIME multipart.** ZIP has a registered media type and an ISO profile, and a deterministic store-only ZIP writer already exists in this ecosystem. Store-only removes decompression bombs; the remaining restrictions remove the ambiguities (central directory against local headers, data descriptors, extra fields, ZIP64) that make ZIP readers disagree.
 
 ## Consequences
@@ -43,12 +45,12 @@
 
 ## Conformance
 
-Deterministic vectors are in [`vectors/sealed-envelope/vectors.json`](../vectors/sealed-envelope/vectors.json): 2 receivers, 2 pairings, 17 pairing negatives, 3 positive envelopes and 39 envelope negatives. Before publication they were checked by four implementations:
+Deterministic vectors are in [`vectors/sealed-envelope/vectors.json`](../vectors/sealed-envelope/vectors.json): 2 receivers, 2 pairings, 17 pairing negatives, 4 positive envelopes and 39 envelope negatives. Before publication they were checked by four implementations:
 
 1. the reference generator (`@hpke/core` 1.9.0 on Node 22, `hash-wasm` for Argon2id), which produced them;
 2. an implementation of RFC 9180 and the JWE processing written out by hand in Python over the `cryptography` package's primitives, with `argon2-cffi`. It first reproduces RFC 9180 appendix A.3.1, opens messages sealed by OpenSSL's HPKE for this suite, and opens the `HPKE-7` JWE test vector of draft-ietf-jose-hpke-encrypt (appendix A.13). It then re-seals every positive vector from its inputs, character for character, opens it, and refuses every negative vector with the published outcome;
-3. Apple CryptoKit (`HPKE.Recipient`, `P256_SHA256_AES_GCM_256`), which opens both route a positive vectors, refuses the seven cryptographic route a negatives, and seals a fresh envelope that implementations 1 and 2 open;
-4. the Rust `hpke` crate 0.14.1, which opens both route a positive vectors and refuses the same seven negatives.
+3. Apple CryptoKit (`HPKE.Recipient`, `P256_SHA256_AES_GCM_256`), which opens every route a positive vector, refuses the seven cryptographic route a negatives, and seals a fresh envelope that implementations 1 and 2 open;
+4. the Rust `hpke` crate 0.14.1, which opens every route a positive vector and refuses the same seven negatives.
 
 ## Draft 0.2 (2026-10-19)
 
