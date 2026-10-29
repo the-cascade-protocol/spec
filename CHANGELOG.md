@@ -6,6 +6,10 @@ Format: each entry is one milestone, dated, with a short prose summary and point
 
 ---
 
+## 2026-10-29: relay mailbox, draft 0.3 (proposed, not ratified)
+
+`relay-mailbox.md` draft 0.3 answers `HEAD` on the envelope exactly as `GET` without content, corrects the `Idempotency-Key` draft's status, and follows sealed envelope draft 0.3, with 3 new cases (96 in all). No vocabulary, shape or context change.
+
 ## 2026-10-29: sealed delivery envelope, draft 0.3 (proposed, not ratified)
 
 `sealed-envelope.md` draft 0.3. The bundle manifest no longer depends on a content vocabulary: it is a `cascade:ExportManifest` named by its own `dct:identifier`, its kind given by `dct:conformsTo`, and its attachment rule covers FHIR `Attachment.hash` too, so a bundle may carry FHIR JSON as easily as Turtle. The HPKE `info` is empty, the JOSE HPKE draft's default. The fingerprint is 80 bits (16 characters). `exp` is checked as written. Positive vector bytes change; 1 new positive and 2 new pairing negative vectors. No vocabulary, shape or context change.

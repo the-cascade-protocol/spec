@@ -1,6 +1,6 @@
 # D-RELAY-1: A relay mailbox that holds one sealed envelope for hours, and never a key
 
-**Status:** Proposed. Not ratified. Normative text, once ratified: [`relay-mailbox.md`](../relay-mailbox.md) (draft 0.2).
+**Status:** Proposed. Not ratified. Normative text, once ratified: [`relay-mailbox.md`](../relay-mailbox.md) (draft 0.3).
 **Date:** 2026-10-19
 **Proposed by:** the specification maintainer
 **Prompted by:** route a of the sealed delivery envelope ([`sealed-envelope.md`](../sealed-envelope.md), D-PAIR-1, proposed), which hands an envelope from a sender to a receiver through a relay and specifies only three things about it: one deposit per mailbox, opaque storage, and a collect and delete credential that is not in the pairing. Everything else about the relay (its routes, what it stores, for how long, what it logs) was left to a separate document. This is that document. The routes, the token hashing, the rate limiting and the logging rules follow an existing sealed mailbox, already built and deployed, that carries encrypted answers between browsers, generalized from many deposits per request to one envelope per pairing.
@@ -23,7 +23,7 @@
 
 **Reuse before invention.** Every construct was checked against ratified standards first; [`relay-mailbox.md`](../relay-mailbox.md) section 3 lists each. Two things are new: the two path templates (under a deployment's own base URL) and six problem types. Three IETF drafts that would otherwise fit (`Idempotency-Key`, resumable uploads, `RateLimit` fields) are not ratified, and the design needs none of them.
 
-**`If-None-Match: *` for "one deposit".** HTTP already has a create-only write, and its refusal (`412`) already means "something is there". Requiring the header (`428` without it) means a sender that forgets cannot be mistaken for one that meant to overwrite. Recognizing a retry by its bytes avoids an idempotency key, the only standard for which is an expired draft.
+**`If-None-Match: *` for "one deposit".** HTTP already has a create-only write, and its refusal (`412`) already means "something is there". Requiring the header (`428` without it) means a sender that forgets cannot be mistaken for one that meant to overwrite. Recognizing a retry by its bytes avoids an idempotency key, the only standard for which is an active working group draft, not ratified.
 
 **A receiver-minted token over the alternatives.** A token issued by the relay (as some SMART Health Links hosting does for its management token) would have to travel back from the server, and the relay would see it at least once in clear; a minted token is seen by the relay only on use and stored only as a hash. A token derived from the pairing key would tie a delete credential to an encryption key. Proof of possession of the pairing key ([RFC 9449](https://www.rfc-editor.org/rfc/rfc9449)) would show the relay the pairing's public key, which the envelope design keeps from it, and would sign with a key agreement key.
 
@@ -45,11 +45,15 @@
 
 ## Conformance
 
-Request and response cases are in [`vectors/relay-mailbox/cases.json`](../vectors/relay-mailbox/cases.json): 18 positive and 75 negative, 10 of them needing a relay whose clock a harness can set and 11 sent byte for byte over HTTP/1.1. Envelopes come by id from [`vectors/sealed-envelope/vectors.json`](../vectors/sealed-envelope/vectors.json). Before publication the cases were replayed against two implementations written separately: a reference relay in JavaScript on Node, and a relay in Python written from this document's text without reading the first (both pass all 93 cases). Deleting stored bytes and keeping identifiers out of logs cannot be seen through the routes; implementations test them themselves.
+Request and response cases are in [`vectors/relay-mailbox/cases.json`](../vectors/relay-mailbox/cases.json): 19 positive and 77 negative, 10 of them needing a relay whose clock a harness can set and 14 sent byte for byte over HTTP/1.1. Envelopes come by id from [`vectors/sealed-envelope/vectors.json`](../vectors/sealed-envelope/vectors.json). Before publication the cases were replayed against two implementations written separately: a reference relay in JavaScript on Node, and a relay in Python written from this document's text without reading the first (both pass all 96 cases of draft 0.3). Deleting stored bytes and keeping identifiers out of logs cannot be seen through the routes; implementations test them themselves.
 
 ## Draft 0.2 (2026-10-19)
 
 Draft 0.2 changes no decision above. It settles five points the second implementation read from the text alone: a request that cannot be framed is answered `400` and the connection closed; a transfer coding other than `chunked` is answered `501`; a `405` to `HEAD` carries no content; an `about:blank` title is the status code's reason phrase; and when a mailbox is closed, or closed and past its retention end, while a deposit's body arrives, the earlier check wins. Eleven negative cases were added and every problem title is now checked.
+
+## Draft 0.3 (2026-10-29)
+
+Draft 0.3 changes no decision above. `HEAD` on the envelope is answered exactly as `GET` without content (the bearer required, the same status and header fields), as RFC 9110 sections 9.1 and 9.3.2 describe, rather than refused with `405`; the mailbox, which has no `GET`, still answers `405`. The `Idempotency-Key` draft is described as an active working group draft, not ratified. The document now depends on sealed envelope draft 0.3, whose positive envelope bytes changed. One case changed its expectation, one was rewritten and three were added (96 in all).
 
 ## Questions for the ruling
 
