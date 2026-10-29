@@ -54,7 +54,7 @@ This maps one-to-one onto JWE key encryption with HPKE (draft-ietf-jose-hpke-enc
 
 ### 3. The owner's own wraps are unchanged
 
-The owner opens the Pod with their `webauthn-prf` wrap (and the six-word `passphrase` wrap where 3.548 requires one). An owner MAY also hold an `hpke-recipient` wrap to their own personal key, which is how one person opens many Pods with one passkey prompt. The writer rule from 3.548 about a passkey wrap being the only wrap applies to the Pod as a whole: a header MUST always have at least one wrap that is not `hpke-recipient`, so that a Pod never depends entirely on other people's keyrings.
+The owner opens the Pod with their `webauthn-prf` wrap (and the six-word `passphrase` wrap where the passkey wrap's rules require one). An owner MAY also hold an `hpke-recipient` wrap to their own personal key, which is how one person opens many Pods with one passkey prompt. The writer rule about a passkey wrap being the only wrap applies to the Pod as a whole: a header MUST always have at least one wrap that is not `hpke-recipient`, so that a Pod never depends entirely on other people's keyrings.
 
 ### 4. Adding a person: the public key must arrive authenticated
 
