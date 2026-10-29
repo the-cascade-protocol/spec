@@ -212,7 +212,7 @@ Integrated Encryption as specified by draft-ietf-jose-hpke-encrypt section 5, wi
 
 - **HPKE mode:** base (`mode_base`). The protected header MUST NOT carry `psk_id`, `enc` or `crit`.
 - **`kid`:** REQUIRED: a string, the pairing's kid (section 4.3). A protected header with no `kid`, or with a `kid` that is not a string, is **malformed**. A receiver selects the pairing by it and MUST refuse an envelope whose `kid` names no pairing it holds as **cannot open**.
-- **HPKE `info`:** the ASCII bytes `cascade-sealed-envelope/v1`. The draft allows mutually known information in place of its empty default; this value separates envelopes of this format from any other use of HPKE.
+- **HPKE `info`:** empty (the empty octet sequence), the default draft-ietf-jose-hpke-encrypt gives it. Domain separation does not need it: the protected header is the AAD (next item) and carries `typ` `cascade-sealed-envelope+jwe`, so every envelope is bound to this format, and the pairing key has no other use (section 4.6). An empty `info` lets a JOSE library that implements `HPKE-7` as the draft does, without a way to set `info`, open and write these envelopes.
 - **HPKE `aad`:** ASCII of the encoded protected header (draft section 7.1 step 15).
 - **Segments:** the protected header; the encapsulated key (`enc`, the 65-byte uncompressed point); empty; the HPKE ciphertext (bundle plus 16-byte tag); empty.
 
@@ -382,7 +382,7 @@ HPKE makes a new ephemeral key for every envelope, and the receiver deletes the 
 
 ### 11.6 Dependence on a document not yet published
 
-`HPKE-7` and Integrated Encryption are defined by an IETF document approved for publication but not yet an RFC. The cryptography underneath is RFC 9180 and the container is RFC 7516, so a change before publication can only rename or renumber, not change the bytes this document fixes: the suite, the `info`, the AAD and the segment layout are all stated here. A revision of this document will cite the RFC when it is published.
+`HPKE-7` and Integrated Encryption are defined by an IETF document approved for publication but not yet an RFC. The cryptography underneath is RFC 9180 and the container is RFC 7516, so a change before publication can only rename or renumber, not change the bytes this document fixes: the suite, the `info`, the AAD and the segment layout are all stated here. The `info` is the draft's own default, the empty octet sequence, so this format asks nothing of a JOSE library beyond the draft; what keeps an envelope from being read as another format's message is the `typ` inside the AAD (section 6.3). A revision of this document will cite the RFC when it is published.
 
 ### 11.7 Downgrade
 
