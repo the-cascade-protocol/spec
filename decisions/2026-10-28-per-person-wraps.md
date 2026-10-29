@@ -3,7 +3,7 @@
 **Status:** Proposed, 2026-10-28. Being prototyped in Cascade Appeal under the draft wrap kind `x-draft-hpke-recipient`. Not eligible for ruling until the evaluation below is complete and its results are recorded in this document. Not normative: nothing here changes [`pod-encryption.md`](../pod-encryption.md) until a revision of that document adopts it.
 **Date:** 2026-10-28
 **Prompted by:** an application in which a patient shares an insurance-appeal case with an advocate or a family member, each signing in with their own passkey, and the patient needs to be able to remove one of them later. The ratified rule for sharing a Pod is to hand over its recovery sheet (D-KEY-2, 2026-09-24). D-KEY-2 left the door open on purpose ("the file format keeps allowing several wraps, so they can be added later without migrating any pod"). This document is the design for walking through it.
-**Depends on:** the `webauthn-prf` wrap kind (root backlog 3.548, decision accepted 2026-10-06, revised 2026-10-07), which this document assumes is specified.
+**Depends on:** the `webauthn-prf` wrap kind (decision accepted 2026-10-06, revised 2026-10-07; a follow-up is filed to specify it), which this document assumes is specified.
 
 ---
 
@@ -23,7 +23,7 @@ The goal is that each person opens the Pod with their own passkey, the owner can
 
 A person who receives shared Pods holds one long-lived HPKE key pair:
 
-- **Suite:** HPKE base mode ([RFC 9180](https://www.rfc-editor.org/rfc/rfc9180)), `DHKEM(P-256, HKDF-SHA256)` (KEM `0x0010`), `HKDF-SHA256` (KDF `0x0001`), `AES-256-GCM` (AEAD `0x0002`). This is the suite the Full Picture rater envelope already uses (root 4.59), so implementations need one HPKE suite, not two. P-256 rather than X25519 because it is the curve every WebCrypto engine imports (spike 2026-10-06, section 4.3).
+- **Suite:** HPKE base mode ([RFC 9180](https://www.rfc-editor.org/rfc/rfc9180)), `DHKEM(P-256, HKDF-SHA256)` (KEM `0x0010`), `HKDF-SHA256` (KDF `0x0001`), `AES-256-GCM` (AEAD `0x0002`). This is the suite the Full Picture rater envelope already uses, so implementations need one HPKE suite, not two. P-256 rather than X25519 because it is the curve every WebCrypto engine imports (spike 2026-10-06, section 4.3).
 - **Public key:** a JWK ([RFC 7517](https://www.rfc-editor.org/rfc/rfc7517), [RFC 7518](https://www.rfc-editor.org/rfc/rfc7518) section 6.2) with exactly `kty: "EC"`, `crv: "P-256"`, `x`, `y`.
 - **Key identifier:** the JWK thumbprint ([RFC 7638](https://www.rfc-editor.org/rfc/rfc7638), SHA-256, base64url without padding) of the public key. This is the `kid` used everywhere below, as in the proposed D-PAIR-1 pairing.
 - **Private key:** stored as a JWK carrying `d`, `x` and `y` (the public point is required, spike section 4.2), only inside a **personal keyring**: a sealed record whose header has the person's own `webauthn-prf` wrap and, optionally, a `passphrase` wrap (their six words). The private key never exists outside that keyring except in memory.
