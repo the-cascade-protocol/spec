@@ -1,5 +1,7 @@
 # Cascade Protocol Specification
 
+> **Cascade Protocol v1.** In use today and being upgraded to Cascade Protocol v2. The v2 model is in [cascade-vocabulary](https://github.com/the-cascade-protocol/cascade-vocabulary) and [cascade-runtime-js](https://github.com/the-cascade-protocol/cascade-runtime-js).
+
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![Spec Status](https://img.shields.io/badge/status-stable-green.svg)]()
 
